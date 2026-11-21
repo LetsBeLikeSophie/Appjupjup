@@ -93,6 +93,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const db = sb();
     db.auth.getSession().then(async ({ data }) => {
+      // 카카오가 로그인 콜백을 두 번 부르면 두 번째가 bad_oauth_state로 돌아와요.
+      // 첫 번째에서 이미 로그인됐으면 에러 주소만 조용히 지워요.
+      const q = new URLSearchParams(location.search);
+      if (q.get('error_code') === 'bad_oauth_state' || q.get('error') === 'invalid_request') {
+        history.replaceState(null, '', location.pathname);
+        if (!data.session) setLoginOpen(true);
+      }
       setSession(data.session);
       await loadProfile(data.session);
       setReady(true);
