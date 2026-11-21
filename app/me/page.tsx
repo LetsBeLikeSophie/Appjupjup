@@ -58,8 +58,14 @@ export default function Me() {
         <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
         <input className="nick" aria-label={t.nickname} value={nick} maxLength={20} onChange={(e) => setNick(e.target.value)}
           onBlur={() => nick.trim() && nick !== profile.nickname && saveProfile({ nickname: nick.trim() })} />
+        </div>
+      <div className="row gap8" style={{ marginTop: 12 }}>
         <select className="country" aria-label={t.country} value={profile.country} onChange={(e) => saveProfile({ country: e.target.value })}>
           {Array.from(new Set([profile.country, ...COUNTRIES])).map((c) => <option key={c} value={c}>{flag(c)} {c}</option>)}
+        </select>
+        <select className="country" aria-label={t.language} value={profile.locale.startsWith('ko') ? 'ko' : 'en'} onChange={(e) => saveProfile({ locale: e.target.value })}>
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
         </select>
       </div>
 
