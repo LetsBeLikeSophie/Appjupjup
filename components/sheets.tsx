@@ -1,0 +1,201 @@
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import { useApp, errKey } from '@/lib/ctx';
+import { sb, SUPABASE_URL, parseLink, cardColor, type App } from '@/lib/supabase';
+import { AppIcon, Icon, PromiseChip, Sheet } from './ui';
+import { StackCard } from './cards';
+
+/* ---------- 로그인 ---------- */
+export function LoginSheet() {
+  const { loginOpen, closeLogin, t } = useApp();
+  const [skipUrl, setSkipUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!loginOpen) return;
+    try { const p = JSON.parse(localStorage.getItem('aj_pending') || 'null'); setSkipUrl(p?.type === 'download' ? p.url : null); } catch { setSkipUrl(null); }
+  }, [loginOpen]);
+
+  const go = (provider: 'kakao' | 'google') =>
+    sb().auth.signInWithOAuth({ provider, options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(location.pathname)}` } });
+
+  return (
+    <Sheet open={loginOpen} onClose={closeLogin} label={t.loginTitle}>
+      <div className="sheet-head">
+        <h2>{t.loginTitle}</h2>
+        <button className="round" aria-label={t.close} onClick={closeLogin}>{Icon.close}</button>
+      </div>
+      <ul className="why">
+        <li><span>{Icon.shake}</span>{t.loginWhy1}</li>
+        <li><span>{Icon.bell}</span>{t.loginWhy2}</li>
+        <li><span>{Icon.plus}</span>{t.loginWhy3}</li>
+      </ul>
+      <button className="btn kakao" onClick={() => go('kakao')}>
+        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24"><path d="M12 4C7 4 3 7.1 3 11c0 2.5 1.7 4.7 4.2 6l-1 3.6c-.1.3.3.6.6.4l4.2-2.8c.3 0 .7.1 1 .1 5 0 9-3.1 9-7s-4-7.3-9-7.3z" fill="#191919" /></svg>
+        {t.loginKakao}
+      </button>
+      <button className="btn google" onClick={() => go('google')}>
+        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4" /><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853" /><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.2 1.1 4.6L6.4 14z" fill="#FBBC05" /><path d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.8 9.4 6 12 6z" fill="#EA4335" /></svg>
+        {t.loginGoogle}
+      </button>
+      {skipUrl && <a className="skip" href={skipUrl} target="_blank" rel="noopener noreferrer" onClick={closeLogin}>{t.loginSkip}</a>}
+      <p className="fine">{t.loginNote}</p>
+    </Sheet>
+  );
+}
+
+/* ---------- 한 줄 피드백 ---------- */
+export function FeedbackSheet() {
+  const { feedbackApp: app, openFeedback, t, toast, session } = useApp();
+  const [text, setText] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [pumasi, setPumasi] = useState(false);
+  useEffect(() => {
+    setText(''); setErr('');
+    if (!app || !session) return;
+    // 이 앱으로 열린 품앗이가 있는지 (점수 표시용)
+    sb().from('aj_matches').select('id')
+      .or(`and(user_a.eq.${session.user.id},app_a.eq.${app.id},a_result.is.null),and(user_b.eq.${session.user.id},app_b.eq.${app.id},b_result.is.null)`)
+      .gt('due_at', new Date().toISOString()).limit(1)
+      .then(({ data }) => setPumasi(!!data?.length));
+  }, [app, session]);
+  if (!app) return null;
+  const c = cardColor(app.id);
+  const send = async () => {
+    setBusy(true); setErr('');
+    const { data, error } = await sb().rpc('aj_leave_feedback', { p_app: app.id, p_body: text });
+    setBusy(false);
+    if (error) {
+      const k = errKey(error);
+      setErr(k === 'badword' ? t.fbBad : k === 'download_required' ? t.needDownload : k === 'already' ? t.already : t.errGeneric);
+      return;
+    }
+    toast(data?.delta ? `${t.nKept} +${data.delta}` : t.fbSent);
+    openFeedback(null);
+  };
+  return (
+    <Sheet open onClose={() => openFeedback(null)} label={t.fbTitle} bg={c.bg}>
+      <div className="sheet-head" style={{ color: c.ink }}>
+        <div className="row gap12">
+          <AppIcon src={app.icon_url} size={48} />
+          <div><h2>{app.name}</h2><div className="sub">{app.owner?.nickname}</div></div>
+        </div>
+        <button className="round" aria-label={t.close} onClick={() => openFeedback(null)}>{Icon.close}</button>
+      </div>
+      <label className="sr" htmlFor="fb">{t.fbTitle}</label>
+      <textarea id="fb" rows={3} maxLength={100} value={text} onChange={(e) => setText(e.target.value)} className={err ? 'bad' : ''} />
+      <div className="fb-meta" style={{ color: c.ink }}><span className="err">{err}</span><span>{text.length} / 100</span></div>
+      <div className="row gap10" style={{ color: c.ink }}>
+        {pumasi ? <><PromiseChip value="+3" ink={c.ink} /><span className="sub">{t.fbPumasi}</span></>
+                : <><span className="tag-free">{t.free}</span><span className="sub">{t.fbFree}</span></>}
+        <button className="send" aria-label={t.send} disabled={!text.trim() || busy} onClick={send}>{Icon.send}</button>
+      </div>
+    </Sheet>
+  );
+}
+
+/* ---------- 앱 올리기 ---------- */
+type Meta = { name?: string; icon?: string; screenshots?: string[]; available?: boolean; needsManual?: boolean };
+
+export function UploadSheet({ onDone }: { onDone?: () => void }) {
+  const { uploadOpen, setUploadOpen, t, country, profile, toast } = useApp();
+  const [url, setUrl] = useState('');
+  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'bad' | 'dup'>('idle');
+  const [meta, setMeta] = useState<Meta>({});
+  const [dupApp, setDupApp] = useState<App | null>(null);
+  const [name, setName] = useState('');
+  const [world, setWorld] = useState(false);
+  const [cc, setCc] = useState(country);
+  const [busy, setBusy] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); } }, [uploadOpen, country]);
+
+  const check = (u: string) => {
+    setUrl(u);
+    if (timer.current) clearTimeout(timer.current);
+    if (!u.trim()) { setState('idle'); return; }
+    const p = parseLink(u);
+    if (!p) { setState('bad'); return; }
+    timer.current = setTimeout(async () => {
+      setState('loading');
+      const { data: existing } = await sb().rpc('aj_find_app_by_link', { p_url: u.trim() });
+      if (existing) {
+        const { data } = await sb().from('aj_apps').select('id, name, icon_url, screenshots, stage, owner:aj_profiles(nickname, score, avatar_url)').eq('id', existing).single();
+        setDupApp(data as unknown as App); setState('dup'); return;
+      }
+      try {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/aj-store-meta`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u.trim(), country }),
+        });
+        const m = (await r.json()) as Meta;
+        setMeta(m); setName(m.name || '');
+      } catch { setMeta({ needsManual: true }); }
+      setState('ok');
+    }, 400);
+  };
+
+  const submit = async () => {
+    setBusy(true);
+    const countries = cc.split(/[,\s]+/).map((x) => x.trim().toUpperCase()).filter((x) => /^[A-Z]{2}$/.test(x));
+    const { error } = await sb().rpc('aj_add_app', {
+      p_url: url.trim(), p_name: name.trim(), p_icon: meta.icon || null, p_screens: meta.screenshots || [],
+      p_countries: countries.length ? countries : [country], p_all_countries: world,
+    });
+    setBusy(false);
+    if (error) {
+      const k = errKey(error);
+      toast(k === 'app_limit' ? t.limit : k === 'duplicate' ? t.dup : k === 'bad_link' ? t.badLink : t.errGeneric);
+      return;
+    }
+    setUploadOpen(false); onDone?.();
+  };
+
+  const p = parseLink(url);
+  const preview: App | null = state === 'ok' && p ? {
+    id: url, owner_id: '', platform: p.platform, stage: p.stage, url, name: name || '…', icon_url: meta.icon || null,
+    screenshots: meta.screenshots || [], is_primary: false, feedback_count: 0, countries: [cc], all_countries: world, created_at: '',
+    owner: profile ? { nickname: profile.nickname, score: profile.score, avatar_url: profile.avatar_url } : null,
+  } : null;
+
+  return (
+    <Sheet open={uploadOpen} onClose={() => setUploadOpen(false)} label={t.upload}>
+      <div className="sheet-head">
+        <h2>{t.upload}</h2>
+        <button className="round" aria-label={t.close} onClick={() => setUploadOpen(false)}>{Icon.close}</button>
+      </div>
+      <label className="sr" htmlFor="applink">{t.pasteLink}</label>
+      <input id="applink" className={`link ${state === 'bad' || state === 'dup' ? 'bad' : ''}`} type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
+      {state === 'loading' && <div className="msg">{t.loading}</div>}
+      {state === 'bad' && <div className="msg err">{t.badLink}</div>}
+      {state === 'dup' && dupApp && (
+        <>
+          <div className="msg err">{t.dup}</div>
+          <StackCard app={dupApp} />
+          <div className="row gap8">
+            <a className="btn dark grow" href={`/app/${dupApp.id}`}>{t.dupSee}</a>
+            <button className="btn outline" onClick={() => toast(t.dupMineNote)}>{Icon.flag} {t.dupMine}</button>
+          </div>
+        </>
+      )}
+      {state === 'ok' && preview && (
+        <>
+          <div className={`msg ${meta.needsManual ? '' : 'ok'}`}>
+            {meta.needsManual ? t.needsManual : `${p!.platform === 'android' ? 'Google Play' : 'App Store'} · ${p!.stage === 'live' ? t.live : t.test} · ${t.okLoaded}`}
+            {meta.available === false && !meta.needsManual ? ` · ${t.notInCountry}` : ''}
+          </div>
+          {meta.needsManual && (
+            <input className="link" placeholder={t.appName2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+          )}
+          <StackCard app={preview} />
+          <div className="countries">
+            <label className="row gap8"><input type="checkbox" checked={world} onChange={(e) => setWorld(e.target.checked)} /> {t.worldwide}</label>
+            {!world && <input className="link small" aria-label={t.countries} placeholder={t.countriesHint} value={cc} onChange={(e) => setCc(e.target.value)} />}
+          </div>
+          <div className="honor">{Icon.shake}<span>{t.honor}</span></div>
+          <button className="btn dark" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
+        </>
+      )}
+    </Sheet>
+  );
+}
+

@@ -1,0 +1,1 @@
+{ "name": "앱줍줍", "short_name": "앱줍줍", "start_url": "/", "display": "standalone", "background_color": "#EDEDE9", "theme_color": "#EDEDE9", "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }] }
