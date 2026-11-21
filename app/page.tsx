@@ -16,8 +16,13 @@ export default function Home() {
     let q = sb().from('aj_apps').select(APP_FIELDS, { count: 'exact' })
       .or(`all_countries.eq.true,countries.cs.{${country}}`)
       .order('feedback_count', { ascending: true }).order('created_at', { ascending: false }).limit(60);
-    if (plat !== 'all') q = q.eq('platform', plat);
-    q.then(({ data, count }) => { setApps((data as unknown as App[]) || []); setTotal(count || 0); });
+    // 모든 사람의 앱을 다 보여주고, 내 폰에서 받을 수 있는 앱을 위로
+    q.then(({ data, count }) => {
+      const list = (data as unknown as App[]) || [];
+      const fit = (a: App) => (plat === 'all' || a.platform === plat ? 0 : 1);
+      setApps([...list].sort((a, b) => fit(a) - fit(b)));
+      setTotal(count || 0);
+    });
   }, [country]);
 
   return (

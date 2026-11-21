@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '@/lib/ctx';
-import { sb, cardColor, flag, type App, type Feedback } from '@/lib/supabase';
+import { sb, flag, type App, type Feedback } from '@/lib/supabase';
+import { useIconColor } from '@/lib/useIconColor';
 import { AppIcon, Avatar, Icon, PromiseChip, Shots } from './ui';
 
 function Countries({ app }: { app: App }) {
@@ -13,12 +14,12 @@ function Countries({ app }: { app: App }) {
 
 export function StackCard({ app, onOpen }: { app: App; onOpen?: () => void }) {
   const { t } = useApp();
-  const c = cardColor(app.id);
+  const c = useIconColor(app.id, app.icon_url);
   const body = (
     <>
       <div className="sc-main">
         <div className="row gap6">
-          <span className="pill-line" style={{ borderColor: c.ink }}>{app.stage === 'live' ? t.live : t.test}</span>
+          <span className="tag-soft">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
           {app.owner && <PromiseChip value={app.owner.score} ink={c.ink} />}
         </div>
         <div className="sc-name">{app.name}</div>
@@ -97,7 +98,7 @@ function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => v
         <div className="grow">
           <h1 className="d-name">{app.name}</h1>
           <div className="row gap6 wrap">
-            <span className="pill-line">{app.stage === 'live' ? t.live : t.test}</span>
+            <span className="tag-soft gray">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
             {app.owner && <PromiseChip value={app.owner.score} bg="#F1F1EE" />}
             <Countries app={app} />
           </div>

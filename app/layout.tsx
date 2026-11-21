@@ -3,6 +3,7 @@ import './globals.css';
 import { AppProvider } from '@/lib/ctx';
 import { TabBar, Toast } from '@/components/ui';
 import { FeedbackSheet, LoginSheet } from '@/components/sheets';
+import { ProfileSheet } from '@/components/profile-sheet';
 
 export const metadata: Metadata = {
   title: '앱줍줍',
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TabBar />
           <LoginSheet />
           <FeedbackSheet />
+          <ProfileSheet />
           <Toast />
         </AppProvider>
       </body>

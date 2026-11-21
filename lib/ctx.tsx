@@ -22,6 +22,8 @@ type Ctx = {
   feedbackApp: App | null;
   openFeedback: (a: App | null) => void;
   uploadOpen: boolean;
+  profileOpen: boolean;
+  setProfileOpen: (v: boolean) => void;
   setUploadOpen: (v: boolean) => void;
   refreshProfile: () => Promise<void>;
   refreshUnread: () => Promise<void>;
@@ -52,6 +54,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loginOpen, setLoginOpen] = useState(false);
   const [feedbackApp, setFeedbackApp] = useState<App | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [pending, setPending] = useState<Pending>(null);
 
   const locale = pickLocale(profile?.locale);
@@ -68,13 +71,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const db = sb();
     let { data } = await db.from('aj_profiles').select('*').eq('id', s.user.id).maybeSingle();
     if (!data) {
-      // 처음 로그인: 카카오·구글 이름과 사진으로 프로필을 만들어요
-      const md = s.user.user_metadata || {};
-      const nick = String(md.name || md.full_name || md.nickname || s.user.email?.split('@')[0] || 'user').slice(0, 20);
+      // 처음 로그인: 카카오·구글은 인증만. 이름·사진은 앱줍줍에서 따로 정해요
       await db.from('aj_profiles').insert({
         id: s.user.id,
-        nickname: nick,
-        avatar_url: md.avatar_url || md.picture || null,
+        nickname: 'user' + Math.floor(1000 + Math.random() * 9000),
+        avatar_url: null,
         country: guessCountry(),
         locale: pickLocale(),
       });
@@ -120,6 +121,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, t, toast]);
 
+  // 처음 로그인하면 이름·사진부터 정해요
+  useEffect(() => { if (profile && !profile.setup_done) setProfileOpen(true); }, [profile]);
+
   // 로그인 후 하던 일 이어서 하기
   useEffect(() => {
     if (!pending || !profile) return;
@@ -138,11 +142,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     session, profile, ready, t, locale, country, unread, toast, toastMsg,
     loginOpen, openLogin: openLoginInner, closeLogin: () => setLoginOpen(false),
     feedbackApp, openFeedback: setFeedbackApp,
-    uploadOpen, setUploadOpen,
+    uploadOpen, setUploadOpen, profileOpen, setProfileOpen,
     refreshProfile: () => loadProfile(session),
     refreshUnread, download,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [session, profile, ready, t, locale, country, unread, toastMsg, loginOpen, feedbackApp, uploadOpen, download, refreshUnread, loadProfile, toast]);
+  }), [session, profile, ready, t, locale, country, unread, toastMsg, loginOpen, feedbackApp, uploadOpen, profileOpen, download, refreshUnread, loadProfile, toast]);
 
   return <C.Provider value={value}>{children}</C.Provider>;
 }

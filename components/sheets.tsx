@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useApp, errKey } from '@/lib/ctx';
-import { sb, SUPABASE_URL, parseLink, cardColor, type App } from '@/lib/supabase';
-import { AppIcon, Icon, PromiseChip, Sheet } from './ui';
+import { sb, SUPABASE_URL, parseLink, flag, type App } from '@/lib/supabase';
+import { useIconColor } from '@/lib/useIconColor';
+import { AppIcon, Icon, PromiseChip, Sheet, Shots } from './ui';
 import { StackCard } from './cards';
 
 /* ---------- 로그인 ---------- */
@@ -58,8 +59,8 @@ export function FeedbackSheet() {
       .gt('due_at', new Date().toISOString()).limit(1)
       .then(({ data }) => setPumasi(!!data?.length));
   }, [app, session]);
+  const c = useIconColor(app?.id || 'x', app?.icon_url);
   if (!app) return null;
-  const c = cardColor(app.id);
   const send = async () => {
     setBusy(true); setErr('');
     const { data, error } = await sb().rpc('aj_leave_feedback', { p_app: app.id, p_body: text });
@@ -94,7 +95,7 @@ export function FeedbackSheet() {
 }
 
 /* ---------- 앱 올리기 ---------- */
-type Meta = { name?: string; icon?: string; screenshots?: string[]; available?: boolean; needsManual?: boolean };
+type Meta = { name?: string; icon?: string; screenshots?: string[]; available?: boolean; needsManual?: boolean; countries?: string[]; allCountries?: boolean; countrySource?: 'store' | 'guess' };
 
 export function UploadSheet({ onDone }: { onDone?: () => void }) {
   const { uploadOpen, setUploadOpen, t, country, profile, toast } = useApp();
@@ -106,9 +107,10 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
   const [world, setWorld] = useState(false);
   const [cc, setCc] = useState(country);
   const [busy, setBusy] = useState(false);
+  const [editCc, setEditCc] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); } }, [uploadOpen, country]);
+  useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); setEditCc(false); } }, [uploadOpen, country]);
 
   const check = (u: string) => {
     setUrl(u);
@@ -129,6 +131,8 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
         });
         const m = (await r.json()) as Meta;
         setMeta(m); setName(m.name || '');
+        if (m.allCountries) setWorld(true);
+        else if (m.countries?.length) { setWorld(false); setCc(m.countries.join(', ')); }
       } catch { setMeta({ needsManual: true }); }
       setState('ok');
     }, 400);
@@ -151,11 +155,6 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
   };
 
   const p = parseLink(url);
-  const preview: App | null = state === 'ok' && p ? {
-    id: url, owner_id: '', platform: p.platform, stage: p.stage, url, name: name || '…', icon_url: meta.icon || null,
-    screenshots: meta.screenshots || [], is_primary: false, feedback_count: 0, countries: [cc], all_countries: world, created_at: '',
-    owner: profile ? { nickname: profile.nickname, score: profile.score, avatar_url: profile.avatar_url } : null,
-  } : null;
 
   return (
     <Sheet open={uploadOpen} onClose={() => setUploadOpen(false)} label={t.upload}>
@@ -164,7 +163,7 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
         <button className="round" aria-label={t.close} onClick={() => setUploadOpen(false)}>{Icon.close}</button>
       </div>
       <label className="sr" htmlFor="applink">{t.pasteLink}</label>
-      <input id="applink" className={`link ${state === 'bad' || state === 'dup' ? 'bad' : ''}`} type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
+      <input id="applink" className={`field ${state === 'bad' || state === 'dup' ? 'bad' : ''}`} type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
       {state === 'loading' && <div className="msg">{t.loading}</div>}
       {state === 'bad' && <div className="msg err">{t.badLink}</div>}
       {state === 'dup' && dupApp && (
@@ -173,23 +172,42 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
           <StackCard app={dupApp} />
           <div className="row gap8">
             <a className="btn dark grow" href={`/app/${dupApp.id}`}>{t.dupSee}</a>
-            <button className="btn outline" onClick={() => toast(t.dupMineNote)}>{Icon.flag} {t.dupMine}</button>
+            <button className="btn soft auto" onClick={() => toast(t.dupMineNote)}>{Icon.flag} {t.dupMine}</button>
           </div>
         </>
       )}
-      {state === 'ok' && preview && (
+      {state === 'ok' && p && (
         <>
           <div className={`msg ${meta.needsManual ? '' : 'ok'}`}>
-            {meta.needsManual ? t.needsManual : `${p!.platform === 'android' ? 'Google Play' : 'App Store'} · ${p!.stage === 'live' ? t.live : t.test} · ${t.okLoaded}`}
-            {meta.available === false && !meta.needsManual ? ` · ${t.notInCountry}` : ''}
+            {meta.needsManual ? t.needsManual : `${p.platform === 'android' ? 'Google Play' : 'App Store'} · ${p.stage === 'live' ? t.live : t.test} · ${t.okLoaded}`}
           </div>
           {meta.needsManual && (
-            <input className="link" placeholder={t.appName2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+            <input className="field" placeholder={t.appName2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
           )}
-          <StackCard app={preview} />
-          <div className="countries">
-            <label className="row gap8"><input type="checkbox" checked={world} onChange={(e) => setWorld(e.target.checked)} /> {t.worldwide}</label>
-            {!world && <input className="link small" aria-label={t.countries} placeholder={t.countriesHint} value={cc} onChange={(e) => setCc(e.target.value)} />}
+          <div className="preview">
+            <div className="row gap12">
+              <AppIcon src={meta.icon} size={56} />
+              <div className="grow">
+                <div className="pv-name">{name || '…'}</div>
+                <div className="ma-meta">{p.platform === 'ios' ? t.ios : t.android} · {p.stage === 'live' ? t.live : t.test}</div>
+              </div>
+            </div>
+            <Shots urls={meta.screenshots || []} height={200} />
+          </div>
+          <div className="cc-box">
+            <div className="row between">
+              <div className="grow">
+                <div className="bold">{world ? `🌐 ${t.worldwide}` : cc.split(/[,\s]+/).filter(Boolean).map((x) => flag(x.toUpperCase()) || x).join(' ')}</div>
+                <div className="sub small">{meta.countrySource === 'store' ? t.dataFromStore : meta.countrySource === 'guess' ? t.dataGuess : t.countries}</div>
+              </div>
+              <button className="text-btn" onClick={() => setEditCc((v) => !v)}>{t.change}</button>
+            </div>
+            {editCc && (
+              <div className="countries">
+                <label className="row gap8"><input type="checkbox" checked={world} onChange={(e) => setWorld(e.target.checked)} /> {t.worldwide}</label>
+                {!world && <input className="field" aria-label={t.countries} placeholder={t.countriesHint} value={cc} onChange={(e) => setCc(e.target.value)} />}
+              </div>
+            )}
           </div>
           <div className="honor">{Icon.shake}<span>{t.honor}</span></div>
           <button className="btn dark" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>

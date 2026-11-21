@@ -19,6 +19,19 @@ function parse(raw: string): Parsed | null {
 }
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+const CHECK = ['KR','US','JP','TW','HK','SG','VN','ID','TH','PH','MY','IN','GB','DE','FR','ES','IT','NL','CA','AU','NZ','BR','MX'];
+// 앱스토어는 나라별 조회가 돼서 출시 나라를 자동으로 알아낼 수 있어요
+async function appStoreCountries(id: string) {
+  const res = await Promise.all(CHECK.map(async (c) => {
+    try {
+      const r = await fetch(`https://itunes.apple.com/lookup?id=${id}&country=${c.toLowerCase()}`);
+      const d = await r.json();
+      return d?.resultCount > 0 ? c : null;
+    } catch { return null; }
+  }));
+  const list = res.filter(Boolean) as string[];
+  return { countries: list, allCountries: list.length >= CHECK.length - 2 };
+}
 async function appStore(id: string, country: string) {
   const r = await fetch(`https://itunes.apple.com/lookup?id=${id}&country=${country.toLowerCase()}`);
   const a = (await r.json())?.results?.[0];
@@ -54,9 +67,15 @@ Deno.serve(async (req) => {
   const country = /^[A-Z]{2}$/.test(body.country || '') ? body.country! : 'KR';
   if (p.stage === 'test' && p.platform === 'ios') return json({ ...p, needsManual: true });
   try {
-    const info = p.platform === 'ios' ? await appStore(p.id, country) : await playStore(p.id, country);
+    if (p.platform === 'ios') {
+      const [first, cc] = await Promise.all([appStore(p.id, country), appStoreCountries(p.id)]);
+      const info = first.name || !cc.countries.length ? first : { ...(await appStore(p.id, cc.countries[0])), available: false };
+      return json({ ...p, country, ...info, ...cc, countrySource: 'store', needsManual: !info.name });
+    }
+    const info = await playStore(p.id, country);
     if (p.stage === 'test' && !info.name) return json({ ...p, needsManual: true });
-    return json({ ...p, country, ...info, needsManual: !info.name });
+    // 구글 플레이는 출시 나라를 밖에서 알 수 없어서 전 세계로 시작해요
+    return json({ ...p, country, ...info, countries: [], allCountries: true, countrySource: 'guess', needsManual: !info.name });
   } catch (_e) {
     return json({ ...p, country, needsManual: true });
   }

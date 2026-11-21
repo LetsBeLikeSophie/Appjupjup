@@ -21,6 +21,7 @@ export type Profile = {
   missed_count: number;
   country: string;
   locale: string;
+  setup_done: boolean;
 };
 
 export type App = {

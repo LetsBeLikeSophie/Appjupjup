@@ -81,6 +81,15 @@ const ko = {
   nickname: '닉네임',
   save: '저장',
   photoChange: '프로필 사진 바꾸기',
+  profileTitle: '프로필 수정',
+  profileTitleFirst: '앱줍줍에서 쓸 이름',
+  profileHint: '카카오·구글은 로그인 확인에만 써요. 여기서 보일 이름과 사진을 정해주세요.',
+  edit: '수정',
+  dataFromStore: '스토어에서 불러온 출시 나라',
+  dataGuess: '구글 플레이는 출시 나라를 알 수 없어서 전 세계로 표시해요',
+  change: '바꾸기',
+  android: 'Android',
+  ios: 'iPhone',
   installHint: '알림을 받으려면 홈 화면에 추가해 주세요',
 };
 
@@ -168,6 +177,15 @@ const en: Dict = {
   nickname: 'Nickname',
   save: 'Save',
   photoChange: 'Change profile photo',
+  profileTitle: 'Edit profile',
+  profileTitleFirst: 'Your name on AppJupJup',
+  profileHint: 'Kakao/Google only confirm your login. Choose the name and photo people see here.',
+  edit: 'Edit',
+  dataFromStore: 'Countries from the store',
+  dataGuess: 'Google Play does not share its countries, so we show Worldwide',
+  change: 'Change',
+  android: 'Android',
+  ios: 'iPhone',
   installHint: 'Add to Home Screen to get alerts',
 };
 

@@ -1,0 +1,66 @@
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import { useApp } from '@/lib/ctx';
+import { sb } from '@/lib/supabase';
+import { Avatar, Icon, Sheet } from './ui';
+
+/** 앱줍줍 안에서 쓰는 이름·사진. 처음 로그인하면 자동으로 열려요 */
+export function ProfileSheet() {
+  const { profile, profileOpen, setProfileOpen, refreshProfile, t, toast } = useApp();
+  const [nick, setNick] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const first = !!profile && !profile.setup_done;
+
+  useEffect(() => {
+    if (!profileOpen || !profile) return;
+    setNick(first ? '' : profile.nickname);
+    setFile(null);
+    setPreview(profile.avatar_url);
+  }, [profileOpen, profile, first]);
+
+  if (!profile) return null;
+
+  const pick = (f: File) => { setFile(f); setPreview(URL.createObjectURL(f)); };
+
+  const save = async () => {
+    setBusy(true);
+    let avatar_url = profile.avatar_url;
+    if (file) {
+      const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+      const path = `${profile.id}/avatar.${ext}`;
+      const { error } = await sb().storage.from('aj-avatars').upload(path, file, { upsert: true, contentType: file.type });
+      if (error) { setBusy(false); toast(t.errGeneric); return; }
+      avatar_url = sb().storage.from('aj-avatars').getPublicUrl(path).data.publicUrl + `?v=${Date.now()}`;
+    }
+    const { error } = await sb().from('aj_profiles').update({ nickname: nick.trim(), avatar_url, setup_done: true }).eq('id', profile.id);
+    setBusy(false);
+    if (error) { toast(t.errGeneric); return; }
+    await refreshProfile();
+    setProfileOpen(false);
+  };
+
+  return (
+    <Sheet open={profileOpen} onClose={() => setProfileOpen(false)} label={t.profileTitle}>
+      <div className="sheet-head">
+        <div>
+          <h2>{first ? t.profileTitleFirst : t.profileTitle}</h2>
+          {first && <p className="sub" style={{ margin: '6px 0 0' }}>{t.profileHint}</p>}
+        </div>
+        <button className="round" aria-label={t.close} onClick={() => setProfileOpen(false)}>{Icon.close}</button>
+      </div>
+      <div className="ps-body">
+        <button className="avatar-btn big" aria-label={t.photoChange} onClick={() => input.current?.click()}>
+          <Avatar src={preview} size={96} />
+          <span className="cam">{Icon.camera}</span>
+        </button>
+        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
+        <label className="sr" htmlFor="nick">{t.nickname}</label>
+        <input id="nick" className="field" placeholder={t.nickname} maxLength={20} value={nick} onChange={(e) => setNick(e.target.value)} />
+      </div>
+      <button className="btn dark" disabled={busy || !nick.trim()} onClick={save}>{t.save}</button>
+    </Sheet>
+  );
+}
