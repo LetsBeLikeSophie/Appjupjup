@@ -22,7 +22,10 @@ export function StackCard({ app, onOpen }: { app: App; onOpen?: () => void }) {
           <span className="tag-soft">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
           {app.owner && <PromiseChip value={app.owner.score} ink={c.ink} />}
         </div>
-        <div className="sc-name">{app.name}</div>
+        <div>
+          <div className="sc-name">{app.name}</div>
+          {app.tagline && <div className="sc-tagline">{app.tagline}</div>}
+        </div>
         <div className="row gap8">
           <AppIcon src={app.icon_url} size={30} />
           <span className="ellipsis">{app.owner?.nickname}</span>
@@ -97,6 +100,7 @@ function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => v
         <AppIcon src={app.icon_url} size={72} />
         <div className="grow">
           <h1 className="d-name">{app.name}</h1>
+          {app.tagline && <p className="d-tagline">{app.tagline}</p>}
           <div className="row gap6 wrap">
             <span className="tag-soft gray">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
             {app.owner && <PromiseChip value={app.owner.score} bg="#F1F1EE" />}
@@ -109,7 +113,7 @@ function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => v
       <div className="d-foot">
         <div className="row gap8">
           <Avatar src={app.owner?.avatar_url} size={28} />
-          <span className="bold grow">{app.owner?.nickname}</span>
+          <span className="bold grow">{app.owner?.nickname}{app.owner?.tag ? <span className="name-tag">#{app.owner.tag}</span> : null}</span>
           {!mine && <span className="sub small">{t.getNote}</span>}
         </div>
         {!mine && (

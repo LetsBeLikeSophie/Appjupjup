@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useApp, errKey } from '@/lib/ctx';
-import { sb, SUPABASE_URL, parseLink, flag, type App } from '@/lib/supabase';
+import { sb, SUPABASE_URL, parseLink, flag, countryName, type App } from '@/lib/supabase';
 import { useIconColor } from '@/lib/useIconColor';
 import { AppIcon, Icon, PromiseChip, Sheet, Shots } from './ui';
 import { StackCard } from './cards';
@@ -98,7 +98,7 @@ export function FeedbackSheet() {
 type Meta = { name?: string; icon?: string; screenshots?: string[]; available?: boolean; needsManual?: boolean; countries?: string[]; allCountries?: boolean; countrySource?: 'store' | 'guess' };
 
 export function UploadSheet({ onDone }: { onDone?: () => void }) {
-  const { uploadOpen, setUploadOpen, t, country, profile, toast } = useApp();
+  const { uploadOpen, setUploadOpen, t, country, locale, toast } = useApp();
   const [url, setUrl] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'bad' | 'dup'>('idle');
   const [meta, setMeta] = useState<Meta>({});
@@ -108,9 +108,10 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
   const [cc, setCc] = useState(country);
   const [busy, setBusy] = useState(false);
   const [editCc, setEditCc] = useState(false);
+  const [tagline, setTagline] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); setEditCc(false); } }, [uploadOpen, country]);
+  useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); setEditCc(false); setTagline(''); } }, [uploadOpen, country]);
 
   const check = (u: string) => {
     setUrl(u);
@@ -143,12 +144,12 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
     const countries = cc.split(/[,\s]+/).map((x) => x.trim().toUpperCase()).filter((x) => /^[A-Z]{2}$/.test(x));
     const { error } = await sb().rpc('aj_add_app', {
       p_url: url.trim(), p_name: name.trim(), p_icon: meta.icon || null, p_screens: meta.screenshots || [],
-      p_countries: countries.length ? countries : [country], p_all_countries: world,
+      p_countries: countries.length ? countries : [country], p_all_countries: world, p_tagline: tagline.trim() || null,
     });
     setBusy(false);
     if (error) {
       const k = errKey(error);
-      toast(k === 'app_limit' ? t.limit : k === 'duplicate' ? t.dup : k === 'bad_link' ? t.badLink : t.errGeneric);
+      toast(k === 'badword' ? t.fbBad : k === 'app_limit' ? t.limit : k === 'duplicate' ? t.dup : k === 'bad_link' ? t.badLink : t.errGeneric);
       return;
     }
     setUploadOpen(false); onDone?.();
@@ -194,10 +195,12 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
             </div>
             <Shots urls={meta.screenshots || []} height={200} />
           </div>
+          <label className="sr" htmlFor="tagline">{t.tagline}</label>
+          <input id="tagline" className="field" placeholder={t.tagline + ' · ' + t.taglinePh} maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
           <div className="cc-box">
             <div className="row between">
               <div className="grow">
-                <div className="bold">{world ? `🌐 ${t.worldwide}` : cc.split(/[,\s]+/).filter(Boolean).map((x) => flag(x.toUpperCase()) || x).join(' ')}</div>
+                <div className="bold">{world ? `🌐 ${t.worldwide}` : cc.split(/[,\s]+/).filter(Boolean).map((x) => `${flag(x.toUpperCase())} ${countryName(x.toUpperCase(), locale)}`).join(', ')}</div>
                 <div className="sub small">{meta.countrySource === 'store' ? t.dataFromStore : meta.countrySource === 'guess' ? t.dataGuess : t.countries}</div>
               </div>
               <button className="text-btn" onClick={() => setEditCc((v) => !v)}>{t.change}</button>

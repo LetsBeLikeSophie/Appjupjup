@@ -22,6 +22,7 @@ export type Profile = {
   country: string;
   locale: string;
   setup_done: boolean;
+  tag: number | null;
 };
 
 export type App = {
@@ -37,8 +38,9 @@ export type App = {
   feedback_count: number;
   countries: string[];
   all_countries: boolean;
+  tagline: string | null;
   created_at: string;
-  owner?: Pick<Profile, 'nickname' | 'score' | 'avatar_url'> | null;
+  owner?: Pick<Profile, 'nickname' | 'score' | 'avatar_url' | 'tag'> | null;
 };
 
 export type Feedback = {
@@ -67,7 +69,7 @@ export type Notice = {
 };
 
 export const APP_FIELDS =
-  'id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, created_at, owner:aj_profiles(nickname, score, avatar_url)';
+  'id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, tagline, created_at, owner:aj_profiles(nickname, tag, score, avatar_url)';
 
 /** 스토어 링크 판별 (DB의 aj_parse_link와 같은 규칙) */
 export function parseLink(raw: string) {
@@ -109,4 +111,9 @@ export function cardColor(id: string) {
 export function flag(cc: string) {
   if (!/^[A-Z]{2}$/.test(cc)) return '';
   return String.fromCodePoint(...[...cc].map((c) => 0x1f1a5 + c.charCodeAt(0)));
+}
+
+/** 나라 코드를 그 언어의 나라 이름으로 (KR → 대한민국 / South Korea) */
+export function countryName(cc: string, locale: string) {
+  try { return new Intl.DisplayNames([locale], { type: 'region' }).of(cc) || cc; } catch { return cc; }
 }

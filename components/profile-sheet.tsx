@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/ctx';
 import { sb } from '@/lib/supabase';
 import { shrinkImage } from '@/lib/image';
@@ -7,7 +8,8 @@ import { Avatar, Icon, Sheet } from './ui';
 
 /** 앱줍줍 안에서 쓰는 이름·사진. 처음 로그인하면 자동으로 열려요 */
 export function ProfileSheet() {
-  const { profile, profileOpen, setProfileOpen, refreshProfile, t, toast } = useApp();
+  const { profile, profileOpen, setProfileOpen, setUploadOpen, refreshProfile, t, toast } = useApp();
+  const router = useRouter();
   const [nick, setNick] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -40,8 +42,11 @@ export function ProfileSheet() {
     const { error } = await sb().from('aj_profiles').update({ nickname: nick.trim(), avatar_url, setup_done: true }).eq('id', profile.id);
     setBusy(false);
     if (error) { toast(t.errGeneric); return; }
+    const wasFirst = first;
     await refreshProfile();
     setProfileOpen(false);
+    // 처음 가입이면 내 정보로 가서 앱 올리기를 바로 열어요
+    if (wasFirst) { router.push('/me'); setTimeout(() => setUploadOpen(true), 300); }
   };
 
   return (

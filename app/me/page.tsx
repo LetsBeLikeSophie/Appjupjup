@@ -1,14 +1,14 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useApp } from '@/lib/ctx';
-import { sb, APP_FIELDS, flag, type App } from '@/lib/supabase';
+import { sb, APP_FIELDS, flag, countryName, type App } from '@/lib/supabase';
 import { AppIcon, Avatar, Icon } from '@/components/ui';
 import { UploadSheet } from '@/components/sheets';
 
 const COUNTRIES = ['KR', 'US', 'JP', 'TW', 'VN', 'ID', 'TH', 'PH', 'IN', 'GB', 'DE', 'FR', 'CA', 'AU', 'BR', 'MX'];
 
 export default function Me() {
-  const { t, session, profile, ready, openLogin, refreshProfile, setUploadOpen, setProfileOpen, toast } = useApp();
+  const { t, locale, session, profile, ready, openLogin, refreshProfile, setUploadOpen, setProfileOpen, toast } = useApp();
   const [apps, setApps] = useState<App[]>([]);
 
   const loadApps = useCallback(() => {
@@ -45,10 +45,10 @@ export default function Me() {
       <div className="me-head">
         <Avatar src={profile.avatar_url} size={64} />
         <div className="grow">
-          <div className="me-name ellipsis">{profile.nickname}</div>
+          <div className="me-name ellipsis">{profile.nickname}{profile.tag ? <span className="name-tag">#{profile.tag}</span> : null}</div>
           <div className="row gap6" style={{ marginTop: 8 }}>
             <select className="chip-select" aria-label={t.country} value={profile.country} onChange={(e) => saveProfile({ country: e.target.value })}>
-              {Array.from(new Set([profile.country, ...COUNTRIES])).map((c) => <option key={c} value={c}>{flag(c)} {c}</option>)}
+              {Array.from(new Set([profile.country, ...COUNTRIES])).map((c) => <option key={c} value={c}>{flag(c)} {countryName(c, locale)}</option>)}
             </select>
             <select className="chip-select" aria-label={t.language} value={profile.locale.startsWith('ko') ? 'ko' : 'en'} onChange={(e) => saveProfile({ locale: e.target.value })}>
               <option value="ko">한국어</option>
@@ -74,6 +74,7 @@ export default function Me() {
             <AppIcon src={a.icon_url} size={56} />
             <div className="grow">
               <div className="ma-name">{a.name}</div>
+              {a.tagline && <div className="ma-tagline">{a.tagline}</div>}
               <div className="ma-meta">
                 {a.platform === 'ios' ? t.ios : t.android} · {a.stage === 'live' ? t.live : t.test} · {t.feedback} {a.feedback_count}
               </div>
@@ -86,6 +87,9 @@ export default function Me() {
             </div>
           </div>
         ))}
+        {apps.length === 0 && (
+          <div className="empty-hint"><b>{t.firstApp}</b><span>{t.firstAppSub}</span></div>
+        )}
         {apps.length < 3 && <button className="addslot" onClick={() => setUploadOpen(true)}>{Icon.plus}{t.addByLink}</button>}
       </div>
 

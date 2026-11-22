@@ -160,3 +160,10 @@ body:has(.overlay:not(.static)) .tabwrap { display: none; }
 input, select, textarea { font-size: 16px !important; }
 html, body { touch-action: manipulation; overscroll-behavior-y: none; }
 .sheet { overscroll-behavior: contain; touch-action: pan-y; }
+
+.name-tag { margin-left: 4px; font-weight: 500; color: var(--sub); font-size: .7em; letter-spacing: 0; }
+.sc-tagline { margin-top: 6px; font-size: 13px; line-height: 1.4; font-weight: 500; opacity: .85; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.d-tagline { margin: 6px 0 8px; font-size: 14px; line-height: 1.45; color: #3B3E44; }
+.ma-tagline { margin-top: 4px; font-size: 13px; line-height: 1.4; color: #3B3E44; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.empty-hint { background: #fff; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.5; color: #3B3E44; }
+.empty-hint b { font-size: 17px; color: var(--ink); }
