@@ -11,6 +11,7 @@ export const Icon = {
   user: <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" {...P}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>,
   down: <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" {...P}><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></svg>,
   close: <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" {...P} strokeWidth={2.4}><path d="M6 6l12 12M18 6 6 18" /></svg>,
+  back: <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" {...P} strokeWidth={2.4}><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>,
   chevDown: <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" {...P} strokeWidth={2.4}><path d="m6 9 6 6 6-6" /></svg>,
   chevRight: <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" {...P} strokeWidth={2.6}><path d="m9 6 6 6-6 6" /></svg>,
   plus: <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" {...P} strokeWidth={2.4}><path d="M12 5v14M5 12h14" /></svg>,

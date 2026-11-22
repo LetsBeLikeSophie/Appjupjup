@@ -207,3 +207,48 @@ html, body { touch-action: manipulation; overscroll-behavior-y: none; }
 .sk-shots .sk { width: 33%; height: 220px; border-radius: 14px; }
 .pulse .sk { animation: pulse 1.1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .45; } }
+
+/* v3: 글자 크기 단계 — 화면 제목 24 / 이름 20 / 섹션 17 / 카드 제목 15 / 본문 14 / 보조 12 */
+.page-title { font-size: 24px; }
+.me-head { gap: 14px; }
+.me-name { font-size: 20px; }
+.section-head { padding: 28px 4px 10px; }
+.h2 { font-size: 17px; letter-spacing: -.3px; }
+.score-card { margin-top: 20px; padding: 18px 20px; border-radius: 24px; }
+.sc-num { font-size: 52px; letter-spacing: -2px; }
+.sc-label { font-size: 13px; }
+.sc-label svg { width: 18px; height: 18px; }
+.myapp { width: 100%; border: 0; text-align: left; align-items: center; padding: 14px 14px 14px 16px; border-radius: 20px; gap: 12px; }
+.myapp .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ma-name { font-size: 15px; line-height: 1.35; }
+.ma-tagline { margin: 0; font-size: 13px; }
+.ma-meta { margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.star-mini { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; color: var(--ink); }
+.star-mini svg { width: 12px; height: 12px; fill: #FAB005; stroke: #FAB005; }
+.addslot { min-height: 60px; border-radius: 20px; font-size: 14px; }
+.empty-hint { border-radius: 20px; padding: 16px; }
+.empty-hint b { font-size: 15px; }
+.settings { background: #fff; border-radius: 20px; overflow: hidden; }
+.set-row { position: relative; display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 16px; font-size: 14px; font-weight: 700; }
+.set-row + .set-row { border-top: 1px solid var(--line); }
+.set-val { display: inline-flex; align-items: center; gap: 6px; color: var(--sub); font-weight: 500; }
+.set-val svg { opacity: .5; }
+.set-row select { position: absolute; inset: 0; opacity: 0; width: 100%; }
+.h-sheet { margin: 0; font-size: 20px !important; }
+.sheet-head h2 { font-size: 20px; }
+.form { display: flex; flex-direction: column; gap: 8px; }
+.form-label { font-size: 12px; font-weight: 700; color: var(--sub); padding: 6px 4px 0; }
+.check { font-size: 14px; font-weight: 700; padding: 4px; }
+.text-btn.danger { background: none; color: var(--bad); }
+
+/* 상세: 상단 바, 내 앱 표시, 다음 앱 */
+.d-pos { font-size: 13px; color: var(--sub); font-weight: 700; }
+.d-mine { padding: 8px 20px 24px; text-align: center; }
+.d-name { font-size: 19px; }
+.d-tagline { font-size: 13px; }
+.next-peek { margin-top: 24px; padding: 20px 20px 32px; gap: 10px; background: var(--bg); border-top: 0; }
+.np-label { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--sub); }
+.np-label svg { width: 16px; height: 16px; }
+.np-app { display: flex; align-items: center; gap: 10px; max-width: 100%; padding: 10px 14px; border-radius: 16px; background: #fff; }
+.np-app b { font-size: 14px; }
+.fb-box { margin-bottom: 4px; }

@@ -95,11 +95,11 @@ function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => v
   return (
     <section className="slide" aria-label={app.name}>
       <div className="d-top">
-        {onClose ? <button className="round sm" aria-label={t.close} onClick={onClose}>{Icon.chevDown}</button> : <a className="round sm" href="/" aria-label={t.close}>{Icon.chevDown}</a>}
-        <span className="sub">{pos}</span>
+        {onClose ? <button className="round sm" aria-label={t.back} onClick={onClose}>{Icon.back}</button> : <a className="round sm" href="/" aria-label={t.back}>{Icon.back}</a>}
+        <span className="d-pos">{pos}</span>
       </div>
       <div className="d-head">
-        <AppIcon src={app.icon_url} size={60} />
+        <AppIcon src={app.icon_url} size={56} />
         <div className="grow">
           <h1 className="d-name">{app.name}</h1>
           {app.tagline && <p className="d-tagline">{app.tagline}</p>}
@@ -116,9 +116,9 @@ function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => v
           </span>
         )}
       </div>
-      <div className="pl20"><Shots urls={app.screenshots} height={340} /></div>
+      <div className="pl20"><Shots urls={app.screenshots} height={320} /></div>
       <div className="pad20"><FeedbackList app={app} /></div>
-      {!mine && (
+      {mine ? <div className="d-mine sub small">{t.mineNote}</div> : (
         <div className="d-foot">
           <a className="btn dark" href={app.url} target="_blank" rel="noopener noreferrer"
             onClick={(e) => { if (!session) e.preventDefault(); download(app); }}>
@@ -147,9 +147,8 @@ function NextPeek({ app, onSeen }: { app: App; onSeen: () => void }) {
   }, [onSeen]);
   return (
     <div className="next-peek" ref={ref}>
-      <span className="sub small">{t.nextApp}</span>
-      <span className="row gap8"><AppIcon src={app.icon_url} size={24} /><b className="ellipsis">{app.name}</b></span>
-      <span className="chev-down">{Icon.chevDown}</span>
+      <span className="np-label">{t.nextApp}<span className="chev-down">{Icon.chevDown}</span></span>
+      <span className="np-app"><AppIcon src={app.icon_url} size={28} /><b className="ellipsis">{app.name}</b></span>
     </div>
   );
 }
