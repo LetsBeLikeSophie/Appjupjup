@@ -1,15 +1,17 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '@/lib/ctx';
-import { sb, flag, type App, type Feedback } from '@/lib/supabase';
+import { sb, flag, countryName, type App, type Feedback } from '@/lib/supabase';
 import { useIconColor } from '@/lib/useIconColor';
 import { AppIcon, Avatar, Icon, PromiseChip, Shots } from './ui';
 
-function Countries({ app }: { app: App }) {
-  const { t } = useApp();
-  if (app.all_countries) return <span className="cc">🌐 {t.worldwide}</span>;
+function Countries({ app, chip }: { app: App; chip?: boolean }) {
+  const { t, locale } = useApp();
+  const cls = chip ? 'mini-chip' : 'cc';
+  if (app.all_countries) return <span className={cls}>🌐 {t.worldwide}</span>;
   const list = app.countries || [];
-  return <span className="cc">{list.slice(0, 3).map(flag).join(' ')}{list.length > 3 ? ` +${list.length - 3}` : ''}</span>;
+  if (!chip) return <span className="cc">{list.slice(0, 3).map(flag).join(' ')}{list.length > 3 ? ` +${list.length - 3}` : ''}</span>;
+  return <span className={cls}>{flag(list[0])} {countryName(list[0], locale)}{list.length > 1 ? ` +${list.length - 1}` : ''}</span>;
 }
 
 export function StackCard({ app, onOpen }: { app: App; onOpen?: () => void }) {
@@ -92,51 +94,89 @@ function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => v
   const mine = session?.user.id === app.owner_id;
   return (
     <section className="slide" aria-label={app.name}>
-      <div className="row between pad20">
-        {onClose ? <button className="round" aria-label={t.close} onClick={onClose}>{Icon.chevDown}</button> : <a className="round" href="/" aria-label={t.close}>{Icon.chevDown}</a>}
+      <div className="d-top">
+        {onClose ? <button className="round sm" aria-label={t.close} onClick={onClose}>{Icon.chevDown}</button> : <a className="round sm" href="/" aria-label={t.close}>{Icon.chevDown}</a>}
         <span className="sub">{pos}</span>
       </div>
-      <div className="row gap14 pad20">
-        <AppIcon src={app.icon_url} size={72} />
+      <div className="d-head">
+        <AppIcon src={app.icon_url} size={60} />
         <div className="grow">
           <h1 className="d-name">{app.name}</h1>
           {app.tagline && <p className="d-tagline">{app.tagline}</p>}
-          <div className="row gap6 wrap">
-            <span className="tag-soft gray">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
-            {app.owner && <PromiseChip value={app.owner.score} bg="#F1F1EE" />}
-            <Countries app={app} />
-          </div>
         </div>
       </div>
-      <div className="pl20"><Shots urls={app.screenshots} height={360} /></div>
+      <div className="d-chips">
+        <span className="mini-chip">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
+        {app.owner && <PromiseChip value={app.owner.score} bg="#F1F1EE" />}
+        <Countries app={app} chip />
+        {app.owner && (
+          <span className="mini-chip">
+            <Avatar src={app.owner.avatar_url} size={18} />
+            {app.owner.nickname}{app.owner.tag ? <span className="name-tag">#{app.owner.tag}</span> : null}
+          </span>
+        )}
+      </div>
+      <div className="pl20"><Shots urls={app.screenshots} height={340} /></div>
       <div className="pad20"><FeedbackList app={app} /></div>
-      <div className="d-foot">
-        <div className="row gap8">
-          <Avatar src={app.owner?.avatar_url} size={28} />
-          <span className="bold grow">{app.owner?.nickname}{app.owner?.tag ? <span className="name-tag">#{app.owner.tag}</span> : null}</span>
-          {!mine && <span className="sub small">{t.getNote}</span>}
-        </div>
-        {!mine && (
+      {!mine && (
+        <div className="d-foot">
           <a className="btn dark" href={app.url} target="_blank" rel="noopener noreferrer"
             onClick={(e) => { if (!session) e.preventDefault(); download(app); }}>
             {Icon.down}{t.get}
           </a>
-        )}
-      </div>
+          <span className="sub small center-text">{t.getNote}</span>
+        </div>
+      )}
     </section>
   );
 }
 
-/** 위아래로 넘기면 다음 앱 */
-export function AppDetail({ apps, start, onClose }: { apps: App[]; start: number; onClose?: () => void }) {
+function NextPeek({ app, onSeen }: { app: App; onSeen: () => void }) {
+  const { t } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = ref.current?.children[start] as HTMLElement | undefined;
+    const el = ref.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const io = new IntersectionObserver(([e]) => {
+      if (timer) clearTimeout(timer);
+      if (e.isIntersecting) timer = setTimeout(onSeen, 1200);
+    }, { threshold: 0.9 });
+    io.observe(el);
+    return () => { io.disconnect(); if (timer) clearTimeout(timer); };
+  }, [onSeen]);
+  return (
+    <div className="next-peek" ref={ref}>
+      <span className="sub small">{t.nextApp}</span>
+      <span className="row gap8"><AppIcon src={app.icon_url} size={24} /><b className="ellipsis">{app.name}</b></span>
+      <span className="chev-down">{Icon.chevDown}</span>
+    </div>
+  );
+}
+
+/** 위아래로 읽다가 맨 아래에서 더 내리면 다음 앱 */
+export function AppDetail({ apps, start, onClose }: { apps: App[]; start: number; onClose?: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { toast, t } = useApp();
+  useEffect(() => {
+    const el = ref.current?.querySelectorAll('.slide')[start] as HTMLElement | undefined;
     el?.scrollIntoView({ block: 'start' });
   }, [start]);
+  const hinted = useRef(false);
+  const hint = () => {
+    if (hinted.current) return;
+    hinted.current = true;
+    try { if (localStorage.getItem('aj_hint_next')) return; localStorage.setItem('aj_hint_next', '1'); } catch {}
+    toast(t.nextHint);
+  };
   return (
     <div className="detail" ref={ref}>
-      {apps.map((a, i) => <Slide key={a.id} app={a} pos={`${i + 1} / ${apps.length}`} onClose={onClose} />)}
+      {apps.map((a, i) => (
+        <div key={a.id}>
+          <Slide app={a} pos={`${i + 1} / ${apps.length}`} onClose={onClose} />
+          {i < apps.length - 1 && <NextPeek app={apps[i + 1]} onSeen={hint} />}
+        </div>
+      ))}
     </div>
   );
 }

@@ -47,7 +47,7 @@ export function Avatar({ src, size = 40 }: { src?: string | null; size?: number 
 
 export function PromiseChip({ value, ink = '#17181A', bg = 'rgba(255,255,255,.6)' }: { value: string | number; ink?: string; bg?: string }) {
   return (
-    <span className="promise" style={{ color: ink, background: bg }} aria-label={`약속 점수 ${value}`}>
+    <span className="promise" style={{ color: ink, background: bg }} aria-label={`약속 점수 ${value}`} role="img">
       {Icon.shake}{value}
     </span>
   );
