@@ -69,6 +69,7 @@ export function Shots({ urls, height, tint = '#F1F1EE' }: { urls: string[]; heig
 export function TabBar() {
   const path = usePathname();
   const { unread, t } = useApp();
+  if (path.startsWith('/app/')) return null; // 앱 상세는 받기 버튼이 아래에 있어서 메뉴를 숨겨요
   const items = [
     { href: '/', icon: Icon.home, label: t.appName },
     { href: '/alerts', icon: Icon.bell, label: t.alerts, dot: unread > 0 },
