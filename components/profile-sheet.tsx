@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import { sb } from '@/lib/supabase';
+import { shrinkImage } from '@/lib/image';
 import { Avatar, Icon, Sheet } from './ui';
 
 /** 앱줍줍 안에서 쓰는 이름·사진. 처음 로그인하면 자동으로 열려요 */
@@ -29,9 +30,10 @@ export function ProfileSheet() {
     setBusy(true);
     let avatar_url = profile.avatar_url;
     if (file) {
-      const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-      const path = `${profile.id}/avatar.${ext}`;
-      const { error } = await sb().storage.from('aj-avatars').upload(path, file, { upsert: true, contentType: file.type });
+      const path = `${profile.id}/avatar.jpg`;
+      let blob: Blob;
+      try { blob = await shrinkImage(file); } catch { setBusy(false); toast(t.errGeneric); return; }
+      const { error } = await sb().storage.from('aj-avatars').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
       if (error) { setBusy(false); toast(t.errGeneric); return; }
       avatar_url = sb().storage.from('aj-avatars').getPublicUrl(path).data.publicUrl + `?v=${Date.now()}`;
     }
@@ -56,7 +58,7 @@ export function ProfileSheet() {
           <Avatar src={preview} size={96} />
           <span className="cam">{Icon.camera}</span>
         </button>
-        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
+        <input ref={input} type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && pick(e.target.files[0])} />
         <label className="sr" htmlFor="nick">{t.nickname}</label>
         <input id="nick" className="field" placeholder={t.nickname} maxLength={20} value={nick} onChange={(e) => setNick(e.target.value)} />
       </div>

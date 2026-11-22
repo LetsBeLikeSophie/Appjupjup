@@ -155,3 +155,8 @@ body:has(.overlay:not(.static)) .tabwrap { display: none; }
 .cc-box { background: var(--soft); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
 .ps-body { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 8px 0 4px; }
 .avatar-btn.big .cam { width: 32px; height: 32px; border-radius: 16px; }
+
+/* 확대 막기: 아이폰은 16px보다 작은 입력칸을 누르면 화면을 확대해요 */
+input, select, textarea { font-size: 16px !important; }
+html, body { touch-action: manipulation; overscroll-behavior-y: none; }
+.sheet { overscroll-behavior: contain; touch-action: pan-y; }

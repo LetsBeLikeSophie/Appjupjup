@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useApp } from '@/lib/ctx';
 
 const P = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -92,10 +92,36 @@ export function TabBar() {
 }
 
 export function Sheet({ open, onClose, label, children, bg }: { open: boolean; onClose: () => void; label: string; children: ReactNode; bg?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ y: number; dy: number; active: boolean } | null>(null);
   if (!open) return null;
+
+  // 아래로 쓸어내리면 닫혀요 (시트 맨 위에 있을 때만)
+  const start = (e: React.TouchEvent) => {
+    const el = ref.current;
+    if (!el || el.scrollTop > 0) return;
+    drag.current = { y: e.touches[0].clientY, dy: 0, active: true };
+    el.style.transition = 'none';
+  };
+  const move = (e: React.TouchEvent) => {
+    const d = drag.current, el = ref.current;
+    if (!d?.active || !el) return;
+    d.dy = Math.max(0, e.touches[0].clientY - d.y);
+    el.style.transform = `translateY(${d.dy}px)`;
+  };
+  const end = () => {
+    const d = drag.current, el = ref.current;
+    drag.current = null;
+    if (!d || !el) return;
+    el.style.transition = 'transform .2s ease';
+    if (d.dy > 110) { el.style.transform = 'translateY(100%)'; setTimeout(onClose, 180); }
+    else el.style.transform = '';
+  };
+
   return (
     <div className="sheet-wrap" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={label} className="sheet" style={bg ? { background: bg } : undefined} onClick={(e) => e.stopPropagation()}>
+      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className="sheet" style={bg ? { background: bg } : undefined}
+        onClick={(e) => e.stopPropagation()} onTouchStart={start} onTouchMove={move} onTouchEnd={end} onTouchCancel={end}>
         <span className="grab" aria-hidden />
         {children}
       </div>

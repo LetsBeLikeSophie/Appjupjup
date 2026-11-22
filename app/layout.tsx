@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: '앱줍줍', statusBarStyle: 'default' },
   icons: { icon: '/icon.svg', apple: '/icon.svg' },
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#EDEDE9' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: 'cover', themeColor: '#EDEDE9' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
