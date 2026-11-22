@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/ctx';
 import { sb } from '@/lib/supabase';
 import { shrinkImage } from '@/lib/image';
-import { Avatar, Icon, Sheet } from './ui';
+import { Avatar, Icon } from './ui';
+import { Sheet, SheetHeader } from './layout';
 
 /** 앱줍줍 안에서 쓰는 이름·사진. 처음 로그인하면 자동으로 열려요 */
 export function ProfileSheet() {
@@ -51,15 +52,9 @@ export function ProfileSheet() {
 
   return (
     <Sheet open={profileOpen} onClose={() => setProfileOpen(false)} label={t.profileTitle}>
-      <div className="sheet-head">
-        <div>
-          <h2>{first ? t.profileTitleFirst : t.profileTitle}</h2>
-          {first && <p className="sub" style={{ margin: '6px 0 0' }}>{t.profileHint}</p>}
-        </div>
-        <button className="round" aria-label={t.close} onClick={() => setProfileOpen(false)}>{Icon.close}</button>
-      </div>
-      <div className="ps-body">
-        <button className="avatar-btn big" aria-label={t.photoChange} onClick={() => input.current?.click()}>
+      <SheetHeader title={first ? t.profileTitleFirst : t.profileTitle} sub={first ? t.profileHint : undefined} onClose={() => setProfileOpen(false)} />
+      <div className="stack">
+        <button className="avatar-btn" aria-label={t.photoChange} onClick={() => input.current?.click()}>
           <Avatar src={preview} size={96} />
           <span className="cam">{Icon.camera}</span>
         </button>

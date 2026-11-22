@@ -4,6 +4,7 @@ import { useApp } from '@/lib/ctx';
 import { sb, APP_FIELDS, devicePlatform, type App } from '@/lib/supabase';
 import { StackCard, AppDetail } from '@/components/cards';
 import { PromiseChip } from '@/components/ui';
+import { Loading } from '@/components/layout';
 
 export default function Home() {
   const { t, country, profile } = useApp();
@@ -28,18 +29,18 @@ export default function Home() {
   return (
     <div className="home">
       <header className="home-head">
-        <div className="logo">{t.appName}</div>
-        <div className="row between end">
-          <div>
-            <div className="sub">{t.totalApps}</div>
-            <div className="big">{total}<span>{t.apps}</span></div>
-          </div>
-          {profile && <a href="/me" aria-label={t.score}><PromiseChip value={profile.score} bg="#FFFFFF" /></a>}
+        <div className="row between">
+          <span className="logo">{t.appName}</span>
+          {profile && <a href="/me" aria-label={t.score}><PromiseChip value={profile.score} tone="white" /></a>}
+        </div>
+        <div className="col">
+          <span className="t-sub">{t.totalApps}</span>
+          <span className="count">{total}<span>{t.apps}</span></span>
         </div>
       </header>
       <div className="panel">
-        {apps === null && <div className="sub center">{t.loading}</div>}
-        {apps?.length === 0 && <div className="sub center">{t.empty}</div>}
+        {apps === null && <Loading />}
+        {apps?.length === 0 && <div className="loading">{t.empty}</div>}
         {apps?.map((a, i) => <StackCard key={a.id} app={a} onOpen={() => setOpen(i)} />)}
       </div>
       {open !== null && apps && (

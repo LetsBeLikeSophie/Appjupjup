@@ -1,7 +1,5 @@
 'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useRef, type ReactNode } from 'react';
+import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { useApp } from '@/lib/ctx';
 
 const P = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -46,87 +44,43 @@ export function Avatar({ src, size = 40 }: { src?: string | null; size?: number 
   );
 }
 
-export function PromiseChip({ value, ink = '#17181A', bg = 'rgba(255,255,255,.6)' }: { value: string | number; ink?: string; bg?: string }) {
+/** 이름 + #태그 */
+export function NameTag({ name, tag }: { name?: string | null; tag?: number | null }) {
+  return <>{name}{tag ? <span className="name-tag">#{tag}</span> : null}</>;
+}
+
+/** 모든 칩은 높이 26. tone: soft(회색) / glass(색 카드 위) / white / dark */
+export type ChipTone = 'soft' | 'glass' | 'white' | 'dark';
+export function Chip({ tone = 'soft', className = '', style, children, ...rest }: { tone?: ChipTone; className?: string; style?: CSSProperties; children: ReactNode } & HTMLAttributes<HTMLSpanElement>) {
+  return <span className={`chip ${tone === 'soft' ? '' : tone} ${className}`} style={style} {...rest}>{children}</span>;
+}
+
+/** 약속 점수: 악수 + 숫자 */
+export function PromiseChip({ value, tone = 'soft', ink }: { value: string | number; tone?: ChipTone; ink?: string }) {
   return (
-    <span className="promise" style={{ color: ink, background: bg }} aria-label={`약속 점수 ${value}`} role="img">
+    <Chip tone={tone} className="promise" style={ink ? { color: ink } : undefined} role="img" aria-label={`약속 점수 ${value}`}>
       {Icon.shake}{value}
-    </span>
+    </Chip>
   );
 }
 
-export function Shots({ urls, height, tint = '#F1F1EE' }: { urls: string[]; height: number; tint?: string }) {
+/** 동그란 아이콘 버튼 (40). href가 있으면 링크 */
+export function IconButton({ label, onClick, href, tone, children, disabled }: { label: string; onClick?: () => void; href?: string; tone?: 'glass' | 'dark'; children: ReactNode; disabled?: boolean }) {
+  const cls = `icon-btn ${tone || ''}`;
+  if (href) return <a className={cls} href={href} aria-label={label}>{children}</a>;
+  return <button className={cls} aria-label={label} onClick={onClick} disabled={disabled}>{children}</button>;
+}
+
+export function Shots({ urls, height, tint = '#F1F1EE', bleed }: { urls: string[]; height: number; tint?: string; bleed?: boolean }) {
   const w = Math.round(height * 0.5);
+  const r = Math.max(10, Math.round(height * 0.07));
   const list = urls.length ? urls : [null, null, null];
   return (
-    <div className="shots" style={{ height }}>
+    <div className={`shots ${bleed ? 'bleed' : ''}`} style={{ height }}>
       {list.map((u, i) =>
-        u ? <img key={i} src={u} alt="" loading="lazy" style={{ height, borderRadius: Math.max(10, height * 0.07) }} />
-          : <span key={i} className="shot-ph" style={{ width: w, height, background: tint, borderRadius: Math.max(10, height * 0.07) }}>{Icon.img}</span>,
+        u ? <img key={i} src={u} alt="" loading="lazy" style={{ height, borderRadius: r }} />
+          : <span key={i} className="shot-ph" style={{ width: w, height, background: tint, borderRadius: r }}>{Icon.img}</span>,
       )}
-    </div>
-  );
-}
-
-export function TabBar() {
-  const path = usePathname();
-  const { unread, t } = useApp();
-  if (path.startsWith('/app/')) return null; // 앱 상세는 받기 버튼이 아래에 있어서 메뉴를 숨겨요
-  const items = [
-    { href: '/', icon: Icon.home, label: t.appName },
-    { href: '/alerts', icon: Icon.bell, label: t.alerts, dot: unread > 0 },
-    { href: '/me', icon: Icon.user, label: t.me },
-  ];
-  return (
-    <div className="tabwrap">
-      <nav className="tabbar" aria-label="menu">
-        {items.map((i) => {
-          const on = i.href === '/' ? path === '/' : path.startsWith(i.href);
-          return (
-            <Link key={i.href} href={i.href} aria-label={i.label} aria-current={on ? 'page' : undefined} className={on ? 'on' : ''}>
-              {i.icon}
-              {i.dot && <span className="dot" />}
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
-  );
-}
-
-export function Sheet({ open, onClose, label, children, bg, tall }: { open: boolean; onClose: () => void; label: string; children: ReactNode; bg?: string; tall?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ y: number; dy: number; active: boolean } | null>(null);
-  if (!open) return null;
-
-  // 아래로 쓸어내리면 닫혀요 (시트 맨 위에 있을 때만)
-  const start = (e: React.TouchEvent) => {
-    const el = ref.current;
-    if (!el || el.scrollTop > 0) return;
-    drag.current = { y: e.touches[0].clientY, dy: 0, active: true };
-    el.style.transition = 'none';
-  };
-  const move = (e: React.TouchEvent) => {
-    const d = drag.current, el = ref.current;
-    if (!d?.active || !el) return;
-    d.dy = Math.max(0, e.touches[0].clientY - d.y);
-    el.style.transform = `translateY(${d.dy}px)`;
-  };
-  const end = () => {
-    const d = drag.current, el = ref.current;
-    drag.current = null;
-    if (!d || !el) return;
-    el.style.transition = 'transform .2s ease';
-    if (d.dy > 110) { el.style.transform = 'translateY(100%)'; setTimeout(onClose, 180); }
-    else el.style.transform = '';
-  };
-
-  return (
-    <div className="sheet-wrap" onClick={onClose}>
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className={`sheet ${tall ? 'tall' : ''}`} style={bg ? { background: bg } : undefined}
-        onClick={(e) => e.stopPropagation()} onTouchStart={start} onTouchMove={move} onTouchEnd={end} onTouchCancel={end}>
-        <span className="grab" aria-hidden />
-        {children}
-      </div>
     </div>
   );
 }

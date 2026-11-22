@@ -27,6 +27,8 @@ Claude Code가 이 저장소를 이어서 작업할 때 읽는 문서예요. 사
 - 나라/언어: 사용자 country/locale, 앱 countries[]/all_countries. 문구는 `lib/i18n.ts` (ko/en)
 
 ## 디자인 규칙 (피드백 누적)
+- **숫자는 `app/globals.css` 맨 위 토큰만** (`--gutter` 20, `--gap` 16, `--pad` 16, `--r-card` 20, 글자 `.t-title/.t-name/.t-section/.t-card/.t-body/.t-sub`). 새 v2·v3 덧칠 금지, 해당 규칙을 고칠 것
+- 공통 부품: `components/ui.tsx`(아이콘·Chip·PromiseChip·IconButton·NameTag·Shots), `components/layout.tsx`(Page·Section·ListRow·Empty·GuestGate·Sheet·SheetHeader·TabBar), `components/app-parts.tsx`(PlatformChip·CountryChip·AppChips·CountryEditor). 새 화면은 이걸 조립해서 만들기
 - 배경 #EDEDE9, 검정 알약 버튼, 파스텔 카드는 **앱 아이콘에서 뽑은 색**(`lib/useIconColor.ts`)
 - **테두리는 입력 중인 칸(focus)에만.** 태그·카드·대표 표시에 테두리 금지
 - 글자 크기 단계: 화면 제목 24 / 이름 20 / 섹션 17 / 카드 제목 15 / 본문 14 / 보조 12. 큰 제목 남발 금지
@@ -40,7 +42,7 @@ Claude Code가 이 저장소를 이어서 작업할 때 읽는 문서예요. 사
 
 ## 지금 진행 중 / 다음 할 일
 - [ ] 방금 반영: 내 정보 정리(설정 행, 글자 단계), 내 앱 누르면 수정 시트(`components/myapp-sheet.tsx`), 상세 상단 ← 아이콘·다음 앱 간격. **폰에서 확인 필요**
-- [ ] 전체 화면 여백·정렬 다시 점검 (사용자가 "정렬 안 된 느낌" 반복 지적)
+- [x] 전체 컴포넌트화·여백 정리 (11-22). 폰에서 다시 확인 필요
 - [ ] 앱 수정 시 한 줄 소개 욕설 검사 (지금은 등록 RPC에서만 검사)
 - [ ] 웹 푸시 알림 (iOS는 홈 화면 추가 필요), 이후 Capacitor
 - [ ] "내 앱이에요" 소유 인증: 스토어 설명에 코드 넣는 방식

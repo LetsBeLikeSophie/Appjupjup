@@ -1,48 +1,42 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '@/lib/ctx';
-import { sb, flag, countryName, type App, type Feedback } from '@/lib/supabase';
+import { sb, type App, type Feedback } from '@/lib/supabase';
 import { useIconColor } from '@/lib/useIconColor';
-import { AppIcon, Avatar, Icon, PromiseChip, Shots } from './ui';
+import { AppIcon, Chip, Icon, IconButton, PromiseChip, Shots } from './ui';
+import { AppChips, CountryFlags, PlatformChip } from './app-parts';
 
-function Countries({ app, chip }: { app: App; chip?: boolean }) {
-  const { t, locale } = useApp();
-  const cls = chip ? 'mini-chip' : 'cc';
-  if (app.all_countries) return <span className={cls}>🌐 {t.worldwide}</span>;
-  const list = app.countries || [];
-  if (!chip) return <span className="cc">{list.slice(0, 3).map(flag).join(' ')}{list.length > 3 ? ` +${list.length - 3}` : ''}</span>;
-  return <span className={cls}>{flag(list[0])} {countryName(list[0], locale)}{list.length > 1 ? ` +${list.length - 1}` : ''}</span>;
-}
-
+/* ---------- 홈 카드: 아이콘 색 배경, 안쪽 16 ---------- */
 export function StackCard({ app, onOpen }: { app: App; onOpen?: () => void }) {
-  const { t } = useApp();
   const c = useIconColor(app.id, app.icon_url);
   const body = (
     <>
       <div className="sc-main">
         <div className="row gap6">
-          <span className="tag-soft">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
-          {app.owner && <PromiseChip value={app.owner.score} ink={c.ink} />}
+          <PlatformChip platform={app.platform} stage={app.stage} tone="glass" />
+          {app.owner && <PromiseChip value={app.owner.score} tone="glass" ink={c.ink} />}
         </div>
         <div>
-          <div className="sc-name">{app.name}</div>
-          {app.tagline && <div className="sc-tagline">{app.tagline}</div>}
+          <div className="t-name clamp3">{app.name}</div>
+          {app.tagline && <div className="sc-tagline clamp1">{app.tagline}</div>}
         </div>
-        <div className="row gap8">
-          <AppIcon src={app.icon_url} size={30} />
+        <div className="sc-owner">
+          <AppIcon src={app.icon_url} size={28} />
           <span className="ellipsis">{app.owner?.nickname}</span>
-          <Countries app={app} />
+          <CountryFlags app={app} />
         </div>
       </div>
-      <div className="sc-shots"><Shots urls={app.screenshots.slice(0, 2)} height={168} tint="rgba(255,255,255,.6)" /></div>
+      <div className="sc-shots"><Shots urls={app.screenshots.slice(0, 2)} height={164} tint="rgba(255,255,255,.6)" /></div>
     </>
   );
+  const style = { background: c.bg, color: c.ink };
   return onOpen
-    ? <button className="stackcard" style={{ background: c.bg, color: c.ink }} onClick={onOpen} aria-label={app.name}>{body}</button>
-    : <div className="stackcard" style={{ background: c.bg, color: c.ink }}>{body}</div>;
+    ? <button className="stackcard" style={style} onClick={onOpen} aria-label={app.name}>{body}</button>
+    : <div className="stackcard" style={style}>{body}</div>;
 }
 
-function FeedbackList({ app }: { app: App }) {
+/* ---------- 한 줄 피드백 목록 ---------- */
+function FeedbackBox({ app }: { app: App }) {
   const { t, session, openLogin, toast, openFeedback } = useApp();
   const [list, setList] = useState<Feedback[]>([]);
   const [canWrite, setCanWrite] = useState(false);
@@ -71,16 +65,16 @@ function FeedbackList({ app }: { app: App }) {
     toast('✓ ' + t.report);
   };
   return (
-    <div className="fb-box">
+    <div className="card soft">
       <div className="row between">
-        <div className="row gap6 bold">{Icon.chat}{t.feedback} {list.length}</div>
-        {canWrite && <button className="chip-btn" onClick={() => openFeedback(app)}>{t.writeOne}</button>}
+        <span className="row gap6 t-card">{Icon.chat}{t.feedback} {list.length}</span>
+        {canWrite && <button className="btn-sm dark" onClick={() => openFeedback(app)}>{t.writeOne}</button>}
       </div>
-      {list.length === 0 && <div className="sub">{t.noFeedback}</div>}
+      {list.length === 0 && <span className="t-sub">{t.noFeedback}</span>}
       {list.map((f) => (
         <div key={f.id} className="fb-row">
-          <span className={f.kind === 'pumasi' ? 'tag-pumasi' : 'tag-free'}>{f.kind === 'pumasi' ? t.pumasi : t.free}</span>
-          <span className="grow">{f.body}</span>
+          <Chip tone={f.kind === 'pumasi' ? 'dark' : 'white'}>{f.kind === 'pumasi' ? t.pumasi : t.free}</Chip>
+          <span className="grow t-body">{f.body}</span>
           <button className="mini" aria-label={t.helpful} onClick={() => helpful(f)}>{Icon.thumb}{f.helpful_count || ''}</button>
           <button className="mini" aria-label={t.report} onClick={() => report(f)}>{Icon.flag}</button>
         </div>
@@ -89,42 +83,33 @@ function FeedbackList({ app }: { app: App }) {
   );
 }
 
+/* ---------- 앱 상세 한 장: 모든 줄이 좌우 20에 맞춰요 ---------- */
 function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => void }) {
   const { t, download, session } = useApp();
   const mine = session?.user.id === app.owner_id;
   return (
     <section className="slide" aria-label={app.name}>
-      <div className="d-top">
-        {onClose ? <button className="round sm" aria-label={t.back} onClick={onClose}>{Icon.back}</button> : <a className="round sm" href="/" aria-label={t.back}>{Icon.back}</a>}
-        <span className="d-pos">{pos}</span>
+      <div className="row between gutter">
+        {onClose ? <IconButton label={t.back} onClick={onClose}>{Icon.back}</IconButton> : <IconButton label={t.back} href="/">{Icon.back}</IconButton>}
+        <span className="t-sub">{pos}</span>
       </div>
-      <div className="d-head">
+      <div className="d-head gutter">
         <AppIcon src={app.icon_url} size={56} />
-        <div className="grow">
-          <h1 className="d-name">{app.name}</h1>
-          {app.tagline && <p className="d-tagline">{app.tagline}</p>}
+        <div className="col grow">
+          <h1 className="t-name clamp2">{app.name}</h1>
+          {app.tagline && <p className="t-body t-muted clamp2">{app.tagline}</p>}
         </div>
       </div>
-      <div className="d-chips">
-        <span className="mini-chip">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test}</span>
-        {app.owner && <PromiseChip value={app.owner.score} bg="#F1F1EE" />}
-        <Countries app={app} chip />
-        {app.owner && (
-          <span className="mini-chip">
-            <Avatar src={app.owner.avatar_url} size={18} />
-            {app.owner.nickname}{app.owner.tag ? <span className="name-tag">#{app.owner.tag}</span> : null}
-          </span>
-        )}
-      </div>
-      <div className="pl20"><Shots urls={app.screenshots} height={320} /></div>
-      <div className="pad20"><FeedbackList app={app} /></div>
-      {mine ? <div className="d-mine sub small">{t.mineNote}</div> : (
+      <div className="gutter"><AppChips app={app} /></div>
+      <Shots urls={app.screenshots} height={320} bleed />
+      <div className="gutter"><FeedbackBox app={app} /></div>
+      {mine ? <p className="d-mine t-sub">{t.mineNote}</p> : (
         <div className="d-foot">
           <a className="btn dark" href={app.url} target="_blank" rel="noopener noreferrer"
             onClick={(e) => { if (!session) e.preventDefault(); download(app); }}>
             {Icon.down}{t.get}
           </a>
-          <span className="sub small center-text">{t.getNote}</span>
+          <span className="t-sub">{t.getNote}</span>
         </div>
       )}
     </section>
@@ -147,8 +132,8 @@ function NextPeek({ app, onSeen }: { app: App; onSeen: () => void }) {
   }, [onSeen]);
   return (
     <div className="next-peek" ref={ref}>
-      <span className="np-label">{t.nextApp}<span className="chev-down">{Icon.chevDown}</span></span>
-      <span className="np-app"><AppIcon src={app.icon_url} size={28} /><b className="ellipsis">{app.name}</b></span>
+      <span className="np-label t-sub">{t.nextApp}{Icon.chevDown}</span>
+      <span className="np-app"><AppIcon src={app.icon_url} size={32} /><b className="t-body ellipsis">{app.name}</b></span>
     </div>
   );
 }

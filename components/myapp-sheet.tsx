@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import { sb, type App } from '@/lib/supabase';
-import { AppIcon, Icon, Sheet } from './ui';
+import { AppIcon, Chip, Icon } from './ui';
+import { Sheet, SheetHeader } from './layout';
+import { CountryEditor, parseCountries } from './app-parts';
 
 /** 내 앱을 누르면 열리는 수정 창 */
 export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClose: () => void; onChanged: () => void }) {
@@ -23,7 +25,7 @@ export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClo
 
   const save = async () => {
     setBusy(true);
-    const countries = cc.split(/[,\s]+/).map((x) => x.trim().toUpperCase()).filter((x) => /^[A-Z]{2}$/.test(x));
+    const countries = parseCountries(cc);
     const { error } = await sb().from('aj_apps').update({
       name: name.trim(), tagline: tagline.trim() || null, all_countries: world, countries: countries.length ? countries : app.countries,
     }).eq('id', app.id);
@@ -40,28 +42,21 @@ export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClo
 
   return (
     <Sheet open onClose={onClose} label={t.editApp}>
-      <div className="sheet-head">
-        <div className="row gap12">
-          <AppIcon src={app.icon_url} size={48} />
-          <h2 className="h-sheet">{t.editApp}</h2>
-        </div>
-        <button className="round" aria-label={t.close} onClick={onClose}>{Icon.close}</button>
-      </div>
+      <SheetHeader title={t.editApp} leading={<AppIcon src={app.icon_url} size={48} />} onClose={onClose} />
       <div className="form">
-        <label className="form-label" htmlFor="ma-name">{t.appName2}</label>
+        <label className="label" htmlFor="ma-name">{t.appName2}</label>
         <input id="ma-name" className="field" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
-        <label className="form-label" htmlFor="ma-tag">{t.tagline}</label>
+        <label className="label" htmlFor="ma-tag">{t.tagline}</label>
         <input id="ma-tag" className="field" maxLength={60} placeholder={t.taglinePh} value={tagline} onChange={(e) => setTagline(e.target.value)} />
-        <span className="form-label">{t.countries}</span>
-        <label className="row gap8 check"><input type="checkbox" checked={world} onChange={(e) => setWorld(e.target.checked)} /> {t.worldwide}</label>
-        {!world && <input className="field" aria-label={t.countries} placeholder={t.countriesHint} value={cc} onChange={(e) => setCc(e.target.value)} />}
+        <span className="label">{t.countries}</span>
+        <CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} />
       </div>
       <button className="btn dark" disabled={busy || !name.trim()} onClick={save}>{t.save}</button>
       <div className="row between">
         {app.is_primary
-          ? <span className="badge">{Icon.star}{t.primary}</span>
-          : <button className="text-btn" onClick={makePrimary}>{Icon.star}{t.makePrimary}</button>}
-        <button className="text-btn danger" onClick={remove}>{t.deleteApp}</button>
+          ? <Chip tone="dark" className="star">{Icon.star}{t.primary}</Chip>
+          : <button className="btn-sm" onClick={makePrimary}>{Icon.star}{t.makePrimary}</button>}
+        <button className="btn-sm danger" onClick={remove}>{t.deleteApp}</button>
       </div>
     </Sheet>
   );

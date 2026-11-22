@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AppProvider } from '@/lib/ctx';
-import { TabBar, Toast } from '@/components/ui';
+import { Toast } from '@/components/ui';
+import { TabBar } from '@/components/layout';
 import { FeedbackSheet, LoginSheet } from '@/components/sheets';
 import { ProfileSheet } from '@/components/profile-sheet';
 

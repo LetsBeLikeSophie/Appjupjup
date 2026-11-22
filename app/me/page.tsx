@@ -1,12 +1,57 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useApp } from '@/lib/ctx';
-import { sb, APP_FIELDS, flag, countryName, type App } from '@/lib/supabase';
-import { AppIcon, Avatar, Icon } from '@/components/ui';
+import { sb, APP_FIELDS, flag, countryName, type App, type Profile } from '@/lib/supabase';
+import { AppIcon, Avatar, Icon, NameTag } from '@/components/ui';
+import { Empty, GuestGate, ListRow, Loading, Page, Section } from '@/components/layout';
 import { UploadSheet } from '@/components/sheets';
 import { MyAppSheet } from '@/components/myapp-sheet';
 
 const COUNTRIES = ['KR', 'US', 'JP', 'TW', 'VN', 'ID', 'TH', 'PH', 'IN', 'GB', 'DE', 'FR', 'CA', 'AU', 'BR', 'MX'];
+
+function ScoreCard({ profile }: { profile: Profile }) {
+  const { t } = useApp();
+  return (
+    <div className="score-card">
+      <div>
+        <div className="score-label">{Icon.shake}{t.score}</div>
+        <div className="score-num">{profile.score}</div>
+      </div>
+      <div className="score-side">{t.start100}<br /><b>{t.kept} {profile.kept_count} · {t.missed} {profile.missed_count}</b></div>
+    </div>
+  );
+}
+
+function MyAppRow({ app, onOpen }: { app: App; onOpen: () => void }) {
+  const { t } = useApp();
+  return (
+    <ListRow
+      onClick={onOpen} label={`${app.name} ${t.editApp}`} chevron
+      leading={<AppIcon src={app.icon_url} size={48} />}
+      title={<b className="t-card">{app.name}</b>}
+      sub={app.tagline}
+      meta={
+        <span className="row gap6">
+          {app.is_primary && <span className="star-mini">{Icon.star}{t.primary}</span>}
+          <span className="ellipsis">{app.platform === 'ios' ? t.ios : t.android} · {app.stage === 'live' ? t.live : t.test} · {t.feedback} {app.feedback_count}</span>
+        </span>
+      }
+    />
+  );
+}
+
+/** 설정 한 줄: 누르면 OS 선택창이 떠요 */
+function SelectRow({ label, value, current, options, onChange }: { label: string; value: string; current: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+  return (
+    <label className="set-row">
+      <span>{label}</span>
+      <span className="set-val">{current}{Icon.chevRight}</span>
+      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </label>
+  );
+}
 
 export default function Me() {
   const { t, locale, session, profile, ready, openLogin, refreshProfile, setUploadOpen, setProfileOpen, toast } = useApp();
@@ -20,16 +65,8 @@ export default function Me() {
   }, [session]);
   useEffect(loadApps, [loadApps]);
 
-  if (ready && !session) {
-    return (
-      <div className="page">
-        <h1 className="page-title">{t.me}</h1>
-        <p className="sub">{t.guestMe}</p>
-        <button className="btn dark" onClick={() => openLogin({ type: 'upload' })}>{t.login}</button>
-      </div>
-    );
-  }
-  if (!profile) return <div className="page sub">{t.loading}</div>;
+  if (ready && !session) return <GuestGate title={t.me} onLogin={() => openLogin({ type: 'upload' })} />;
+  if (!profile) return <Loading />;
 
   const saveProfile = async (patch: Record<string, string>) => {
     const { error } = await sb().from('aj_profiles').update(patch).eq('id', profile.id);
@@ -38,63 +75,37 @@ export default function Me() {
   const lang = profile.locale.startsWith('ko') ? 'ko' : 'en';
 
   return (
-    <div className="page">
+    <Page>
       <div className="me-head">
         <Avatar src={profile.avatar_url} size={56} />
-        <div className="me-name grow ellipsis">{profile.nickname}{profile.tag ? <span className="name-tag">#{profile.tag}</span> : null}</div>
-        <button className="chip-btn soft" onClick={() => setProfileOpen(true)}>{t.edit}</button>
+        <div className="t-name grow ellipsis"><NameTag name={profile.nickname} tag={profile.tag} /></div>
+        <button className="btn-sm white" onClick={() => setProfileOpen(true)}>{t.edit}</button>
       </div>
 
-      <div className="score-card">
-        <div>
-          <div className="sc-label">{Icon.shake}{t.score}</div>
-          <div className="sc-num">{profile.score}</div>
+      <ScoreCard profile={profile} />
+
+      <Section title={t.myApps} aside={<span className="t-sub">{apps.length} / 3</span>}>
+        <div className="list">
+          {apps.length === 0 && <Empty title={t.firstApp}>{t.firstAppSub}</Empty>}
+          {apps.map((a) => <MyAppRow key={a.id} app={a} onOpen={() => setEditing(a)} />)}
+          {apps.length < 3 && <button className="add-slot" onClick={() => setUploadOpen(true)}>{Icon.plus}{t.addByLink}</button>}
         </div>
-        <div className="sc-side">{t.start100}<br /><b>{t.kept} {profile.kept_count} · {t.missed} {profile.missed_count}</b></div>
-      </div>
+      </Section>
 
-      <div className="section-head"><h2 className="h2">{t.myApps}</h2><span className="sub">{apps.length} / 3</span></div>
-      <div className="myapps">
-        {apps.length === 0 && <div className="empty-hint"><b>{t.firstApp}</b><span>{t.firstAppSub}</span></div>}
-        {apps.map((a) => (
-          <button key={a.id} className="myapp" onClick={() => setEditing(a)} aria-label={`${a.name} ${t.editApp}`}>
-            <AppIcon src={a.icon_url} size={48} />
-            <span className="grow">
-              <span className="ma-name">{a.name}</span>
-              {a.tagline && <span className="ma-tagline">{a.tagline}</span>}
-              <span className="ma-meta">
-                {a.is_primary && <span className="star-mini">{Icon.star}{t.primary}</span>}
-                {a.platform === 'ios' ? t.ios : t.android} · {a.stage === 'live' ? t.live : t.test} · {t.feedback} {a.feedback_count}
-              </span>
-            </span>
-            <span className="chev">{Icon.chevRight}</span>
-          </button>
-        ))}
-        {apps.length < 3 && <button className="addslot" onClick={() => setUploadOpen(true)}>{Icon.plus}{t.addByLink}</button>}
-      </div>
-
-      <div className="section-head"><h2 className="h2">{t.settings}</h2></div>
-      <div className="settings">
-        <label className="set-row">
-          <span>{t.country}</span>
-          <span className="set-val">{flag(profile.country)} {countryName(profile.country, locale)}{Icon.chevRight}</span>
-          <select aria-label={t.country} value={profile.country} onChange={(e) => saveProfile({ country: e.target.value })}>
-            {Array.from(new Set([profile.country, ...COUNTRIES])).map((c) => <option key={c} value={c}>{flag(c)} {countryName(c, locale)}</option>)}
-          </select>
-        </label>
-        <label className="set-row">
-          <span>{t.language}</span>
-          <span className="set-val">{lang === 'ko' ? '한국어' : 'English'}{Icon.chevRight}</span>
-          <select aria-label={t.language} value={lang} onChange={(e) => saveProfile({ locale: e.target.value })}>
-            <option value="ko">한국어</option>
-            <option value="en">English</option>
-          </select>
-        </label>
-      </div>
+      <Section title={t.settings}>
+        <div className="settings">
+          <SelectRow label={t.country} value={profile.country} current={`${flag(profile.country)} ${countryName(profile.country, locale)}`}
+            options={Array.from(new Set([profile.country, ...COUNTRIES])).map((c) => ({ value: c, label: `${flag(c)} ${countryName(c, locale)}` }))}
+            onChange={(v) => saveProfile({ country: v })} />
+          <SelectRow label={t.language} value={lang} current={lang === 'ko' ? '한국어' : 'English'}
+            options={[{ value: 'ko', label: '한국어' }, { value: 'en', label: 'English' }]}
+            onChange={(v) => saveProfile({ locale: v })} />
+        </div>
+      </Section>
 
       <button className="link-btn" onClick={async () => { await sb().auth.signOut(); location.href = '/'; }}>{t.logout}</button>
       <UploadSheet onDone={loadApps} />
       <MyAppSheet app={editing} onClose={() => setEditing(null)} onChanged={loadApps} />
-    </div>
+    </Page>
   );
 }

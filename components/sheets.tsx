@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useApp, errKey } from '@/lib/ctx';
-import { sb, SUPABASE_URL, parseLink, flag, countryName, type App } from '@/lib/supabase';
+import { sb, SUPABASE_URL, parseLink, type App } from '@/lib/supabase';
 import { useIconColor } from '@/lib/useIconColor';
-import { AppIcon, Icon, PromiseChip, Sheet, Shots } from './ui';
+import { AppIcon, Chip, Icon, IconButton, PromiseChip, Shots } from './ui';
+import { Sheet, SheetHeader } from './layout';
+import { AppChips, CountryEditor, parseCountries } from './app-parts';
 
 /* ---------- 로그인 ---------- */
 export function LoginSheet() {
@@ -19,10 +21,7 @@ export function LoginSheet() {
 
   return (
     <Sheet open={loginOpen} onClose={closeLogin} label={t.loginTitle}>
-      <div className="sheet-head">
-        <h2>{t.loginTitle}</h2>
-        <button className="round" aria-label={t.close} onClick={closeLogin}>{Icon.close}</button>
-      </div>
+      <SheetHeader title={t.loginTitle} onClose={closeLogin} />
       <ul className="why">
         <li><span>{Icon.shake}</span>{t.loginWhy1}</li>
         <li><span>{Icon.bell}</span>{t.loginWhy2}</li>
@@ -36,8 +35,8 @@ export function LoginSheet() {
         <svg aria-hidden width="20" height="20" viewBox="0 0 24 24"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4" /><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853" /><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.2 1.1 4.6L6.4 14z" fill="#FBBC05" /><path d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.8 9.4 6 12 6z" fill="#EA4335" /></svg>
         {t.loginGoogle}
       </button>
-      {skipUrl && <a className="skip" href={skipUrl} target="_blank" rel="noopener noreferrer" onClick={closeLogin}>{t.loginSkip}</a>}
-      <p className="fine">{t.loginNote}</p>
+      {skipUrl && <a className="sheet-skip" href={skipUrl} target="_blank" rel="noopener noreferrer" onClick={closeLogin}>{t.loginSkip}</a>}
+      <p className="t-sub">{t.loginNote}</p>
     </Sheet>
   );
 }
@@ -74,20 +73,16 @@ export function FeedbackSheet() {
   };
   return (
     <Sheet open onClose={() => openFeedback(null)} label={t.fbTitle} bg={c.bg}>
-      <div className="sheet-head" style={{ color: c.ink }}>
-        <div className="row gap12">
-          <AppIcon src={app.icon_url} size={48} />
-          <div><h2>{app.name}</h2><div className="sub">{app.owner?.nickname}</div></div>
-        </div>
-        <button className="round" aria-label={t.close} onClick={() => openFeedback(null)}>{Icon.close}</button>
+      <SheetHeader title={app.name} sub={app.owner?.nickname} leading={<AppIcon src={app.icon_url} size={48} />} onClose={() => openFeedback(null)} color={c.ink} />
+      <div className="form">
+        <label className="sr" htmlFor="fb">{t.fbTitle}</label>
+        <textarea id="fb" rows={3} maxLength={100} placeholder={t.fbPh} value={text} onChange={(e) => setText(e.target.value)} className={`field ${err ? 'bad' : ''}`} />
+        <div className="row between msg" style={{ color: c.ink }}><span className="err">{err}</span><span>{text.length} / 100</span></div>
       </div>
-      <label className="sr" htmlFor="fb">{t.fbTitle}</label>
-      <textarea id="fb" rows={3} maxLength={100} value={text} onChange={(e) => setText(e.target.value)} className={err ? 'bad' : ''} />
-      <div className="fb-meta" style={{ color: c.ink }}><span className="err">{err}</span><span>{text.length} / 100</span></div>
-      <div className="row gap10" style={{ color: c.ink }}>
-        {pumasi ? <><PromiseChip value="+3" ink={c.ink} /><span className="sub">{t.fbPumasi}</span></>
-                : <><span className="tag-free">{t.free}</span><span className="sub">{t.fbFree}</span></>}
-        <button className="send" aria-label={t.send} disabled={!text.trim() || busy} onClick={send}>{Icon.send}</button>
+      <div className="row gap12" style={{ color: c.ink }}>
+        {pumasi ? <PromiseChip value="+3" tone="glass" ink={c.ink} /> : <Chip tone="white">{t.free}</Chip>}
+        <span className="t-sub grow" style={{ color: c.ink }}>{pumasi ? t.fbPumasi : t.fbFree}</span>
+        <IconButton tone="dark" label={t.send} disabled={!text.trim() || busy} onClick={send}>{Icon.send}</IconButton>
       </div>
     </Sheet>
   );
@@ -97,7 +92,7 @@ export function FeedbackSheet() {
 type Meta = { name?: string; icon?: string; screenshots?: string[]; available?: boolean; needsManual?: boolean; countries?: string[]; allCountries?: boolean; countrySource?: 'store' | 'guess' };
 
 export function UploadSheet({ onDone }: { onDone?: () => void }) {
-  const { uploadOpen, setUploadOpen, t, country, locale, toast } = useApp();
+  const { uploadOpen, setUploadOpen, t, country, toast } = useApp();
   const [url, setUrl] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'bad' | 'dup'>('idle');
   const [meta, setMeta] = useState<Meta>({});
@@ -140,7 +135,7 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
 
   const submit = async () => {
     setBusy(true);
-    const countries = cc.split(/[,\s]+/).map((x) => x.trim().toUpperCase()).filter((x) => /^[A-Z]{2}$/.test(x));
+    const countries = parseCountries(cc);
     const { error } = await sb().rpc('aj_add_app', {
       p_url: url.trim(), p_name: name.trim(), p_icon: meta.icon || null, p_screens: meta.screenshots || [],
       p_countries: countries.length ? countries : [country], p_all_countries: world, p_tagline: tagline.trim() || null,
@@ -166,7 +161,7 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
           ? (p.stage === 'test' ? t.needsManual : t.loadFail)
           : `${p.platform === 'android' ? 'Google Play' : 'App Store'} · ${t.okLoaded}`}
       </span>
-    ) : <span className="msg muted">{t.pasteHint}</span>;
+    ) : <span className="msg">{t.pasteHint}</span>;
 
   const paste = async () => {
     try { const txt = await navigator.clipboard.readText(); if (txt) check(txt.trim()); } catch { /* 권한 거절 */ }
@@ -174,31 +169,30 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
 
   return (
     <Sheet open={uploadOpen} onClose={() => setUploadOpen(false)} label={t.upload} tall>
-      <div className="sheet-head">
-        <h2>{t.upload}</h2>
-        <button className="round" aria-label={t.close} onClick={() => setUploadOpen(false)}>{Icon.close}</button>
-      </div>
+      <SheetHeader title={t.upload} onClose={() => setUploadOpen(false)} />
 
+      <div className="form">
       <div className={`field-wrap ${state === 'bad' || state === 'dup' ? 'bad' : ''}`}>
         <label className="sr" htmlFor="applink">{t.pasteLink}</label>
         <input id="applink" type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
         {url
-          ? <button className="field-clear" aria-label={t.clear} onClick={() => check('')}>{Icon.close}</button>
-          : <button className="field-action" onClick={paste}>{t.paste}</button>}
+          ? <IconButton label={t.clear} onClick={() => check('')}>{Icon.close}</IconButton>
+          : <button className="btn-sm dark" onClick={paste}>{t.paste}</button>}
       </div>
       {status}
+      </div>
 
       {/* 미리보기 자리는 항상 같은 크기로 있어서 시트가 튀지 않아요 */}
       {state === 'dup' && dupApp ? (
         <>
           <div className="preview">
-            <div className="pv-head">
+            <div className="d-head">
               <AppIcon src={dupApp.icon_url} size={56} />
-              <div className="grow"><div className="pv-name">{dupApp.name}</div></div>
+              <div className="t-card clamp2 grow">{dupApp.name}</div>
             </div>
             {dupApp.screenshots?.length ? <Shots urls={dupApp.screenshots} height={220} /> : null}
           </div>
-          <div className="row gap8">
+          <div className="row">
             <a className="btn dark grow" href={`/app/${dupApp.id}`}>{t.dupSee}</a>
             <button className="btn soft auto" onClick={() => toast(t.dupMineNote)}>{Icon.flag} {t.dupMine}</button>
           </div>
@@ -209,41 +203,35 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
             <input className="field" placeholder={t.appName2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
           )}
           <div className="preview">
-            <div className="pv-head">
+            <div className="d-head">
               <AppIcon src={meta.icon} size={56} />
-              <div className="grow">
-                <div className="pv-name">{name || t.appName2}</div>
-                {tagline.trim() && <div className="pv-tagline">{tagline}</div>}
+              <div className="col grow">
+                <div className="t-card clamp2">{name || t.appName2}</div>
+                {tagline.trim() && <div className="t-sub clamp1">{tagline}</div>}
               </div>
             </div>
-            <div className="d-chips flush">
-              <span className="mini-chip">{p.platform === 'ios' ? t.ios : t.android} · {p.stage === 'live' ? t.live : t.test}</span>
-              <span className="mini-chip">{world ? `🌐 ${t.worldwide}` : cc.split(/[,\s]+/).filter(Boolean).slice(0, 2).map((x) => `${flag(x.toUpperCase())} ${countryName(x.toUpperCase(), locale)}`).join(', ')}</span>
-            </div>
+            <AppChips app={{ platform: p.platform, stage: p.stage, all_countries: world, countries: parseCountries(cc) }} tone="white" />
             {meta.screenshots?.length ? <Shots urls={meta.screenshots} height={220} /> : null}
           </div>
           <label className="sr" htmlFor="tagline">{t.tagline}</label>
           <input id="tagline" className="field" placeholder={t.tagline} maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
-          <div className="cc-box">
+          <div className="card soft">
             <div className="row between gap12">
-              <div className="grow sub small">{meta.countrySource === 'store' ? t.dataFromStore : meta.countrySource === 'guess' ? t.dataGuess : t.countries}</div>
-              <button className="text-btn" onClick={() => setEditCc((v) => !v)}>{t.change}</button>
+              <span className="grow t-sub">{meta.countrySource === 'store' ? t.dataFromStore : meta.countrySource === 'guess' ? t.dataGuess : t.countries}</span>
+              <button className="btn-sm white" onClick={() => setEditCc((v) => !v)}>{t.change}</button>
             </div>
-            {editCc && (
-              <div className="countries">
-                <label className="row gap8"><input type="checkbox" checked={world} onChange={(e) => setWorld(e.target.checked)} /> {t.worldwide}</label>
-                {!world && <input className="field" aria-label={t.countries} placeholder={t.countriesHint} value={cc} onChange={(e) => setCc(e.target.value)} />}
-              </div>
-            )}
+            {editCc && <CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} />}
           </div>
-          <div className="honor">{Icon.shake}<span>{t.honor}</span></div>
-          <button className="btn dark" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
+          <div className="sheet-foot">
+            <div className="honor">{Icon.shake}<span>{t.honor}</span></div>
+            <button className="btn dark" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
+          </div>
         </>
       ) : (
-        <div className={`preview skeleton ${state === 'loading' ? 'pulse' : ''}`} aria-hidden>
-          <div className="pv-head">
-            <span className="sk sk-icon" />
-            <div className="grow"><span className="sk sk-line" /><span className="sk sk-line short" /></div>
+        <div className={`preview ${state === 'loading' ? 'pulse' : ''}`} aria-hidden>
+          <div className="d-head">
+            <span className="sk" style={{ width: 56, height: 56, borderRadius: 14, flexShrink: 0 }} />
+            <div className="col grow" style={{ gap: 8 }}><span className="sk sk-line" /><span className="sk sk-line short" /></div>
           </div>
           <div className="sk-shots"><span className="sk" /><span className="sk" /><span className="sk" /></div>
         </div>
