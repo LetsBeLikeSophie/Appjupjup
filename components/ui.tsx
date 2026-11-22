@@ -91,7 +91,7 @@ export function TabBar() {
   );
 }
 
-export function Sheet({ open, onClose, label, children, bg }: { open: boolean; onClose: () => void; label: string; children: ReactNode; bg?: string }) {
+export function Sheet({ open, onClose, label, children, bg, tall }: { open: boolean; onClose: () => void; label: string; children: ReactNode; bg?: string; tall?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; dy: number; active: boolean } | null>(null);
   if (!open) return null;
@@ -120,7 +120,7 @@ export function Sheet({ open, onClose, label, children, bg }: { open: boolean; o
 
   return (
     <div className="sheet-wrap" onClick={onClose}>
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className="sheet" style={bg ? { background: bg } : undefined}
+      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className={`sheet ${tall ? 'tall' : ''}`} style={bg ? { background: bg } : undefined}
         onClick={(e) => e.stopPropagation()} onTouchStart={start} onTouchMove={move} onTouchEnd={end} onTouchCancel={end}>
         <span className="grab" aria-hidden />
         {children}

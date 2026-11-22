@@ -4,7 +4,6 @@ import { useApp, errKey } from '@/lib/ctx';
 import { sb, SUPABASE_URL, parseLink, flag, countryName, type App } from '@/lib/supabase';
 import { useIconColor } from '@/lib/useIconColor';
 import { AppIcon, Icon, PromiseChip, Sheet, Shots } from './ui';
-import { StackCard } from './cards';
 
 /* ---------- 로그인 ---------- */
 export function LoginSheet() {
@@ -157,52 +156,77 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
 
   const p = parseLink(url);
 
+  const status =
+    state === 'loading' ? <span className="msg">{t.loading}</span> :
+    state === 'bad' ? <span className="msg err">{t.badLink}</span> :
+    state === 'dup' ? <span className="msg err">{t.dup}</span> :
+    state === 'ok' && p ? (
+      <span className={`msg ${meta.needsManual ? '' : 'ok'}`}>
+        {meta.needsManual
+          ? (p.stage === 'test' ? t.needsManual : t.loadFail)
+          : `${p.platform === 'android' ? 'Google Play' : 'App Store'} · ${t.okLoaded}`}
+      </span>
+    ) : <span className="msg muted">{t.pasteHint}</span>;
+
+  const paste = async () => {
+    try { const txt = await navigator.clipboard.readText(); if (txt) check(txt.trim()); } catch { /* 권한 거절 */ }
+  };
+
   return (
-    <Sheet open={uploadOpen} onClose={() => setUploadOpen(false)} label={t.upload}>
+    <Sheet open={uploadOpen} onClose={() => setUploadOpen(false)} label={t.upload} tall>
       <div className="sheet-head">
         <h2>{t.upload}</h2>
         <button className="round" aria-label={t.close} onClick={() => setUploadOpen(false)}>{Icon.close}</button>
       </div>
-      <label className="sr" htmlFor="applink">{t.pasteLink}</label>
-      <input id="applink" className={`field ${state === 'bad' || state === 'dup' ? 'bad' : ''}`} type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
-      {state === 'loading' && <div className="msg">{t.loading}</div>}
-      {state === 'bad' && <div className="msg err">{t.badLink}</div>}
-      {state === 'dup' && dupApp && (
+
+      <div className={`field-wrap ${state === 'bad' || state === 'dup' ? 'bad' : ''}`}>
+        <label className="sr" htmlFor="applink">{t.pasteLink}</label>
+        <input id="applink" type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
+        {url
+          ? <button className="field-clear" aria-label={t.clear} onClick={() => check('')}>{Icon.close}</button>
+          : <button className="field-action" onClick={paste}>{t.paste}</button>}
+      </div>
+      {status}
+
+      {/* 미리보기 자리는 항상 같은 크기로 있어서 시트가 튀지 않아요 */}
+      {state === 'dup' && dupApp ? (
         <>
-          <div className="msg err">{t.dup}</div>
-          <StackCard app={dupApp} />
+          <div className="preview">
+            <div className="pv-head">
+              <AppIcon src={dupApp.icon_url} size={56} />
+              <div className="grow"><div className="pv-name">{dupApp.name}</div></div>
+            </div>
+            {dupApp.screenshots?.length ? <Shots urls={dupApp.screenshots} height={220} /> : null}
+          </div>
           <div className="row gap8">
             <a className="btn dark grow" href={`/app/${dupApp.id}`}>{t.dupSee}</a>
             <button className="btn soft auto" onClick={() => toast(t.dupMineNote)}>{Icon.flag} {t.dupMine}</button>
           </div>
         </>
-      )}
-      {state === 'ok' && p && (
+      ) : state === 'ok' && p ? (
         <>
-          <div className={`msg ${meta.needsManual ? '' : 'ok'}`}>
-            {meta.needsManual ? t.needsManual : `${p.platform === 'android' ? 'Google Play' : 'App Store'} · ${p.stage === 'live' ? t.live : t.test} · ${t.okLoaded}`}
-          </div>
           {meta.needsManual && (
             <input className="field" placeholder={t.appName2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
           )}
           <div className="preview">
-            <div className="row gap12">
+            <div className="pv-head">
               <AppIcon src={meta.icon} size={56} />
               <div className="grow">
-                <div className="pv-name">{name || '…'}</div>
-                <div className="ma-meta">{p.platform === 'ios' ? t.ios : t.android} · {p.stage === 'live' ? t.live : t.test}</div>
+                <div className="pv-name">{name || t.appName2}</div>
+                {tagline.trim() && <div className="pv-tagline">{tagline}</div>}
               </div>
             </div>
-            <Shots urls={meta.screenshots || []} height={200} />
+            <div className="d-chips flush">
+              <span className="mini-chip">{p.platform === 'ios' ? t.ios : t.android} · {p.stage === 'live' ? t.live : t.test}</span>
+              <span className="mini-chip">{world ? `🌐 ${t.worldwide}` : cc.split(/[,\s]+/).filter(Boolean).slice(0, 2).map((x) => `${flag(x.toUpperCase())} ${countryName(x.toUpperCase(), locale)}`).join(', ')}</span>
+            </div>
+            {meta.screenshots?.length ? <Shots urls={meta.screenshots} height={220} /> : null}
           </div>
           <label className="sr" htmlFor="tagline">{t.tagline}</label>
-          <input id="tagline" className="field" placeholder={t.tagline + ' · ' + t.taglinePh} maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
+          <input id="tagline" className="field" placeholder={t.tagline} maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
           <div className="cc-box">
-            <div className="row between">
-              <div className="grow">
-                <div className="bold">{world ? `🌐 ${t.worldwide}` : cc.split(/[,\s]+/).filter(Boolean).map((x) => `${flag(x.toUpperCase())} ${countryName(x.toUpperCase(), locale)}`).join(', ')}</div>
-                <div className="sub small">{meta.countrySource === 'store' ? t.dataFromStore : meta.countrySource === 'guess' ? t.dataGuess : t.countries}</div>
-              </div>
+            <div className="row between gap12">
+              <div className="grow sub small">{meta.countrySource === 'store' ? t.dataFromStore : meta.countrySource === 'guess' ? t.dataGuess : t.countries}</div>
               <button className="text-btn" onClick={() => setEditCc((v) => !v)}>{t.change}</button>
             </div>
             {editCc && (
@@ -215,6 +239,14 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
           <div className="honor">{Icon.shake}<span>{t.honor}</span></div>
           <button className="btn dark" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
         </>
+      ) : (
+        <div className={`preview skeleton ${state === 'loading' ? 'pulse' : ''}`} aria-hidden>
+          <div className="pv-head">
+            <span className="sk sk-icon" />
+            <div className="grow"><span className="sk sk-line" /><span className="sk sk-line short" /></div>
+          </div>
+          <div className="sk-shots"><span className="sk" /><span className="sk" /><span className="sk" /></div>
+        </div>
       )}
     </Sheet>
   );
