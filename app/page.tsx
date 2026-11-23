@@ -29,16 +29,13 @@ export default function Home() {
   return (
     <div className="home">
       <header className="home-head">
-        <div className="row between">
-          <span className="logo">{t.appName}</span>
+        <div className="page-head">
+          <h1 className="t-title">{t.appName}</h1>
           {profile && <a href="/me" aria-label={t.score}><PromiseChip value={profile.score} tone="white" /></a>}
         </div>
-        <div className="col">
-          <span className="t-sub">{t.totalApps}</span>
-          <span className="count">{total}<span>{t.apps}</span></span>
-        </div>
+        <span className="t-sub">{t.totalApps} {total}</span>
       </header>
-      <div className="panel">
+      <div className="cards">
         {apps === null && <Loading />}
         {apps?.length === 0 && <div className="loading">{t.empty}</div>}
         {apps?.map((a, i) => <StackCard key={a.id} app={a} onOpen={() => setOpen(i)} />)}

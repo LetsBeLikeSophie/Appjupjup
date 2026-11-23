@@ -82,7 +82,7 @@ export function FeedbackSheet() {
       <div className="row gap12" style={{ color: c.ink }}>
         {pumasi ? <PromiseChip value="+3" tone="glass" ink={c.ink} /> : <Chip tone="white">{t.free}</Chip>}
         <span className="t-sub grow" style={{ color: c.ink }}>{pumasi ? t.fbPumasi : t.fbFree}</span>
-        <IconButton tone="dark" label={t.send} disabled={!text.trim() || busy} onClick={send}>{Icon.send}</IconButton>
+        <IconButton tone="primary" label={t.send} disabled={!text.trim() || busy} onClick={send}>{Icon.send}</IconButton>
       </div>
     </Sheet>
   );
@@ -177,7 +177,7 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
         <input id="applink" type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
         {url
           ? <IconButton label={t.clear} onClick={() => check('')}>{Icon.close}</IconButton>
-          : <button className="btn-sm dark" onClick={paste}>{t.paste}</button>}
+          : <button className="btn-sm primary" onClick={paste}>{t.paste}</button>}
       </div>
       {status}
       </div>
@@ -193,7 +193,7 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
             {dupApp.screenshots?.length ? <Shots urls={dupApp.screenshots} height={220} /> : null}
           </div>
           <div className="row">
-            <a className="btn dark grow" href={`/app/${dupApp.id}`}>{t.dupSee}</a>
+            <a className="btn primary grow" href={`/app/${dupApp.id}`}>{t.dupSee}</a>
             <button className="btn soft auto" onClick={() => toast(t.dupMineNote)}>{Icon.flag} {t.dupMine}</button>
           </div>
         </>
@@ -224,7 +224,7 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
           </div>
           <div className="sheet-foot">
             <div className="honor">{Icon.shake}<span>{t.honor}</span></div>
-            <button className="btn dark" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
+            <button className="btn primary" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
           </div>
         </>
       ) : (

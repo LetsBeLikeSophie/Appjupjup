@@ -44,23 +44,23 @@ export function GuestGate({ title, onLogin }: { title: string; onLogin: () => vo
   return (
     <Page title={title}>
       <Empty>{t.guestMe}</Empty>
-      <button className="btn dark" onClick={onLogin}>{t.login}</button>
+      <button className="btn primary" onClick={onLogin}>{t.login}</button>
     </Page>
   );
 }
 
 /* ---------- 목록 한 줄: 앞(아이콘) · 제목/보조 · 뒤 ---------- */
 type RowProps = {
-  leading?: ReactNode; title: ReactNode; sub?: ReactNode; meta?: ReactNode; trailing?: ReactNode; chevron?: boolean;
-  tone?: 'dark' | 'unread'; href?: string; onClick?: () => void; label?: string;
+  leading?: ReactNode; title: ReactNode; time?: string; sub?: ReactNode; meta?: ReactNode; trailing?: ReactNode; chevron?: boolean;
+  tone?: 'primary'; href?: string; onClick?: () => void; label?: string;
 };
-export function ListRow({ leading, title, sub, meta, trailing, chevron, tone, href, onClick, label }: RowProps) {
+export function ListRow({ leading, title, time, sub, meta, trailing, chevron, tone, href, onClick, label }: RowProps) {
   const cls = `list-row ${tone || ''}`;
   const inner = (
     <>
       {leading}
       <span className="col grow">
-        <span className="t-body ellipsis">{title}</span>
+        <span className="row-title"><span className="t-body ellipsis">{title}</span>{time && <span className="t-sub">{time}</span>}</span>
         {sub && <span className="t-sub ellipsis">{sub}</span>}
         {meta && <span className="t-sub">{meta}</span>}
       </span>

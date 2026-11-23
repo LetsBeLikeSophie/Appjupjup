@@ -68,12 +68,12 @@ function FeedbackBox({ app }: { app: App }) {
     <div className="card soft">
       <div className="row between">
         <span className="row gap6 t-card">{Icon.chat}{t.feedback} {list.length}</span>
-        {canWrite && <button className="btn-sm dark" onClick={() => openFeedback(app)}>{t.writeOne}</button>}
+        {canWrite && <button className="btn-sm primary" onClick={() => openFeedback(app)}>{t.writeOne}</button>}
       </div>
       {list.length === 0 && <span className="t-sub">{t.noFeedback}</span>}
       {list.map((f) => (
         <div key={f.id} className="fb-row">
-          <Chip tone={f.kind === 'pumasi' ? 'dark' : 'white'}>{f.kind === 'pumasi' ? t.pumasi : t.free}</Chip>
+          <Chip tone={f.kind === 'pumasi' ? 'primary' : 'white'}>{f.kind === 'pumasi' ? t.pumasi : t.free}</Chip>
           <span className="grow t-body">{f.body}</span>
           <button className="mini" aria-label={t.helpful} onClick={() => helpful(f)}>{Icon.thumb}{f.helpful_count || ''}</button>
           <button className="mini" aria-label={t.report} onClick={() => report(f)}>{Icon.flag}</button>
@@ -105,7 +105,7 @@ function Slide({ app, pos, onClose }: { app: App; pos: string; onClose?: () => v
       <div className="gutter"><FeedbackBox app={app} /></div>
       {mine ? <p className="d-mine t-sub">{t.mineNote}</p> : (
         <div className="d-foot">
-          <a className="btn dark" href={app.url} target="_blank" rel="noopener noreferrer"
+          <a className="btn primary" href={app.url} target="_blank" rel="noopener noreferrer"
             onClick={(e) => { if (!session) e.preventDefault(); download(app); }}>
             {Icon.down}{t.get}
           </a>

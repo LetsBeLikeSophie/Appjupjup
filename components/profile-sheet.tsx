@@ -62,7 +62,7 @@ export function ProfileSheet() {
         <label className="sr" htmlFor="nick">{t.nickname}</label>
         <input id="nick" className="field" placeholder={t.nickname} maxLength={20} value={nick} onChange={(e) => setNick(e.target.value)} />
       </div>
-      <button className="btn dark" disabled={busy || !nick.trim()} onClick={save}>{t.save}</button>
+      <button className="btn primary" disabled={busy || !nick.trim()} onClick={save}>{t.save}</button>
     </Sheet>
   );
 }

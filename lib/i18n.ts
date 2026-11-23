@@ -31,7 +31,7 @@ const ko = {
   nMatched: '님과 서로 받았어요',
   nMatchedSub: '한 줄 남기기',
   nFeedback: '님이 피드백을 남겼어요',
-  nKept: '약속 지킴',
+  nKept: '약속을 지켰어요',
   nMissed: '약속을 못 지켰어요',
   nGrace: '이번은 봐줬어요',
   me: '내 정보',

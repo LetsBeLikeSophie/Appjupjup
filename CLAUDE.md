@@ -28,17 +28,19 @@ Claude Code가 이 저장소를 이어서 작업할 때 읽는 문서예요. 사
 
 ## 디자인 규칙 (피드백 누적)
 - **숫자는 `app/globals.css` 맨 위 토큰만** (`--gutter` 20, `--gap` 16, `--pad` 16, `--r-card` 20, 글자 `.t-title/.t-name/.t-section/.t-card/.t-body/.t-sub`). 새 v2·v3 덧칠 금지, 해당 규칙을 고칠 것
+- 화면은 데이터(page)와 그리기(`components/*-view.tsx`)를 나눔 → 로그인 없이 가짜 데이터로 확인 가능
 - 공통 부품: `components/ui.tsx`(아이콘·Chip·PromiseChip·IconButton·NameTag·Shots), `components/layout.tsx`(Page·Section·ListRow·Empty·GuestGate·Sheet·SheetHeader·TabBar), `components/app-parts.tsx`(PlatformChip·CountryChip·AppChips·CountryEditor). 새 화면은 이걸 조립해서 만들기
-- 배경 #EDEDE9, 검정 알약 버튼, 파스텔 카드는 **앱 아이콘에서 뽑은 색**(`lib/useIconColor.ts`)
+- **화이트 + 오렌지** (11-23 리디자인): 배경 #F6F6F3, 대표색 `--primary` #F26A1B 하나. 검정 덩어리(검정 카드·메뉴·행) 금지, 진한 색은 화면당 주 버튼 하나. 강조 행·칩은 `--primary-soft` 연한 오렌지
+- 파스텔 카드는 **앱 아이콘에서 뽑은 색**(`lib/useIconColor.ts`)
 - **테두리는 입력 중인 칸(focus)에만.** 태그·카드·대표 표시에 테두리 금지
 - 글자 크기 단계: 화면 제목 24 / 이름 20 / 섹션 17 / 카드 제목 15 / 본문 14 / 보조 12. 큰 제목 남발 금지
 - 여백: 좌우 20, 요소 간 16, 카드 안 패딩 16 — 화면끼리 같은 규칙
 - 칩(`.mini-chip`, `PromiseChip`)은 높이 26, 모든 화면 같은 크기
 - 모달은 아래에서 올라오는 시트, 맨 위에서 아래로 쓸면 닫힘. 시트 높이가 내용 따라 튀지 않게(스켈레톤 자리 유지)
 - 입력칸 16px(아이폰 확대 방지), 화면 확대 금지
-- 하단 메뉴 3개: 홈 · 알림 · 내 정보 (아이콘만, 떠 있는 검정 알약)
+- 하단 메뉴 3개: 홈 · 알림 · 내 정보 (아이콘만, 떠 있는 흰 알약, 선택은 연한 오렌지)
 - 앱 상세: 위아래 스크롤, 맨 아래 "다음 앱" → 더 내리면 다음 앱 (처음 한 번 안내 토스트)
-- 알림: 제목 없이 한 행씩, 행 전체가 링크, 할 일 있는 행만 검정
+- 알림: 제목 없이 한 행씩, 행 전체가 링크, 할 일 있는 행만 연한 오렌지, 안 읽음은 점만, 시간은 제목 오른쪽
 
 ## 지금 진행 중 / 다음 할 일
 - [ ] 방금 반영: 내 정보 정리(설정 행, 글자 단계), 내 앱 누르면 수정 시트(`components/myapp-sheet.tsx`), 상세 상단 ← 아이콘·다음 앱 간격. **폰에서 확인 필요**

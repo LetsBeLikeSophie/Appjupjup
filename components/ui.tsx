@@ -1,5 +1,5 @@
 'use client';
-import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import { useState, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import { useApp } from '@/lib/ctx';
 
 const P = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -29,14 +29,22 @@ export const Icon = {
   img: <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" {...P} strokeWidth={1.6}><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="9" cy="10" r="1.8" /><path d="m21 16-5-5-9 9" /></svg>,
 };
 
+/** 이미지 못 불러오면 깨진 그림 대신 빈 자리로 */
+function useImg(src?: string | null) {
+  const [bad, setBad] = useState<string | null>(null);
+  return { ok: !!src && bad !== src, onError: () => setBad(src || null) };
+}
+
 export function AppIcon({ src, size = 48 }: { src?: string | null; size?: number }) {
   const r = Math.round(size * 0.24);
-  if (src) return <img className="appicon" src={src} alt="" width={size} height={size} style={{ borderRadius: r }} />;
+  const img = useImg(src);
+  if (img.ok) return <img className="appicon" src={src!} alt="" width={size} height={size} style={{ borderRadius: r }} onError={img.onError} />;
   return <span className="appicon ph" style={{ width: size, height: size, borderRadius: r }}>{Icon.img}</span>;
 }
 
 export function Avatar({ src, size = 40 }: { src?: string | null; size?: number }) {
-  if (src) return <img className="avatar" src={src} alt="" width={size} height={size} />;
+  const img = useImg(src);
+  if (img.ok) return <img className="avatar" src={src!} alt="" width={size} height={size} onError={img.onError} />;
   return (
     <span className="avatar ph" style={{ width: size, height: size }}>
       <svg aria-hidden width={size * 0.86} height={size * 0.86} viewBox="0 0 24 24"><circle cx="12" cy="9" r="4.5" fill="rgba(255,255,255,.85)" /><path d="M3 24c0-5 4-8 9-8s9 3 9 8z" fill="rgba(255,255,255,.85)" /></svg>
@@ -49,8 +57,8 @@ export function NameTag({ name, tag }: { name?: string | null; tag?: number | nu
   return <>{name}{tag ? <span className="name-tag">#{tag}</span> : null}</>;
 }
 
-/** 모든 칩은 높이 26. tone: soft(회색) / glass(색 카드 위) / white / dark */
-export type ChipTone = 'soft' | 'glass' | 'white' | 'dark';
+/** 모든 칩은 높이 26. tone: soft(회색) / glass(색 카드 위) / white / primary(오렌지) */
+export type ChipTone = 'soft' | 'glass' | 'white' | 'primary';
 export function Chip({ tone = 'soft', className = '', style, children, ...rest }: { tone?: ChipTone; className?: string; style?: CSSProperties; children: ReactNode } & HTMLAttributes<HTMLSpanElement>) {
   return <span className={`chip ${tone === 'soft' ? '' : tone} ${className}`} style={style} {...rest}>{children}</span>;
 }
@@ -65,7 +73,7 @@ export function PromiseChip({ value, tone = 'soft', ink }: { value: string | num
 }
 
 /** 동그란 아이콘 버튼 (40). href가 있으면 링크 */
-export function IconButton({ label, onClick, href, tone, children, disabled }: { label: string; onClick?: () => void; href?: string; tone?: 'glass' | 'dark'; children: ReactNode; disabled?: boolean }) {
+export function IconButton({ label, onClick, href, tone, children, disabled }: { label: string; onClick?: () => void; href?: string; tone?: 'glass' | 'primary'; children: ReactNode; disabled?: boolean }) {
   const cls = `icon-btn ${tone || ''}`;
   if (href) return <a className={cls} href={href} aria-label={label}>{children}</a>;
   return <button className={cls} aria-label={label} onClick={onClick} disabled={disabled}>{children}</button>;
@@ -74,11 +82,13 @@ export function IconButton({ label, onClick, href, tone, children, disabled }: {
 export function Shots({ urls, height, tint = '#F1F1EE', bleed }: { urls: string[]; height: number; tint?: string; bleed?: boolean }) {
   const w = Math.round(height * 0.5);
   const r = Math.max(10, Math.round(height * 0.07));
-  const list = urls.length ? urls : [null, null, null];
+  const [bad, setBad] = useState<string[]>([]);
+  const good = urls.filter((u) => !bad.includes(u));
+  const list = good.length ? good : [null, null, null];
   return (
     <div className={`shots ${bleed ? 'bleed' : ''}`} style={{ height }}>
       {list.map((u, i) =>
-        u ? <img key={i} src={u} alt="" loading="lazy" style={{ height, borderRadius: r }} />
+        u ? <img key={u} src={u} alt="" loading="lazy" style={{ height, borderRadius: r }} onError={() => setBad((b) => [...b, u])} />
           : <span key={i} className="shot-ph" style={{ width: w, height, background: tint, borderRadius: r }}>{Icon.img}</span>,
       )}
     </div>
