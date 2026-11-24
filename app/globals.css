@@ -177,7 +177,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .pick-cell { height: 136px; display: flex; align-items: center; justify-content: center; min-width: 0; }
 .pick-item { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 100%; }
 /* 3겹 더미 (끌어서 옮기기, 다시 쏟기) */
-.heap { position: relative; margin: 8px var(--gutter) 0; height: calc(100dvh - 210px - env(safe-area-inset-top)); touch-action: none; user-select: none; -webkit-user-select: none; }
+.heap { position: relative; margin: 8px var(--gutter) 0; height: calc(100dvh - 210px - env(safe-area-inset-top)); touch-action: none; isolation: isolate; user-select: none; -webkit-user-select: none; }
 .heap-item { position: absolute; cursor: grab; touch-action: none; -webkit-touch-callout: none; transition: transform .12s, filter .2s; animation: drop .35s backwards cubic-bezier(.2,.9,.3,1.2); }
 .heap-item .appicon-wrap { box-shadow: 0 3px 10px rgba(0,0,0,.14); border-radius: 24%; }
 .heap-item img { -webkit-user-drag: none; pointer-events: none; }
@@ -304,3 +304,9 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 
 /* ---------- 토스트 ---------- */
 .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; background: #2B2D31; color: #fff; padding: 12px 18px; border-radius: 22px; font-size: var(--fs-body); font-weight: 700; max-width: 90vw; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+
+/* /demo: 더미 위에 상세 겹쳐 열기 (더미 자리 유지) */
+.demo-detail { position: fixed; inset: 0; z-index: 600; overflow-y: auto; background: var(--surface); }
+.dev-seg { flex-shrink: 0; display: flex; gap: 2px; padding: 2px; border-radius: 17px; background: var(--surface); }
+.dev-seg button { width: 36px; height: 30px; border: 0; border-radius: 15px; background: none; color: var(--sub); display: flex; align-items: center; justify-content: center; }
+.dev-seg button.on { background: var(--primary-soft); color: var(--primary-ink); }

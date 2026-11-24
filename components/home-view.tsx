@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/ctx';
 import { hash, isFresh, type App } from '@/lib/supabase';
@@ -9,7 +9,7 @@ import { Marker, tiltOf } from './app-parts';
 import { Loading } from './layout';
 
 /** 카테고리 칩: 전체 · 새로 나옴 · 앱이 있는 카테고리만 */
-export function CatChips({ apps, cat, setCat }: { apps: App[]; cat: string; setCat: (c: string) => void }) {
+export function CatChips({ apps, cat, setCat, lead }: { apps: App[]; cat: string; setCat: (c: string) => void; lead?: ReactNode }) {
   const { t } = useApp();
   const counts = new Map<string, number>();
   apps.forEach((a) => a.category && counts.set(a.category, (counts.get(a.category) || 0) + 1));
@@ -17,6 +17,7 @@ export function CatChips({ apps, cat, setCat }: { apps: App[]; cat: string; setC
   const items = [{ k: 'all', l: t.all }, ...(apps.some(isFresh) ? [{ k: 'fresh', l: t.fresh }] : []), ...cats.map((k) => ({ k, l: t.cat[k] || t.cat.etc }))];
   return (
     <div className="cat-row" role="tablist">
+      {lead}
       {items.map((i) => (
         <button key={i.k} role="tab" aria-selected={cat === i.k} className={`cat ${cat === i.k ? 'on' : ''}`} onClick={() => setCat(i.k)}>{i.l}</button>
       ))}
@@ -28,6 +29,31 @@ export function filterApps(apps: App[], cat: string) {
   if (cat === 'all') return apps;
   if (cat === 'fresh') return apps.filter(isFresh);
   return apps.filter((a) => a.category === cat);
+}
+
+export type Device = 'all' | 'android' | 'ios';
+/** 접속한 폰으로 기본 기기 정하기 (컴퓨터는 전체) */
+export function guessDevice(): Device {
+  const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'all';
+}
+export const byDevice = (apps: App[], d: Device) => (d === 'all' ? apps : apps.filter((a) => a.platform === d));
+
+/** 기기 고르기: 안드로이드·아이폰 두 아이콘. 둘 다 켜짐 = 전체, 켜진 걸 다시 누르면 전체 */
+function DeviceSeg({ device, setDevice }: { device: Device; setDevice: (d: Device) => void }) {
+  const { t } = useApp();
+  return (
+    <div className="dev-seg">
+      {(['android', 'ios'] as const).map((d) => (
+        <button key={d} aria-label={d === 'ios' ? t.ios : t.android} aria-pressed={device === d}
+          className={device === 'all' || device === d ? 'on' : ''} onClick={() => setDevice(device === d ? 'all' : d)}>
+          {d === 'ios' ? Icon.apple : Icon.android}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 /** 바닥에 흩어진 아이콘. 자리·크기·기울기는 앱마다 고정 */
@@ -57,7 +83,7 @@ export function IconField({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<s
 export const SAY_MAX = 10;
 const sayOf = (a: App) => (a.say || '').trim() || undefined;
 const PER_LAYER = 14, LAYERS = 3, COLS = 3, ROWS = 5;
-export function IconHeap({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string }) {
+export function IconHeap({ apps, gotIds, hrefOf, onPick }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; onPick?: (a: App) => void }) {
   const { t } = useApp();
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
@@ -128,6 +154,7 @@ export function IconHeap({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<st
       el.removeEventListener('pointercancel', up);
       el.classList.remove('lift');
       if (drag) moved.current.set(a.id, { x: parseFloat(el.dataset.x!), y: parseFloat(el.dataset.y!), z: top.current });
+      else if (onPick) onPick(a);
       else router.push(hrefOf ? hrefOf(a) : `/app/${a.id}`);
     };
     el.addEventListener('pointermove', move);
@@ -174,20 +201,21 @@ export function IconHeap({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<st
 }
 
 /** 홈 그리기 (데이터는 page에서) */
-export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean }) {
+export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, onPick, device, setDevice }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
   const { t } = useApp();
-  const list = apps ? filterApps(apps, cat) : null;
+  const mine = apps && device ? byDevice(apps, device) : apps;
+  const list = mine ? filterApps(mine, cat) : null;
   return (
     <div className="home">
       <header className="home-head">
         <h1 className="t-title">{t.appName}</h1>
         <Link className="game-btn" href={gameHref ?? `/game${cat !== 'all' ? `?cat=${cat}` : ''}`}>{Icon.swords}{t.game}</Link>
       </header>
-      {apps && <CatChips apps={apps} cat={cat} setCat={setCat} />}
+      {mine && <CatChips apps={mine} cat={cat} setCat={setCat} lead={device && setDevice ? <DeviceSeg device={device} setDevice={setDevice} /> : undefined} />}
       {list === null && <Loading />}
       {list?.length === 0 && <div className="loading">{t.empty}</div>}
       {list && list.length > 0 && (heap
-        ? <IconHeap key={cat} apps={list} gotIds={gotIds} hrefOf={hrefOf} />
+        ? <IconHeap key={`${device}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} />
         : <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} />)}
     </div>
   );
