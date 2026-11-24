@@ -15,14 +15,17 @@ export type Profile = {
   id: string;
   nickname: string;
   avatar_url: string | null;
+  /** 온도: 100에서 시작, 깎이지 않아요 */
   score: number;
-  grace_left: number;
-  kept_count: number;
-  missed_count: number;
   country: string;
   locale: string;
   setup_done: boolean;
   tag: number | null;
+};
+
+/** 화면에 보이는 "나": 대표 앱이 있으면 그 앱, 없으면 줍줍이 #태그 */
+export type Person = Pick<Profile, 'id' | 'nickname' | 'tag' | 'score'> & {
+  apps?: Pick<App, 'id' | 'name' | 'icon_url' | 'is_primary'>[] | null;
 };
 
 export type App = {
@@ -35,41 +38,63 @@ export type App = {
   icon_url: string | null;
   screenshots: string[];
   is_primary: boolean;
+  /** 댓글 수 */
   feedback_count: number;
   countries: string[];
   all_countries: boolean;
   tagline: string | null;
+  category: string | null;
+  released_at: string | null;
+  store_updated_at: string | null;
   created_at: string;
-  owner?: Pick<Profile, 'nickname' | 'score' | 'avatar_url' | 'tag'> | null;
+  owner?: Person | null;
 };
 
-export type Feedback = {
+export type Comment = {
   id: string;
   app_id: string;
   author_id: string;
-  kind: 'pumasi' | 'free';
   body: string;
   helpful_count: number;
   created_at: string;
-  author?: Pick<Profile, 'nickname' | 'avatar_url'> | null;
+  author?: Person | null;
 };
 
 export type Notice = {
   id: string;
-  kind: 'got' | 'matched' | 'feedback' | 'kept' | 'missed' | 'grace';
+  kind: 'got' | 'comment' | 'helpful' | 'visit' | string;
   body: string | null;
   delta: number | null;
   read_at: string | null;
   created_at: string;
   app_id: string | null;
-  match_id: string | null;
-  actor?: Pick<Profile, 'nickname' | 'avatar_url'> | null;
-  app?: Pick<App, 'id' | 'name' | 'icon_url'> | null;
-  match?: { due_at: string; a_result: string | null; b_result: string | null; user_a: string } | null;
+  actor?: Person | null;
+  app?: Pick<App, 'id' | 'name' | 'icon_url' | 'owner_id'> | null;
 };
 
+export const PERSON = 'id, nickname, tag, score, apps:aj_apps(id, name, icon_url, is_primary)';
 export const APP_FIELDS =
-  'id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, tagline, created_at, owner:aj_profiles(nickname, tag, score, avatar_url)';
+  `id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, tagline, category, released_at, store_updated_at, created_at, owner:aj_profiles(${PERSON})`;
+export const COMMENT_FIELDS = `id, app_id, author_id, body, helpful_count, created_at, author:aj_profiles(${PERSON})`;
+
+/** 대표 앱 (없으면 첫 앱) */
+export function primaryApp(p?: Person | null) {
+  const list = p?.apps || [];
+  return list.find((a) => a.is_primary) || list[0] || null;
+}
+
+/** 출시(또는 앱줍줍에 올라온 지) 14일 안 */
+export function isFresh(a: Pick<App, 'released_at' | 'created_at'>) {
+  const t = new Date(a.released_at || a.created_at).getTime();
+  return Date.now() - t < 14 * 86400000;
+}
+
+/** 문자열 → 고정된 숫자 (자리·기울기를 앱마다 고정) */
+export function hash(s: string) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
 
 /** 스토어 링크 판별 (DB의 aj_parse_link와 같은 규칙) */
 export function parseLink(raw: string) {

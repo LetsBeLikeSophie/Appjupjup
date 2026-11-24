@@ -47,15 +47,16 @@ export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClo
         <label className="label" htmlFor="ma-name">{t.appName2}</label>
         <input id="ma-name" className="field" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
         <label className="label" htmlFor="ma-tag">{t.tagline}</label>
-        <input id="ma-tag" className="field" maxLength={60} placeholder={t.taglinePh} value={tagline} onChange={(e) => setTagline(e.target.value)} />
+        <input id="ma-tag" className="field" maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
         <span className="label">{t.countries}</span>
         <CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} />
       </div>
       <button className="btn primary" disabled={busy || !name.trim()} onClick={save}>{t.save}</button>
       <div className="row between">
         {app.is_primary
-          ? <Chip tone="primary" className="star">{Icon.star}{t.primary}</Chip>
+          ? <Chip tone="primary">{Icon.star}{t.primary}</Chip>
           : <button className="btn-sm" onClick={makePrimary}>{Icon.star}{t.makePrimary}</button>}
+        <a className="btn-sm ghost" href={`/app/${app.id}`}>{t.dupSee}</a>
         <button className="btn-sm danger" onClick={remove}>{t.deleteApp}</button>
       </div>
     </Sheet>

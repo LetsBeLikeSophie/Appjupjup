@@ -1,69 +1,60 @@
 'use client';
+import Link from 'next/link';
 import { useApp } from '@/lib/ctx';
-import type { Notice } from '@/lib/supabase';
-import { AppIcon, Avatar, PromiseChip } from './ui';
-import { Empty, ListRow, Loading, Page } from './layout';
+import { primaryApp, type Notice } from '@/lib/supabase';
+import { AppIcon, Icon, Temp, WhoIcon, WhoName } from './ui';
+import { Empty, Loading, Page } from './layout';
+import { ago } from './detail-view';
 
-function ago(iso: string, locale: string) {
-  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-  if (m < 60) return rtf.format(-m, 'minute');
-  if (m < 1440) return rtf.format(-Math.round(m / 60), 'hour');
-  return rtf.format(-Math.round(m / 1440), 'day');
-}
-
-/** 알림 한 줄. 할 일(피드백 남기기)이 있는 행만 검정 */
-export function AlertRow({ n, myId, onWrite }: { n: Notice; myId?: string; onWrite: (appId: string) => void }) {
+/** 알림 한 줄. 답방할 앱이 있는 행만 연한 오렌지 */
+export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
   const { t, locale } = useApp();
-  const unread = !n.read_at;
-  const who = n.actor?.nickname || '';
   const when = ago(n.created_at, locale);
-
-  let todo = false;
-  if (n.kind === 'matched' && n.match) {
-    const mineA = n.match.user_a === myId;
-    todo = (mineA ? n.match.a_result : n.match.b_result) == null && new Date(n.match.due_at) > new Date();
-  }
-  const days = n.match ? Math.max(0, Math.ceil((new Date(n.match.due_at).getTime() - Date.now()) / 86400000)) : 0;
+  const actorApp = primaryApp(n.actor);
+  // 남이 내 앱에 왔을 때만 답방 카드 (개발자 답글·도움돼요는 아님)
+  const canVisit = (n.kind === 'got' || n.kind === 'comment') && n.app?.owner_id === myId && !!actorApp;
+  const unread = !n.read_at;
 
   const title =
-    n.kind === 'got' ? <><b>{who}</b>{t.nGot}</> :
-    n.kind === 'matched' ? <><b>{who}</b>{t.nMatched}</> :
-    n.kind === 'feedback' ? <><b>{who}</b>{t.nFeedback}</> :
-    <b>{n.kind === 'kept' ? t.nKept : n.kind === 'missed' ? t.nMissed : t.nGrace}</b>;
-  const sub =
-    n.kind === 'got' ? <>{t.nGotSub} · {n.app?.name}</> :
-    n.kind === 'matched' ? (todo ? <>D-{days} · {t.nMatchedSub}</> : n.app?.name) :
-    n.kind === 'feedback' ? <>“{n.body}”</> : n.app?.name;
-
-  const result = n.kind === 'kept' || n.kind === 'missed' || n.kind === 'grace';
-  const linked = !!n.app_id && !result;
-  const trailing = (
-    <>
-      {n.delta ? <PromiseChip value={n.delta > 0 ? `+${n.delta}` : `${n.delta}`} tone={todo ? 'glass' : 'soft'} /> : null}
-      {unread && <span className="udot" aria-label="new" />}
-    </>
-  );
+    n.kind === 'helpful' ? <b>{t.nHelpful}</b> :
+    n.kind === 'got' ? <><b><WhoName who={n.actor} /></b>{t.nGot}</> :
+    n.kind === 'visit' ? <><b><WhoName who={n.actor} /></b>{t.nVisit}</> :
+    <><b><WhoName who={n.actor} /></b> → {n.app?.name}</>;
+  const sub = n.body ? <>“{n.body}”</> : n.app?.name;
+  const leading = n.kind === 'helpful' ? <AppIcon src={n.app?.icon_url} size={40} /> : <WhoIcon who={n.actor} size={40} />;
 
   return (
-    <ListRow
-      leading={result ? <AppIcon src={n.app?.icon_url} size={40} /> : <Avatar src={n.actor?.avatar_url} size={40} />}
-      title={title} time={when} sub={sub} trailing={trailing} chevron={linked}
-      tone={todo ? 'primary' : undefined}
-      onClick={todo && n.app_id ? () => onWrite(n.app_id!) : undefined}
-      href={!todo && linked ? `/app/${n.app_id}` : undefined}
-    />
+    <div className={`alert ${canVisit && unread ? 'primary' : ''}`}>
+      <Link className="alert-main" href={n.app_id ? `/app/${n.app_id}` : '#'}>
+        {leading}
+        <span className="col grow">
+          <span className="row-title"><span className="t-body ellipsis">{title}</span><span className="t-sub">{when}</span></span>
+          <span className="row gap6">
+            {n.delta ? <Temp value={`+${n.delta}`} /> : null}
+            {sub && <span className="t-sub ellipsis">{sub}</span>}
+          </span>
+        </span>
+        {unread && <span className="udot" aria-label="new" />}
+      </Link>
+      {canVisit && actorApp && (
+        <div className="visit">
+          <AppIcon src={actorApp.icon_url} size={44} />
+          <span className="col grow"><b className="t-body ellipsis">{actorApp.name}</b>{n.actor && <Temp value={n.actor.score} />}</span>
+          <Link className="visit-btn" href={`/app/${actorApp.id}?from=${n.app_id}`}>{Icon.reply}{t.visit}</Link>
+        </div>
+      )}
+    </div>
   );
 }
 
-export function AlertsView({ list, myId, onWrite }: { list: Notice[] | null; myId?: string; onWrite: (appId: string) => void }) {
+export function AlertsView({ list, myId }: { list: Notice[] | null; myId?: string }) {
   const { t } = useApp();
   return (
     <Page title={t.alerts}>
       {list === null && <Loading />}
       {list?.length === 0 && <Empty>{t.noAlerts}</Empty>}
       <div className="list">
-        {list?.map((n) => <AlertRow key={n.id} n={n} myId={myId} onWrite={onWrite} />)}
+        {list?.map((n) => <AlertRow key={n.id} n={n} myId={myId} />)}
       </div>
     </Page>
   );

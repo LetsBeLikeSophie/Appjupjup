@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useApp } from '@/lib/ctx';
 import { Icon, IconButton } from './ui';
 
@@ -43,7 +43,6 @@ export function GuestGate({ title, onLogin }: { title: string; onLogin: () => vo
   const { t } = useApp();
   return (
     <Page title={title}>
-      <Empty>{t.guestMe}</Empty>
       <button className="btn primary" onClick={onLogin}>{t.login}</button>
     </Page>
   );
@@ -77,7 +76,8 @@ export function ListRow({ leading, title, time, sub, meta, trailing, chevron, to
 export function TabBar() {
   const path = usePathname();
   const { unread, t } = useApp();
-  if (path.startsWith('/app/')) return null; // 앱 상세는 받기 버튼이 아래에 있어서 메뉴를 숨겨요
+  // 앱 상세·밸런스 게임은 아래에 자기 버튼이 있어서 메뉴를 숨겨요
+  if (path.startsWith('/app/') || path.startsWith('/game')) return null;
   const items = [
     { href: '/', icon: Icon.home, label: t.appName },
     { href: '/alerts', icon: Icon.bell, label: t.alerts, dot: unread > 0 },
@@ -101,7 +101,7 @@ export function TabBar() {
 }
 
 /* ---------- 시트: 아래에서 올라오고, 맨 위에서 아래로 쓸면 닫혀요 ---------- */
-export function Sheet({ open, onClose, label, children, bg, tall }: { open: boolean; onClose: () => void; label: string; children: ReactNode; bg?: string; tall?: boolean }) {
+export function Sheet({ open, onClose, label, children, tall }: { open: boolean; onClose: () => void; label: string; children: ReactNode; tall?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y: number; dy: number; active: boolean } | null>(null);
   if (!open) return null;
@@ -129,7 +129,7 @@ export function Sheet({ open, onClose, label, children, bg, tall }: { open: bool
 
   return (
     <div className="sheet-wrap" onClick={onClose}>
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className={`sheet ${tall ? 'tall' : ''}`} style={bg ? { background: bg } : undefined}
+      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className={`sheet ${tall ? 'tall' : ''}`}
         onClick={(e) => e.stopPropagation()} onTouchStart={start} onTouchMove={move} onTouchEnd={end} onTouchCancel={end}>
         <span className="grab" aria-hidden />
         {children}
@@ -139,17 +139,16 @@ export function Sheet({ open, onClose, label, children, bg, tall }: { open: bool
 }
 
 /** 시트 머리: [아이콘] 제목/보조 ··· [닫기]. 모든 시트 같은 모양 */
-export function SheetHeader({ title, sub, leading, onClose, color }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; onClose: () => void; color?: string }) {
+export function SheetHeader({ title, sub, leading, onClose }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; onClose: () => void }) {
   const { t } = useApp();
-  const style: CSSProperties | undefined = color ? { color } : undefined;
   return (
-    <div className="sheet-head" style={style}>
+    <div className="sheet-head">
       {leading}
       <div className="grow">
         <h2 className="t-name clamp2">{title}</h2>
-        {sub && <div className="t-sub" style={style}>{sub}</div>}
+        {sub && <div className="t-sub">{sub}</div>}
       </div>
-      <IconButton label={t.close} onClick={onClose} tone={color ? 'glass' : undefined}>{Icon.close}</IconButton>
+      <IconButton label={t.close} onClick={onClose}>{Icon.close}</IconButton>
     </div>
   );
 }

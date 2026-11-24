@@ -1,56 +1,74 @@
 'use client';
 import { useApp } from '@/lib/ctx';
-import { flag, countryName, type App } from '@/lib/supabase';
-import { Avatar, Chip, NameTag, PromiseChip, type ChipTone } from './ui';
+import { flag, hash, isFresh, type App } from '@/lib/supabase';
+import { AppIcon, Chip, Icon, type ChipTone } from './ui';
 
 /** "KR, us jp" → ['KR','US','JP'] */
 export function parseCountries(text: string) {
   return text.split(/[,\s]+/).map((x) => x.trim().toUpperCase()).filter((x) => /^[A-Z]{2}$/.test(x));
 }
 
-/** Android · 출시 */
+/** 기기 아이콘 (테스트면 글자) */
 export function PlatformChip({ platform, stage, tone }: { platform: App['platform']; stage: App['stage']; tone?: ChipTone }) {
   const { t } = useApp();
-  return <Chip tone={tone}>{platform === 'ios' ? t.ios : t.android} · {stage === 'live' ? t.live : t.test}</Chip>;
+  return <Chip tone={tone} aria-label={platform === 'ios' ? t.ios : t.android}>{platform === 'ios' ? Icon.apple : Icon.android}{stage === 'test' ? t.test : null}</Chip>;
 }
 
-/** 🌐 전 세계 / 🇰🇷 한국 +2 */
-export function CountryChip({ all, countries, tone }: { all: boolean; countries: string[]; tone?: ChipTone }) {
-  const { t, locale } = useApp();
-  if (all) return <Chip tone={tone}>🌐 {t.worldwide}</Chip>;
-  if (!countries.length) return null;
-  return <Chip tone={tone}>{flag(countries[0])} {countryName(countries[0], locale)}{countries.length > 1 ? ` +${countries.length - 1}` : ''}</Chip>;
-}
-
-/** 카드 위에 쓰는 짧은 국기 표시 */
-export function CountryFlags({ app }: { app: App }) {
+export function CategoryChip({ cat, tone }: { cat?: string | null; tone?: ChipTone }) {
   const { t } = useApp();
-  if (app.all_countries) return <span>🌐 {t.worldwide}</span>;
-  const list = app.countries || [];
-  return <span>{list.slice(0, 3).map(flag).join(' ')}{list.length > 3 ? ` +${list.length - 3}` : ''}</span>;
+  if (!cat) return null;
+  return <Chip tone={tone}>{t.cat[cat] || t.cat.etc}</Chip>;
 }
 
-/** 앱 상세·미리보기 칩 묶음: 기기·단계 / 점수 / 나라 / 만든 사람 */
-export function AppChips({ app, tone }: { app: Pick<App, 'platform' | 'stage' | 'all_countries' | 'countries' | 'owner'>; tone?: ChipTone }) {
+/** 🌐 / 🇰🇷 +2 */
+export function CountryChip({ all, countries, tone }: { all: boolean; countries: string[]; tone?: ChipTone }) {
+  if (all) return <Chip tone={tone}>🌐</Chip>;
+  if (!countries.length) return null;
+  return <Chip tone={tone}>{flag(countries[0])}{countries.length > 1 ? ` +${countries.length - 1}` : ''}</Chip>;
+}
+
+/** 앱 칩 묶음: 카테고리 · 기기 · 나라 */
+export function AppChips({ app, tone }: { app: Pick<App, 'platform' | 'stage' | 'all_countries' | 'countries' | 'category'>; tone?: ChipTone }) {
   return (
     <div className="chips">
+      <CategoryChip cat={app.category} tone={tone} />
       <PlatformChip platform={app.platform} stage={app.stage} tone={tone} />
-      {app.owner && <PromiseChip value={app.owner.score} tone={tone} />}
       <CountryChip all={app.all_countries} countries={app.countries || []} tone={tone} />
-      {app.owner && (
-        <Chip tone={tone}><Avatar src={app.owner.avatar_url} size={18} /><NameTag name={app.owner.nickname} tag={app.owner.tag} /></Chip>
-      )}
     </div>
   );
 }
 
-/** 출시 나라 고르기 (앱 올리기·앱 수정 같이 씀) */
+/** 출시 나라 고르기 */
 export function CountryEditor({ world, setWorld, cc, setCc }: { world: boolean; setWorld: (v: boolean) => void; cc: string; setCc: (v: string) => void }) {
   const { t } = useApp();
   return (
     <>
-      <label className="check"><input type="checkbox" checked={world} onChange={(e) => setWorld(e.target.checked)} /> {t.worldwide}</label>
+      <label className="check"><input type="checkbox" checked={world} onChange={(e) => setWorld(e.target.checked)} /> 🌐 {t.worldwide}</label>
       {!world && <input className="field" aria-label={t.countries} placeholder={t.countriesHint} value={cc} onChange={(e) => setCc(e.target.value)} />}
     </>
   );
+}
+
+/** 앱마다 고정된 기울기 (-8 ~ 8도) */
+export const tiltOf = (id: string) => ((hash(id + 't') % 17) - 8);
+
+/** 아이콘에 붙는 표시는 하나만: 새로 나옴 → 주움 → 댓글 수 */
+export function Marker({ app, got }: { app: App; got: boolean }) {
+  if (isFresh(app) && !got) return <i className="mk-fresh" aria-label="new" />;
+  if (got) return <span className="mk-got">{Icon.check}</span>;
+  if (app.feedback_count > 0) return <span className="mk-count">{app.feedback_count > 9 ? '9+' : app.feedback_count}</span>;
+  return null;
+}
+
+/** 똑바로 놓인 앱 하나 (내 정보·사람 시트·알림) */
+export function AppTile({ app, size = 56, star, onClick, href }: { app: Pick<App, 'id' | 'name' | 'icon_url'> & { is_primary?: boolean }; size?: number; star?: boolean; onClick?: () => void; href?: string }) {
+  const inner = (
+    <>
+      <AppIcon src={app.icon_url} size={size}>{star && <span className="mk-star">{Icon.star}</span>}</AppIcon>
+      <span className="tile-name ellipsis" style={{ maxWidth: size + 24 }}>{app.name}</span>
+    </>
+  );
+  if (href) return <a className="tile" href={href}>{inner}</a>;
+  if (onClick) return <button className="tile" onClick={onClick}>{inner}</button>;
+  return <span className="tile">{inner}</span>;
 }

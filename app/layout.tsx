@@ -1,14 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AppProvider } from '@/lib/ctx';
-import { Toast } from '@/components/ui';
-import { TabBar } from '@/components/layout';
-import { FeedbackSheet, LoginSheet } from '@/components/sheets';
-import { ProfileSheet } from '@/components/profile-sheet';
+import { Globals } from '@/components/globals';
 
 export const metadata: Metadata = {
   title: '앱줍줍',
-  description: '내 앱 올리고, 남의 앱 줍줍. 서로 받아보고 한 줄 피드백을 주고받는 앱 품앗이.',
+  description: '쏟아지는 작은 앱, 먼저 줍줍. 써 보고 댓글 한 줄.',
   manifest: '/manifest.webmanifest',
   appleWebApp: { capable: true, title: '앱줍줍', statusBarStyle: 'default' },
   icons: { icon: '/icon.svg', apple: '/icon.svg' },
@@ -25,11 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AppProvider>
           <main className="frame">{children}</main>
-          <TabBar />
-          <LoginSheet />
-          <FeedbackSheet />
-          <ProfileSheet />
-          <Toast />
+          <Globals />
         </AppProvider>
       </body>
     </html>

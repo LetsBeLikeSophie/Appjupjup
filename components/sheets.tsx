@@ -2,14 +2,43 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp, errKey } from '@/lib/ctx';
 import { sb, SUPABASE_URL, parseLink, type App } from '@/lib/supabase';
-import { useIconColor } from '@/lib/useIconColor';
-import { AppIcon, Chip, Icon, IconButton, PromiseChip, Shots } from './ui';
+import { AppIcon, Icon, IconButton, Shots } from './ui';
 import { Sheet, SheetHeader } from './layout';
 import { AppChips, CountryEditor, parseCountries } from './app-parts';
 
+/** 아이콘 몇 개를 살짝 겹쳐 놓은 그림 (로그인·첫 입장) */
+function IconPile({ apps }: { apps: Pick<App, 'id' | 'icon_url'>[] }) {
+  const tilts = [-10, 5, 9];
+  return (
+    <div className="pile" aria-hidden>
+      {apps.slice(0, 3).map((a, i) => <AppIcon key={a.id} src={a.icon_url} size={i === 1 ? 64 : 54} tilt={tilts[i]} />)}
+    </div>
+  );
+}
+
+/* ---------- 첫 입장: 앱 만들어요 / 구경할래요 ---------- */
+export function WelcomeSheet({ sample, force }: { sample: Pick<App, 'id' | 'icon_url'>[]; force?: boolean }) {
+  const { welcomeOpen, closeWelcome, t } = useApp();
+  if (!welcomeOpen && !force) return null;
+  return (
+    <div className="welcome" role="dialog" aria-modal="true" aria-label={t.appName}>
+      <h1 className="t-title">{t.appName}</h1>
+      <button className="choice" onClick={() => closeWelcome(true)}>
+        <span className="choice-ics"><span className="add-icon">{Icon.plus}</span></span>
+        <b className="t-name">{t.welcomeDev}</b>
+      </button>
+      <button className="choice" onClick={() => closeWelcome(false)}>
+        <IconPile apps={sample} />
+        <b className="t-name">{t.welcomeLook}</b>
+      </button>
+    </div>
+  );
+}
+
 /* ---------- 로그인 ---------- */
-export function LoginSheet() {
-  const { loginOpen, closeLogin, t } = useApp();
+export function LoginSheet({ sample, force }: { sample: Pick<App, 'id' | 'icon_url'>[]; force?: boolean }) {
+  const { loginOpen: open, closeLogin, t } = useApp();
+  const loginOpen = open || !!force;
   const [skipUrl, setSkipUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!loginOpen) return;
@@ -21,88 +50,40 @@ export function LoginSheet() {
 
   return (
     <Sheet open={loginOpen} onClose={closeLogin} label={t.loginTitle}>
-      <SheetHeader title={t.loginTitle} onClose={closeLogin} />
-      <ul className="why">
-        <li><span>{Icon.shake}</span>{t.loginWhy1}</li>
-        <li><span>{Icon.bell}</span>{t.loginWhy2}</li>
-        <li><span>{Icon.plus}</span>{t.loginWhy3}</li>
-      </ul>
+      <IconPile apps={sample} />
+      <h2 className="t-name" style={{ textAlign: 'center' }}>{t.loginTitle}</h2>
       <button className="btn kakao" onClick={() => go('kakao')}>
         <svg aria-hidden width="20" height="20" viewBox="0 0 24 24"><path d="M12 4C7 4 3 7.1 3 11c0 2.5 1.7 4.7 4.2 6l-1 3.6c-.1.3.3.6.6.4l4.2-2.8c.3 0 .7.1 1 .1 5 0 9-3.1 9-7s-4-7.3-9-7.3z" fill="#191919" /></svg>
         {t.loginKakao}
       </button>
-      <button className="btn google" onClick={() => go('google')}>
+      <button className="btn soft" onClick={() => go('google')}>
         <svg aria-hidden width="20" height="20" viewBox="0 0 24 24"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285F4" /><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34A853" /><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.2 1.1 4.6L6.4 14z" fill="#FBBC05" /><path d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.8 9.4 6 12 6z" fill="#EA4335" /></svg>
         {t.loginGoogle}
       </button>
       {skipUrl && <a className="sheet-skip" href={skipUrl} target="_blank" rel="noopener noreferrer" onClick={closeLogin}>{t.loginSkip}</a>}
-      <p className="t-sub">{t.loginNote}</p>
+      <p className="t-sub" style={{ textAlign: 'center' }}>{t.loginNote}</p>
     </Sheet>
   );
 }
 
-/* ---------- 한 줄 피드백 ---------- */
-export function FeedbackSheet() {
-  const { feedbackApp: app, openFeedback, t, toast, session } = useApp();
-  const [text, setText] = useState('');
-  const [err, setErr] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [pumasi, setPumasi] = useState(false);
-  useEffect(() => {
-    setText(''); setErr('');
-    if (!app || !session) return;
-    // 이 앱으로 열린 품앗이가 있는지 (점수 표시용)
-    sb().from('aj_matches').select('id')
-      .or(`and(user_a.eq.${session.user.id},app_a.eq.${app.id},a_result.is.null),and(user_b.eq.${session.user.id},app_b.eq.${app.id},b_result.is.null)`)
-      .gt('due_at', new Date().toISOString()).limit(1)
-      .then(({ data }) => setPumasi(!!data?.length));
-  }, [app, session]);
-  const c = useIconColor(app?.id || 'x', app?.icon_url);
-  if (!app) return null;
-  const send = async () => {
-    setBusy(true); setErr('');
-    const { data, error } = await sb().rpc('aj_leave_feedback', { p_app: app.id, p_body: text });
-    setBusy(false);
-    if (error) {
-      const k = errKey(error);
-      setErr(k === 'badword' ? t.fbBad : k === 'download_required' ? t.needDownload : k === 'already' ? t.already : t.errGeneric);
-      return;
-    }
-    toast(data?.delta ? `${t.nKept} +${data.delta}` : t.fbSent);
-    openFeedback(null);
-  };
-  return (
-    <Sheet open onClose={() => openFeedback(null)} label={t.fbTitle} bg={c.bg}>
-      <SheetHeader title={app.name} sub={app.owner?.nickname} leading={<AppIcon src={app.icon_url} size={48} />} onClose={() => openFeedback(null)} color={c.ink} />
-      <div className="form">
-        <label className="sr" htmlFor="fb">{t.fbTitle}</label>
-        <textarea id="fb" rows={3} maxLength={100} placeholder={t.fbPh} value={text} onChange={(e) => setText(e.target.value)} className={`field ${err ? 'bad' : ''}`} />
-        <div className="row between msg" style={{ color: c.ink }}><span className="err">{err}</span><span>{text.length} / 100</span></div>
-      </div>
-      <div className="row gap12" style={{ color: c.ink }}>
-        {pumasi ? <PromiseChip value="+3" tone="glass" ink={c.ink} /> : <Chip tone="white">{t.free}</Chip>}
-        <span className="t-sub grow" style={{ color: c.ink }}>{pumasi ? t.fbPumasi : t.fbFree}</span>
-        <IconButton tone="primary" label={t.send} disabled={!text.trim() || busy} onClick={send}>{Icon.send}</IconButton>
-      </div>
-    </Sheet>
-  );
-}
+/* ---------- 앱 올리기: 링크만 붙이면 나머지는 자동 ---------- */
+type Meta = {
+  name?: string; icon?: string; screenshots?: string[]; needsManual?: boolean; countries?: string[]; allCountries?: boolean;
+  category?: string | null; releasedAt?: string | null; updatedAt?: string | null;
+};
 
-/* ---------- 앱 올리기 ---------- */
-type Meta = { name?: string; icon?: string; screenshots?: string[]; available?: boolean; needsManual?: boolean; countries?: string[]; allCountries?: boolean; countrySource?: 'store' | 'guess' };
-
-export function UploadSheet({ onDone }: { onDone?: () => void }) {
-  const { uploadOpen, setUploadOpen, t, country, toast } = useApp();
+export function UploadSheet() {
+  const { uploadOpen, setUploadOpen, t, country, toast, refreshMine } = useApp();
   const [url, setUrl] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'bad' | 'dup'>('idle');
   const [meta, setMeta] = useState<Meta>({});
-  const [dupApp, setDupApp] = useState<App | null>(null);
+  const [dupId, setDupId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [world, setWorld] = useState(false);
   const [cc, setCc] = useState(country);
-  const [busy, setBusy] = useState(false);
   const [editCc, setEditCc] = useState(false);
   const [tagline, setTagline] = useState('');
+  const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); setEditCc(false); setTagline(''); } }, [uploadOpen, country]);
@@ -111,15 +92,11 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
     setUrl(u);
     if (timer.current) clearTimeout(timer.current);
     if (!u.trim()) { setState('idle'); return; }
-    const p = parseLink(u);
-    if (!p) { setState('bad'); return; }
+    if (!parseLink(u)) { setState('bad'); return; }
     timer.current = setTimeout(async () => {
       setState('loading');
       const { data: existing } = await sb().rpc('aj_find_app_by_link', { p_url: u.trim() });
-      if (existing) {
-        const { data } = await sb().from('aj_apps').select('id, name, icon_url, screenshots, stage, owner:aj_profiles(nickname, score, avatar_url)').eq('id', existing).single();
-        setDupApp(data as unknown as App); setState('dup'); return;
-      }
+      if (existing) { setDupId(existing as string); setState('dup'); return; }
       try {
         const r = await fetch(`${SUPABASE_URL}/functions/v1/aj-store-meta`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u.trim(), country }),
@@ -139,6 +116,7 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
     const { error } = await sb().rpc('aj_add_app', {
       p_url: url.trim(), p_name: name.trim(), p_icon: meta.icon || null, p_screens: meta.screenshots || [],
       p_countries: countries.length ? countries : [country], p_all_countries: world, p_tagline: tagline.trim() || null,
+      p_category: meta.category || null, p_released: meta.releasedAt || null, p_updated: meta.updatedAt || null,
     });
     setBusy(false);
     if (error) {
@@ -146,97 +124,53 @@ export function UploadSheet({ onDone }: { onDone?: () => void }) {
       toast(k === 'badword' ? t.fbBad : k === 'app_limit' ? t.limit : k === 'duplicate' ? t.dup : k === 'bad_link' ? t.badLink : t.errGeneric);
       return;
     }
-    setUploadOpen(false); onDone?.();
+    setUploadOpen(false); refreshMine();
   };
 
   const p = parseLink(url);
-
-  const status =
-    state === 'loading' ? <span className="msg">{t.loading}</span> :
-    state === 'bad' ? <span className="msg err">{t.badLink}</span> :
-    state === 'dup' ? <span className="msg err">{t.dup}</span> :
-    state === 'ok' && p ? (
-      <span className={`msg ${meta.needsManual ? '' : 'ok'}`}>
-        {meta.needsManual
-          ? (p.stage === 'test' ? t.needsManual : t.loadFail)
-          : `${p.platform === 'android' ? 'Google Play' : 'App Store'} · ${t.okLoaded}`}
-      </span>
-    ) : <span className="msg">{t.pasteHint}</span>;
-
-  const paste = async () => {
-    try { const txt = await navigator.clipboard.readText(); if (txt) check(txt.trim()); } catch { /* 권한 거절 */ }
-  };
+  const paste = async () => { try { const txt = await navigator.clipboard.readText(); if (txt) check(txt.trim()); } catch { /* 권한 거절 */ } };
+  const msg = state === 'bad' ? t.badLink : state === 'dup' ? t.dup : state === 'ok' && meta.needsManual ? t.loadFail : null;
 
   return (
     <Sheet open={uploadOpen} onClose={() => setUploadOpen(false)} label={t.upload} tall>
       <SheetHeader title={t.upload} onClose={() => setUploadOpen(false)} />
-
       <div className="form">
-      <div className={`field-wrap ${state === 'bad' || state === 'dup' ? 'bad' : ''}`}>
-        <label className="sr" htmlFor="applink">{t.pasteLink}</label>
-        <input id="applink" type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
-        {url
-          ? <IconButton label={t.clear} onClick={() => check('')}>{Icon.close}</IconButton>
-          : <button className="btn-sm primary" onClick={paste}>{t.paste}</button>}
-      </div>
-      {status}
+        <div className={`field-wrap ${state === 'bad' || state === 'dup' ? 'bad' : ''}`}>
+          <label className="sr" htmlFor="applink">{t.pasteLink}</label>
+          <input id="applink" type="url" inputMode="url" placeholder={t.pasteLink} value={url} onChange={(e) => check(e.target.value)} />
+          {url
+            ? <IconButton label={t.clear} onClick={() => check('')}>{Icon.close}</IconButton>
+            : <button className="btn-sm primary" onClick={paste}>{t.paste}</button>}
+        </div>
+        {msg && <span className={`msg ${state === 'ok' ? '' : 'err'}`}>{msg}</span>}
       </div>
 
-      {/* 미리보기 자리는 항상 같은 크기로 있어서 시트가 튀지 않아요 */}
-      {state === 'dup' && dupApp ? (
-        <>
-          <div className="preview">
-            <div className="d-head">
-              <AppIcon src={dupApp.icon_url} size={56} />
-              <div className="t-card clamp2 grow">{dupApp.name}</div>
-            </div>
-            {dupApp.screenshots?.length ? <Shots urls={dupApp.screenshots} height={220} /> : null}
-          </div>
-          <div className="row">
-            <a className="btn primary grow" href={`/app/${dupApp.id}`}>{t.dupSee}</a>
-            <button className="btn soft auto" onClick={() => toast(t.dupMineNote)}>{Icon.flag} {t.dupMine}</button>
-          </div>
-        </>
+      {state === 'dup' && dupId ? (
+        <a className="btn soft" href={`/app/${dupId}`}>{t.dupSee}</a>
       ) : state === 'ok' && p ? (
         <>
-          {meta.needsManual && (
-            <input className="field" placeholder={t.appName2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
-          )}
+          {meta.needsManual && <input className="field" placeholder={t.appName2} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />}
           <div className="preview">
-            <div className="d-head">
-              <AppIcon src={meta.icon} size={56} />
-              <div className="col grow">
-                <div className="t-card clamp2">{name || t.appName2}</div>
-                {tagline.trim() && <div className="t-sub clamp1">{tagline}</div>}
-              </div>
-            </div>
-            <AppChips app={{ platform: p.platform, stage: p.stage, all_countries: world, countries: parseCountries(cc) }} tone="white" />
-            {meta.screenshots?.length ? <Shots urls={meta.screenshots} height={220} /> : null}
+            <AppIcon src={meta.icon} size={80} />
+            <b className="t-card">{name || t.appName2}</b>
+            <AppChips app={{ platform: p.platform, stage: p.stage, all_countries: world, countries: parseCountries(cc), category: meta.category || null }} tone="white" />
+            {meta.screenshots?.length ? <Shots urls={meta.screenshots} height={160} /> : null}
+            <button className="btn-sm ghost" onClick={() => setEditCc((v) => !v)}>{t.countries}{Icon.chevRight}</button>
           </div>
+          {editCc && <div className="form"><CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} /></div>}
           <label className="sr" htmlFor="tagline">{t.tagline}</label>
           <input id="tagline" className="field" placeholder={t.tagline} maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
-          <div className="card soft">
-            <div className="row between gap12">
-              <span className="grow t-sub">{meta.countrySource === 'store' ? t.dataFromStore : meta.countrySource === 'guess' ? t.dataGuess : t.countries}</span>
-              <button className="btn-sm white" onClick={() => setEditCc((v) => !v)}>{t.change}</button>
-            </div>
-            {editCc && <CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} />}
-          </div>
           <div className="sheet-foot">
-            <div className="honor">{Icon.shake}<span>{t.honor}</span></div>
             <button className="btn primary" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
           </div>
         </>
       ) : (
         <div className={`preview ${state === 'loading' ? 'pulse' : ''}`} aria-hidden>
-          <div className="d-head">
-            <span className="sk" style={{ width: 56, height: 56, borderRadius: 14, flexShrink: 0 }} />
-            <div className="col grow" style={{ gap: 8 }}><span className="sk sk-line" /><span className="sk sk-line short" /></div>
-          </div>
+          <span className="sk" style={{ width: 80, height: 80, borderRadius: 19 }} />
+          <span className="sk sk-line short" />
           <div className="sk-shots"><span className="sk" /><span className="sk" /><span className="sk" /></div>
         </div>
       )}
     </Sheet>
   );
 }
-
