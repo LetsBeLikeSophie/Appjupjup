@@ -24,7 +24,7 @@ export default function Demo() {
       e.preventDefault();
       if (a.classList.contains('game-btn')) setGame(true);
     }}>
-      <HomeView apps={apps} cat={cat} setCat={setCat} gotIds={got} gameHref="#" hrefOf={() => '#'} />
+      <HomeView apps={apps} cat={cat} setCat={setCat} gotIds={got} gameHref="#" hrefOf={() => "#"} heap />
     </div>
   );
 }

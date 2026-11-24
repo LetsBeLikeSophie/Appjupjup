@@ -72,3 +72,17 @@ export function AppTile({ app, size = 56, star, onClick, href }: { app: Pick<App
   if (onClick) return <button className="tile" onClick={onClick}>{inner}</button>;
   return <span className="tile">{inner}</span>;
 }
+
+/** 한마디 입력: 홈 더미에서 앱이 말풍선으로 떠드는 10글자 */
+export function SayInput({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  const { t } = useApp();
+  const n = [...value].length;
+  return (
+    <span className="say-input">
+      <label className="sr" htmlFor={id}>{t.say}</label>
+      <input id={id} className="field" placeholder={t.say} value={value}
+        onChange={(e) => onChange([...e.target.value].slice(0, 10).join(''))} />
+      <span className={`say-count ${n >= 10 ? 'full' : ''}`}>{n}/10</span>
+    </span>
+  );
+}

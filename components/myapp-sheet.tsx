@@ -4,20 +4,21 @@ import { useApp } from '@/lib/ctx';
 import { sb, type App } from '@/lib/supabase';
 import { AppIcon, Chip, Icon } from './ui';
 import { Sheet, SheetHeader } from './layout';
-import { CountryEditor, parseCountries } from './app-parts';
+import { CountryEditor, SayInput, parseCountries } from './app-parts';
 
 /** 내 앱을 누르면 열리는 수정 창 */
 export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClose: () => void; onChanged: () => void }) {
   const { t, toast } = useApp();
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
+  const [say, setSay] = useState('');
   const [world, setWorld] = useState(false);
   const [cc, setCc] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!app) return;
-    setName(app.name); setTagline(app.tagline || '');
+    setName(app.name); setTagline(app.tagline || ''); setSay(app.say || '');
     setWorld(app.all_countries); setCc((app.countries || []).join(', '));
   }, [app]);
 
@@ -27,7 +28,7 @@ export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClo
     setBusy(true);
     const countries = parseCountries(cc);
     const { error } = await sb().from('aj_apps').update({
-      name: name.trim(), tagline: tagline.trim() || null, all_countries: world, countries: countries.length ? countries : app.countries,
+      name: name.trim(), tagline: tagline.trim() || null, say: say.trim() || null, all_countries: world, countries: countries.length ? countries : app.countries,
     }).eq('id', app.id);
     setBusy(false);
     if (error) { toast(t.errGeneric); return; }
@@ -48,6 +49,7 @@ export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClo
         <input id="ma-name" className="field" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
         <label className="label" htmlFor="ma-tag">{t.tagline}</label>
         <input id="ma-tag" className="field" maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
+        <SayInput id="ma-say" value={say} onChange={setSay} />
         <span className="label">{t.countries}</span>
         <CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} />
       </div>

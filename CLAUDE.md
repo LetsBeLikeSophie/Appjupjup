@@ -17,6 +17,7 @@ Claude Code가 이 저장소를 이어서 작업할 때 읽는 문서예요. 사
 - 받기(주움) → 원하면 **댓글**(누구나, 받기 안 해도 됨). 개발자는 답글·도움돼요
 - **답방**: 내 앱에 댓글/받기가 오면 알림에 그 사람 앱 카드 + "답방" 버튼. 답방으로 열면 "OO님이 다녀갔어요" 띠. 강요 없음
 - 보상은 **온도 하나**(악수 아이콘 + 숫자, 100에서 시작). 받기·댓글·도움돼요 받음으로 오르고 높을수록 더디게. **깎이지 않음**. 이름(앱) 옆에 보여서 "돌려주는 사람"이 보임. 도감·배지는 안 함, 주운 앱은 내 정보에 목록으로만
+- **홈 더미(시험 중, /demo만)**: 아이콘 3겹(한 번에 42개) + 다시 쏟기, 끌어서 옮기기, 맨 위 앱이 **한마디**(`aj_apps.say`, 10자) 말풍선으로 떠듦. 소피 확인 후 진짜 홈에 적용
 - 카테고리·출시일·최근 업데이트일은 `aj-store-meta`가 스토어에서 자동으로. 홈에 카테고리 칩
 
 ## 스택
@@ -41,6 +42,7 @@ Claude Code가 이 저장소를 이어서 작업할 때 읽는 문서예요. 사
 - **숫자는 `app/globals.css` 맨 위 토큰만** (`--gutter` 20, `--gap` 16, `--pad` 16, `--r-card` 20, 글자 `.t-title/.t-name/.t-section/.t-card/.t-body/.t-sub`). 새 v2·v3 덧칠 금지, 해당 규칙을 고칠 것
 - 화면은 데이터(page)와 그리기(`components/*-view.tsx`)를 나눔 → 로그인 없이 가짜 데이터로 확인 가능
 - 공통 부품: `components/ui.tsx`(아이콘·AppIcon·WhoIcon/WhoName·Temp·Chip·IconButton·Shots·GetButton·PickedPop), `components/layout.tsx`(Page·Section·Empty·GuestGate·Sheet·SheetHeader·TabBar), `components/app-parts.tsx`(AppChips·CategoryChip·Marker·AppTile·CountryEditor·tiltOf). 새 화면은 이걸 조립해서 만들기
+- 시험 화면: `/demo?n=120` (운영에도 열림, 가짜 앱으로 꽉 찬 홈·밸런스 게임, 데이터는 `lib/demo.ts`)
 - 가짜 데이터 화면: `/preview?s=home|game|detail|me|alerts|welcome|login|person` (localhost에서만 열림)
 - 데이터 읽기는 `lib/data.ts`, 전역 시트·메뉴는 `components/globals.tsx`
 - **화이트 + 오렌지** (11-23 리디자인): 배경 #F6F6F3, 대표색 `--primary` #F26A1B 하나. 검정 덩어리(검정 카드·메뉴·행) 금지, 진한 색은 화면당 주 버튼 하나. 강조 행·칩은 `--primary-soft` 연한 오렌지
@@ -64,5 +66,5 @@ Claude Code가 이 저장소를 이어서 작업할 때 읽는 문서예요. 사
 ## 작업 방법
 - `npm run build` 통과 확인 후 main에 커밋·푸시하면 배포돼요
 - dev 서버가 꼬이면(청크 404) `.next` 지우고 다시. 오래 걸리면 `npm run build && npx next start -p 3012`로 확인하는 게 빨라요
-- DB 변경은 `supabase/migrations/`에 기록 (01~09 적용됨; 01~04는 이 대화에서 직접 적용해서 파일이 없음 — `list_migrations`로 확인)
+- DB 변경은 `supabase/migrations/`에 기록 (01~10 적용됨; 01~04는 이 대화에서 직접 적용해서 파일이 없음 — `list_migrations`로 확인)
 - 테스트 데이터는 DO 블록 + 마지막에 raise로 롤백하는 방식으로 만들었어요

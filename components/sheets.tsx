@@ -4,7 +4,7 @@ import { useApp, errKey } from '@/lib/ctx';
 import { sb, SUPABASE_URL, parseLink, type App } from '@/lib/supabase';
 import { AppIcon, Icon, IconButton, Shots } from './ui';
 import { Sheet, SheetHeader } from './layout';
-import { AppChips, CountryEditor, parseCountries } from './app-parts';
+import { AppChips, CountryEditor, SayInput, parseCountries } from './app-parts';
 
 /** 아이콘 몇 개를 살짝 겹쳐 놓은 그림 (로그인·첫 입장) */
 function IconPile({ apps }: { apps: Pick<App, 'id' | 'icon_url'>[] }) {
@@ -83,6 +83,7 @@ export function UploadSheet() {
   const [cc, setCc] = useState(country);
   const [editCc, setEditCc] = useState(false);
   const [tagline, setTagline] = useState('');
+  const [say, setSay] = useState('');
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -115,7 +116,7 @@ export function UploadSheet() {
     const countries = parseCountries(cc);
     const { error } = await sb().rpc('aj_add_app', {
       p_url: url.trim(), p_name: name.trim(), p_icon: meta.icon || null, p_screens: meta.screenshots || [],
-      p_countries: countries.length ? countries : [country], p_all_countries: world, p_tagline: tagline.trim() || null,
+      p_countries: countries.length ? countries : [country], p_all_countries: world, p_tagline: tagline.trim() || null, p_say: say.trim() || null,
       p_category: meta.category || null, p_released: meta.releasedAt || null, p_updated: meta.updatedAt || null,
     });
     setBusy(false);
@@ -160,6 +161,7 @@ export function UploadSheet() {
           {editCc && <div className="form"><CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} /></div>}
           <label className="sr" htmlFor="tagline">{t.tagline}</label>
           <input id="tagline" className="field" placeholder={t.tagline} maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
+          <SayInput id="say" value={say} onChange={setSay} />
           <div className="sheet-foot">
             <button className="btn primary" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
           </div>

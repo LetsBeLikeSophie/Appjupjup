@@ -1,5 +1,7 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/ctx';
 import { hash, isFresh, type App } from '@/lib/supabase';
 import { AppIcon, Icon } from './ui';
@@ -50,8 +52,129 @@ export function IconField({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<s
   );
 }
 
+/** 3겹 더미. 한 번에 42개만 쏟고 "다시 쏟기"로 다음 앱들. 끌어서 옮기면 맨 위로, 살짝 누르면 열기 */
+/** 말풍선 한마디: 10글자까지 */
+export const SAY_MAX = 10;
+const sayOf = (a: App) => (a.say || '').trim() || undefined;
+const PER_LAYER = 14, LAYERS = 3, COLS = 3, ROWS = 5;
+export function IconHeap({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string }) {
+  const { t } = useApp();
+  const router = useRouter();
+  const box = useRef<HTMLDivElement>(null);
+  const [wh, setWh] = useState<[number, number] | null>(null);
+  const [deal, setDeal] = useState(0);
+  const moved = useRef(new Map<string, { x: number; y: number; z: number }>());
+  const top = useRef(100);
+  useEffect(() => {
+    const el = box.current!;
+    const measure = () => { if (el.clientWidth > 0) setWh((o) => (o && o[0] === el.clientWidth && o[1] === el.clientHeight ? o : [el.clientWidth, el.clientHeight])); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // 새로 나온 앱이 첫 판 맨 위로
+  const ordered = [...apps.filter(isFresh), ...apps.filter((a) => !isFresh(a))];
+  const per = PER_LAYER * LAYERS;
+  const start = ordered.length > per ? (deal * per) % ordered.length : 0;
+  const batch = ordered.length > per ? [...ordered, ...ordered].slice(start, start + per) : ordered;
+
+  const redeal = () => { moved.current.clear(); top.current = 100; setBubbles([]); setDeal((d) => d + 1); };
+
+  // 앱이 떠드는 말풍선: 맨 위에 보이는 앱 중 아무나, 짧게 떴다 사라짐 (동시에 최대 3개)
+  const [bubbles, setBubbles] = useState<{ k: number; id: string; text: string; x: number; y: number }[]>([]);
+  const seq = useRef(0);
+  useEffect(() => {
+    if (!wh) return;
+    const tick = setInterval(() => {
+      const els = [...box.current!.querySelectorAll<HTMLElement>('.heap-item[data-layer="0"]:not(.lift)')];
+      if (!els.length) return;
+      setBubbles((list) => {
+        if (list.length >= 3) return list;
+        const free = els.filter((e) => !list.some((b) => b.id === e.dataset.id));
+        const el = free[Math.floor(Math.random() * free.length)];
+        const text = el?.dataset.say;
+        if (!el || !text) return list;
+        const size = parseFloat(el.dataset.s!);
+        const x = Math.min(wh[0] - 56, Math.max(56, parseFloat(el.dataset.x!) + size / 2));
+        const k = ++seq.current;
+        setTimeout(() => setBubbles((l) => l.filter((b) => b.k !== k)), 2600);
+        return [...list, { k, id: el.dataset.id!, text, x, y: parseFloat(el.dataset.y!) }];
+      });
+    }, 1100);
+    return () => clearInterval(tick);
+  }, [wh, deal]);
+
+  const down = (e: React.PointerEvent<HTMLElement>, a: App) => {
+    const el = e.currentTarget;
+    el.setPointerCapture(e.pointerId);
+    const sx = e.clientX, sy = e.clientY;
+    const ox = parseFloat(el.dataset.x!), oy = parseFloat(el.dataset.y!);
+    const size = parseFloat(el.dataset.s!);
+    const [W, H] = wh!;
+    let drag = false;
+    const move = (ev: PointerEvent) => {
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (!drag && Math.hypot(dx, dy) < 6) return;
+      if (!drag) { setBubbles((l) => l.filter((b) => b.id !== a.id)); drag = true; el.style.zIndex = String(++top.current); el.classList.add('lift'); el.dataset.layer = '0'; }
+      const x = Math.min(W - size, Math.max(0, ox + dx)), y = Math.min(H - size, Math.max(0, oy + dy));
+      el.style.left = `${x}px`; el.style.top = `${y}px`;
+      el.dataset.x = String(x); el.dataset.y = String(y);
+    };
+    const up = () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      el.classList.remove('lift');
+      if (drag) moved.current.set(a.id, { x: parseFloat(el.dataset.x!), y: parseFloat(el.dataset.y!), z: top.current });
+      else router.push(hrefOf ? hrefOf(a) : `/app/${a.id}`);
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  };
+
+  // 겹마다 3x5 칸에 하나씩 + 흔들기, 겹끼리는 반 칸 어긋나게 → 고르게 덮임
+  const place = (a: App, i: number) => {
+    const layer = Math.floor(i / PER_LAYER);
+    const h = hash(a.id + ':' + deal);
+    const size = (layer === 0 ? 64 : layer === 1 ? 58 : 52) + (h % 13);
+    const order = [...Array(COLS * ROWS).keys()].sort((p, q) => hash(`${deal}:${layer}:${p}`) - hash(`${deal}:${layer}:${q}`));
+    const cell = order[i % PER_LAYER];
+    const cw = wh![0] / COLS, ch = wh![1] / ROWS;
+    const off = layer === 1 ? 0.5 : layer === 2 ? -0.35 : 0;
+    const jx = (((h >>> 6) % 100) / 100 - 0.5) * 0.7, jy = (((h >>> 13) % 100) / 100 - 0.5) * 0.7;
+    const x = Math.min(wh![0] - size, Math.max(0, ((cell % COLS) + 0.5 + off * 0.5 + jx) * cw - size / 2));
+    const y = Math.min(wh![1] - size, Math.max(0, (Math.floor(cell / COLS) + 0.5 + off + jy) * ch - size / 2));
+    return { layer, size, x, y };
+  };
+
+  return (
+    <>
+      <div className="heap" ref={box}>
+        {wh && batch.map((a, i) => {
+          const p = place(a, i);
+          const m = moved.current.get(a.id);
+          const x = m ? m.x : p.x, y = m ? m.y : p.y;
+          return (
+            <span key={`${a.id}:${deal}`} className="heap-item" role="link" aria-label={a.name}
+              data-id={a.id} data-say={sayOf(a)} data-x={x} data-y={y} data-s={p.size} data-layer={m ? 0 : p.layer}
+              style={{ left: x, top: y, zIndex: m ? m.z : (LAYERS - p.layer) * 30 + (i % PER_LAYER), animationDelay: `${(LAYERS - 1 - p.layer) * 120 + (i % PER_LAYER) * 18}ms` }}
+              onPointerDown={(e) => down(e, a)}>
+              <AppIcon src={a.icon_url} size={p.size} tilt={tiltOf(a.id + deal)}><Marker app={a} got={gotIds.has(a.id)} /></AppIcon>
+            </span>
+          );
+        })}
+        {bubbles.map((b) => <span key={b.k} className="bubble" style={{ left: b.x, top: b.y }}>{b.text}</span>)}
+      </div>
+      {ordered.length > 1 && <button className="redeal" aria-label={t.redeal} onClick={redeal}>{Icon.shuffle}</button>}
+    </>
+  );
+}
+
 /** 홈 그리기 (데이터는 page에서) */
-export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; gameHref?: string; hrefOf?: (a: App) => string }) {
+export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean }) {
   const { t } = useApp();
   const list = apps ? filterApps(apps, cat) : null;
   return (
@@ -63,7 +186,9 @@ export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf }: { apps
       {apps && <CatChips apps={apps} cat={cat} setCat={setCat} />}
       {list === null && <Loading />}
       {list?.length === 0 && <div className="loading">{t.empty}</div>}
-      {list && <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} />}
+      {list && list.length > 0 && (heap
+        ? <IconHeap key={cat} apps={list} gotIds={gotIds} hrefOf={hrefOf} />
+        : <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} />)}
     </div>
   );
 }

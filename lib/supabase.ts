@@ -43,6 +43,7 @@ export type App = {
   countries: string[];
   all_countries: boolean;
   tagline: string | null;
+  say?: string | null;
   category: string | null;
   released_at: string | null;
   store_updated_at: string | null;
@@ -74,7 +75,7 @@ export type Notice = {
 
 export const PERSON = 'id, nickname, tag, score, apps:aj_apps(id, name, icon_url, is_primary)';
 export const APP_FIELDS =
-  `id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, tagline, category, released_at, store_updated_at, created_at, owner:aj_profiles(${PERSON})`;
+  `id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, tagline, say, category, released_at, store_updated_at, created_at, owner:aj_profiles(${PERSON})`;
 export const COMMENT_FIELDS = `id, app_id, author_id, body, helpful_count, created_at, author:aj_profiles(${PERSON})`;
 
 /** 대표 앱 (없으면 첫 앱) */

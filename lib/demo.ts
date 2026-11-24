@@ -19,7 +19,7 @@ const KINDS: [string, string[], string[]][] = [
   ['tools', ['🔦', '📐', '🔋'], ['손전등', '줄자', '배터리']],
 ];
 const SUFFIX = ['', '로그', '일기', '노트', '타임', '친구', '메이트', '플러스', '하루', '톡'];
-const LINES = ['하루 1분이면 끝', '귀찮은 걸 대신', '친구랑 같이', '광고 없이 깔끔', '한 손으로 쓱', '오늘 기록 남기기'];
+const LINES = ['나 써봐요!', '광고 없어요', '오늘 업뎃함 ✨', '3초면 끝!', '심심하면 나', '물 마셨어?', '하루 1분이면 끝', '친구랑 같이', '한 손으로 쓱', '나 새로 나옴'];
 
 /** 시드로 고정된 가짜 앱 n개 */
 export function fakeApps(n: number): App[] {
@@ -36,7 +36,7 @@ export function fakeApps(n: number): App[] {
       url: 'https://play.google.com/store/apps/details?id=dev.itssophie.demo',
       name, icon_url: fakeIcon(bg, emojis[i % emojis.length]), screenshots: [fakeShot(bg), fakeShot(bg + 'CC'), fakeShot(bg)],
       is_primary: true, feedback_count: (i * 13) % 7 === 0 ? (i % 9) + 1 : 0, countries: ['KR'], all_countries: true,
-      tagline: LINES[i % LINES.length], category, released_at: i % 11 === 0 ? iso(3) : iso(200), store_updated_at: iso(5),
+      tagline: LINES[i % LINES.length], say: LINES[i % LINES.length], category, released_at: i % 11 === 0 ? iso(3) : iso(200), store_updated_at: iso(5),
       created_at: iso(30), owner,
     } as App);
   }
