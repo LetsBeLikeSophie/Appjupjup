@@ -101,10 +101,11 @@ const tester = (i: number): Person => ({ id: `t${i}`, nickname: '줍줍이', tag
 const devOf = (i: number, a: App): Person => ({ ...tester(i), apps: [{ id: a.id, name: a.name, icon_url: a.icon_url, is_primary: true }] });
 const filmDev = devOf(9, APPS[3]);
 export const TEST_POINTS = 4;
-export const RECRUIT: Recruit[] = [0, 1, 2, 3, 4, 5].map((i) => ({ app: APPS[i], joined: [3, 9, 11, 5, 1, 7][i], need: 12 }));
+// 14일·12명·캡처는 구글 플레이 조건이라 안드로이드 앱만
+export const RECRUIT: Recruit[] = [1, 2, 5, 11].map((i, k) => ({ app: APPS[i], joined: [3, 9, 5, 7][k], need: 12 }));
 export const JOINED: Joined[] = [
   { app: APPS[8], day: 7, done: [true, false, false] },
-  { app: APPS[6], day: 3, done: [true, false, false] },
+  { app: APPS[4], day: 3, done: [true, false, false] },
   { app: APPS[7], day: 14, done: [true, true, false] },
 ];
 export const MY_TEST: MyTest = {
@@ -129,5 +130,5 @@ export const TEST: TestData = { points: TEST_POINTS, recruit: RECRUIT, joined: J
 /** 홈 가짜 앱 중 테스터 모집 중인 것 (5개 중 1개) */
 export const recruitOf = (a: App): Recruit | null => {
   const i = Number(a.id.replace(/\D/g, ''));
-  return i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12 } : null;
+  return a.platform === 'android' && i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12 } : null;
 };

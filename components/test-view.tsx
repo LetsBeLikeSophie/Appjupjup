@@ -21,9 +21,11 @@ export function Ticket({ n, plus, tone }: { n: number | string; plus?: boolean; 
   return <span className={`ticket ${tone || ''}`}>{Icon.ticket}{plus ? '+' : ''}{n}</span>;
 }
 
+/** 사람 n/need 막대 (테스터 수) */
 export function Meter({ n, need }: { n: number; need: number }) {
   return (
     <div className="meter">
+      <span className="meter-who">{Icon.user}</span>
       <span className="meter-bar"><i style={{ width: `${Math.min(100, (n / need) * 100)}%` }} /></span>
       <span className="t-sub">{n}/{need}</span>
     </div>
@@ -49,7 +51,6 @@ function Slot({ state, src, label }: { state: 'done' | 'open' | 'locked'; src?: 
 function JoinedCard({ j }: { j: Joined }) {
   const { t } = useApp();
   const all = j.done.every(Boolean);
-  const today = CHECKS.findIndex((c, i) => !j.done[i] && c <= j.day);
   return (
     <div className="card">
       <div className="row gap12">
@@ -67,9 +68,7 @@ function JoinedCard({ j }: { j: Joined }) {
           <span className="t-sub">{t.points}</span>
         </div>
       </div>
-      {today >= 0 && (
-        <div className="field-wrap"><input placeholder={t.feedbackPh} maxLength={60} /><button className="icon-btn" aria-label="send">{Icon.send}</button></div>
-      )}
+      <div className="field-wrap"><input placeholder={t.feedbackPh} maxLength={60} /><button className="icon-btn" aria-label="send">{Icon.send}</button></div>
     </div>
   );
 }
@@ -138,16 +137,13 @@ function RecruitSheet({ open, list, joinedCount, onClose }: { open: boolean; lis
 }
 
 function TesterRow({ x }: { x: Tester }) {
-  const { t } = useApp();
-  const miss = CHECKS.some((c, i) => c < x.day && !x.done[i]);
   return (
     <div className="tester">
       <WhoIcon who={x.who} size={34} />
       <span className="t-body ellipsis tester-name"><WhoName who={x.who} /></span>
       <span className="mini-slots">
-        {CHECKS.map((c, i) => <i key={c} className={x.done[i] ? 'ok' : c < x.day ? 'miss' : ''} />)}
+        {CHECKS.map((c, i) => <i key={c} className={x.done[i] ? 'ok' : c < x.day ? 'miss' : ''}>{!x.done[i] && c < x.day && Icon.close}</i>)}
       </span>
-      {miss && <button className="btn-sm">{t.notDone}</button>}
     </div>
   );
 }
@@ -200,7 +196,7 @@ export function TestSections({ d }: { d: TestData }) {
       <Section title={t.joining} aside={<span className="t-sub">{d.joined.length}/{MAX_JOIN}</span>}>
         {d.joined.map((j) => <JoinedCard key={j.app.id} j={j} />)}
         <button className="list-row find-row" onClick={() => setFind(true)}>
-          <span className="find-icon">{Icon.flask}</span>
+          <span className="find-icon">{Icon.plus}</span>
           <span className="t-card grow">{t.findTest}</span>
           <span className="t-sub">{d.recruit.length}</span>
           <span className="chev">{Icon.chevRight}</span>

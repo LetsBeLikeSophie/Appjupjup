@@ -368,7 +368,11 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .mini-slots { display: flex; gap: 4px; flex-shrink: 0; }
 .mini-slots i { width: 14px; height: 18px; border-radius: 4px; background: var(--soft); }
 .mini-slots i.ok { background: var(--ink); }
-.mini-slots i.miss { background: var(--accent); }
+.mini-slots i { display: inline-flex; align-items: center; justify-content: center; }
+.mini-slots i.miss { background: var(--bad); color: #fff; }
+.mini-slots i svg { width: 10px; height: 10px; }
+.meter-who { display: inline-flex; color: var(--sub); flex-shrink: 0; }
+.meter-who svg { width: 14px; height: 14px; }
 
 /* 시험 테마(/demo만): 회색 + 주황 하나. 확정되면 :root 토큰으로 옮기기 */
 :root:has(.demo-mark) { --primary-soft: #ECECE8; --primary-ink: var(--ink); }
