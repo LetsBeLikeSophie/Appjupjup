@@ -10,7 +10,7 @@
   --bg: #F6F6F3; --surface: #FFFFFF; --soft: #F1F1EE; --skel: #E9E9E4;
   --ink: #1F2024; --text2: #3B3E44; --sub: #6B6F77; --line: #ECECE7;
   /* 대표색: 오렌지 한 가지. 진한 색은 화면당 버튼 하나에만 */
-  --primary: #F26A1B; --primary-press: #DA5C12; --primary-soft: #FFF0E6; --primary-ink: #B84A0A;
+  --primary: #F26A1B; --primary-press: #DA5C12; --primary-soft: #FFF0E6; --primary-ink: #B84A0A; --on-primary: #fff;
   --accent: var(--primary); --ok: #0B7A45; --bad: #C0262D; --star: #FAB005;
 
   --gutter: 20px; --gap: 16px; --gap-list: 8px; --pad: 16px;
@@ -106,7 +106,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 
 /* ---------- 버튼 ---------- */
 .btn { height: var(--btn-h); border: 0; border-radius: 28px; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px; width: 100%; }
-.btn.primary { background: var(--primary); color: #fff; }
+.btn.primary { background: var(--primary); color: var(--on-primary); }
 .btn.primary:active { background: var(--primary-press); }
 .btn.soft { background: var(--soft); color: var(--ink); }
 .btn.kakao { background: #FEE500; color: #191919; }
@@ -120,7 +120,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .btn-sm:disabled { opacity: .45; }
 .icon-btn { width: var(--icon-btn); height: var(--icon-btn); border: 0; border-radius: 20px; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink); }
 .icon-btn.white { background: var(--surface); }
-.icon-btn.primary { width: 44px; height: 44px; border-radius: 22px; background: var(--primary); color: #fff; }
+.icon-btn.primary { width: 44px; height: 44px; border-radius: 22px; background: var(--primary); color: var(--on-primary); }
 .icon-btn:disabled { opacity: .4; }
 .mini { height: 28px; padding: 0 8px; border: 0; border-radius: 14px; background: var(--soft); display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sub); font-weight: 700; color: var(--text2); flex-shrink: 0; }
 .mini.on { background: var(--primary-soft); color: var(--primary-ink); }
@@ -129,9 +129,9 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 
 /* ---------- 입력 ---------- */
 .field { width: 100%; height: var(--field-h); border-radius: var(--r-field); border: 2px solid transparent; background: var(--soft); padding: 0 16px; outline: none; }
-.field:focus { border-color: var(--primary); background: var(--surface); }
+.field:focus { border-color: var(--accent); background: var(--surface); }
 .field-wrap { display: flex; align-items: center; gap: 6px; height: var(--field-h); border-radius: var(--r-field); background: var(--soft); border: 2px solid transparent; padding: 0 6px 0 16px; }
-.field-wrap:focus-within { border-color: var(--primary); background: var(--surface); }
+.field-wrap:focus-within { border-color: var(--accent); background: var(--surface); }
 .field-wrap.bad { border-color: var(--bad); }
 .field-wrap input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; outline: none; }
 .field-wrap .icon-btn { width: 36px; height: 36px; background: rgba(0,0,0,.08); }
@@ -156,11 +156,11 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .temp { display: inline-flex; align-items: center; gap: 3px; font-size: var(--fs-sub); font-weight: 900; color: var(--primary-ink); flex-shrink: 0; }
 .temp svg { width: 15px; height: 15px; }
 .temp.big { font-size: 40px; letter-spacing: -1.5px; gap: 8px; color: var(--ink); line-height: 1; }
-.temp.big svg { width: 36px; height: 36px; color: var(--primary); }
+.temp.big svg { width: 36px; height: 36px; color: var(--primary-ink); }
 .dev-tag { flex-shrink: 0; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--primary-soft); color: var(--primary-ink); font-size: 10px; font-weight: 900; display: inline-flex; align-items: center; }
 
 /* ---------- 아이콘 표시 (하나만) ---------- */
-.mk-fresh { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; border-radius: 8px; background: var(--primary); border: 3px solid var(--bg); }
+.mk-fresh { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; border-radius: 8px; background: var(--accent); border: 3px solid var(--bg); }
 .mk-got, .mk-count, .mk-star { position: absolute; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.14); }
 .mk-got { bottom: -6px; right: -6px; width: 22px; height: 22px; border-radius: 11px; color: var(--primary-ink); }
 .mk-count { top: -8px; left: -8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 11px; font-weight: 700; color: var(--text2); }
@@ -189,11 +189,11 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .say-input { position: relative; display: block; }
 .say-input .field { padding-right: 52px; }
 .say-count { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: var(--fs-sub); color: var(--sub); font-weight: 700; }
-.say-count.full { color: var(--primary); }
+.say-count.full { color: var(--bad); }
 .bubble { position: absolute; z-index: 9999; pointer-events: none; transform: translate(-50%, calc(-100% - 6px)); background: #fff; color: var(--ink); font-size: var(--fs-sub); font-weight: 800; white-space: nowrap; padding: 6px 10px; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.14); animation: chat 2.6s both; }
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 2px; }
 @keyframes chat { 0% { opacity: 0; scale: .6; } 10% { opacity: 1; scale: 1.06; } 16% { scale: 1; } 85% { opacity: 1; } 100% { opacity: 0; translate: 0 -8px; } }
-.redeal { position: fixed; right: var(--gutter); bottom: calc(96px + env(safe-area-inset-bottom)); width: 52px; height: 52px; border-radius: 26px; background: #fff; color: var(--primary); box-shadow: 0 6px 20px rgba(0,0,0,.12); display: flex; align-items: center; justify-content: center; z-index: 500; }
+.redeal { position: fixed; right: var(--gutter); bottom: calc(96px + env(safe-area-inset-bottom)); width: 52px; height: 52px; border-radius: 26px; background: #fff; color: var(--primary-ink); box-shadow: 0 6px 20px rgba(0,0,0,.12); display: flex; align-items: center; justify-content: center; z-index: 500; }
 .pick-name { max-width: 104px; font-size: var(--fs-sub); font-weight: 700; color: var(--text2); text-align: center; }
 
 /* ---------- 똑바로 놓인 앱 (내 정보·사람 시트) ---------- */
@@ -212,14 +212,14 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .game-top { display: flex; align-items: center; justify-content: space-between; }
 .dots { display: flex; gap: 6px; }
 .dots i { width: 22px; height: 6px; border-radius: 3px; background: #DEDED8; }
-.dots i.on { background: var(--primary); }
+.dots i.on { background: var(--accent); }
 .vs { flex: 1; position: relative; display: flex; flex-direction: column; gap: 12px; animation: up .25s ease; }
 .vs-card { flex: 1; min-height: 0; border: 0; border-radius: 28px; background: var(--surface); padding: var(--pad); display: flex; align-items: center; gap: 12px; text-align: left; }
-.vs-card:active { box-shadow: inset 0 0 0 3px var(--primary); }
+.vs-card:active { box-shadow: inset 0 0 0 3px var(--accent); }
 .vs-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .vs-shots { display: flex; gap: 6px; flex-shrink: 0; }
 .vs-shots img { height: 150px; width: auto; max-width: 72px; object-fit: cover; border-radius: 10px; background: var(--soft); }
-.vs-mid { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 26px; background: var(--primary); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 5px solid var(--bg); pointer-events: none; }
+.vs-mid { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 26px; background: var(--primary); color: var(--on-primary); font-weight: 900; display: flex; align-items: center; justify-content: center; border: 5px solid var(--bg); pointer-events: none; }
 .champ { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding-top: 40px; animation: up .3s ease; }
 .crown { position: absolute; top: -16px; right: -16px; width: 44px; height: 44px; border-radius: 22px; background: var(--surface); color: var(--star); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
 .champ-foot { margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 8px; }
@@ -247,14 +247,14 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .quick .chip { border: 0; height: 30px; font-size: 13px; }
 .cbar-row { display: flex; align-items: center; gap: 8px; }
 .cbar-in { flex: 1; min-width: 0; height: 44px; border-radius: 22px; border: 2px solid transparent; background: var(--soft); padding: 0 16px; outline: none; }
-.cbar-in.on { border-color: var(--primary); background: var(--surface); }
-.get-btn { flex-shrink: 0; height: 44px; padding: 0 18px; border-radius: 22px; background: var(--primary); color: #fff; font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.cbar-in.on { border-color: var(--accent); background: var(--surface); }
+.get-btn { flex-shrink: 0; height: 44px; padding: 0 18px; border-radius: 22px; background: var(--primary); color: var(--on-primary); font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
 .get-btn.done { background: var(--primary-soft); color: var(--primary-ink); }
 
 /* ---------- 받기 누른 순간 ---------- */
 .picked { position: fixed; inset: 0; z-index: 55; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background: rgba(246,246,243,.94); animation: pop .3s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
 .picked .appicon-wrap { box-shadow: 0 16px 40px rgba(0,0,0,.12); border-radius: 28px; }
-.picked-check { position: absolute; bottom: -10px; right: -14px; width: 40px; height: 40px; border-radius: 20px; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; border: 4px solid var(--bg); }
+.picked-check { position: absolute; bottom: -10px; right: -14px; width: 40px; height: 40px; border-radius: 20px; background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center; border: 4px solid var(--bg); }
 .picked-check svg { width: 18px; height: 18px; }
 @keyframes pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 
@@ -264,14 +264,14 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .alert-main { display: flex; align-items: center; gap: 12px; min-height: 48px; }
 .visit { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 16px; padding: 10px; }
 .alert:not(.primary) .visit { background: var(--soft); }
-.visit-btn { flex-shrink: 0; height: var(--btn-sm-h); padding: 0 14px; border-radius: 18px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.visit-btn { flex-shrink: 0; height: var(--btn-sm-h); padding: 0 14px; border-radius: 18px; background: var(--primary); color: var(--on-primary); font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
 .alert:not(.primary) .visit-btn { background: var(--primary-soft); color: var(--primary-ink); }
 
 /* ---------- 하단 메뉴 ---------- */
 .tabwrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; padding-bottom: calc(16px + env(safe-area-inset-bottom)); pointer-events: none; }
 .tabbar { pointer-events: auto; height: 64px; padding: 6px; border-radius: 32px; background: var(--surface); display: flex; gap: 6px; box-shadow: 0 0 0 1px var(--line), 0 8px 24px rgba(0,0,0,.08); }
 .tabbar a { position: relative; width: 64px; height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center; color: #A2A6AD; }
-.tabbar a.on { background: var(--primary-soft); color: var(--primary); }
+.tabbar a.on { background: var(--primary-soft); color: var(--primary-ink); }
 .tabbar .dot { position: absolute; top: 10px; right: 14px; width: 8px; height: 8px; border-radius: 4px; background: var(--accent); }
 
 /* ---------- 시트 ---------- */
@@ -310,3 +310,35 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .dev-seg { flex-shrink: 0; display: flex; gap: 2px; padding: 2px; border-radius: 17px; background: var(--surface); }
 .dev-seg button { width: 36px; height: 30px; border: 0; border-radius: 15px; background: none; color: var(--sub); display: flex; align-items: center; justify-content: center; }
 .dev-seg button.on { background: var(--primary-soft); color: var(--primary-ink); }
+
+/* 테스터 교환 (/demo/test) */
+.cat-row.flush { padding: 0; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter); }
+.points { display: inline-flex; align-items: center; gap: 4px; height: var(--btn-sm-h); padding: 0 12px; border-radius: 18px; background: var(--surface); font-size: var(--fs-card); font-weight: 900; }
+.col1 { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.meter { display: flex; align-items: center; gap: 8px; }
+.meter-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; }
+.meter-bar i { display: block; height: 100%; border-radius: 3px; background: var(--ink); }
+.days { display: flex; gap: 3px; }
+.days i { flex: 1; height: 6px; border-radius: 3px; background: var(--soft); }
+.days i.on { background: #C9CBCF; }
+.days i.ck { background: var(--primary-soft); box-shadow: inset 0 0 0 1.5px var(--sub); }
+.days i.ck.on:not(.ok) { background: var(--accent); box-shadow: none; }
+.days i.ck.ok { background: var(--ink); box-shadow: none; }
+.day-badge { flex-shrink: 0; font-size: var(--fs-card); font-weight: 900; }
+.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.slot-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.slot { position: relative; width: 100%; aspect-ratio: 1; border: 0; border-radius: 14px; background: var(--soft); color: var(--sub); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; }
+.slot img { width: 100%; height: 100%; object-fit: cover; }
+.slot.open { background: var(--primary); color: var(--on-primary); }
+.slot.locked { opacity: .6; }
+.slot-ok { position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; border-radius: 11px; background: var(--surface); color: var(--ink); display: flex; align-items: center; justify-content: center; }
+.testers { display: flex; flex-direction: column; gap: 10px; }
+.tester { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.tester-name { flex: 1; font-weight: 700; }
+.mini-slots { display: flex; gap: 4px; flex-shrink: 0; }
+.mini-slots i { width: 14px; height: 18px; border-radius: 4px; background: var(--soft); }
+.mini-slots i.ok { background: var(--ink); }
+.mini-slots i.miss { background: var(--accent); }
+
+/* 시험 테마(/demo만): 회색 + 주황 하나. 확정되면 :root 토큰으로 옮기기 */
+:root:has(.demo-mark) { --primary-soft: #ECECE8; --primary-ink: var(--ink); }

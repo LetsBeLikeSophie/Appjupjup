@@ -24,6 +24,10 @@ export const Icon = {
   swords: svg(<><path d="M14.5 17.5 3 6V3h3l11.5 11.5" /><path d="m13 19 6-6" /><path d="m16 16 4 4" /><path d="m19 21 2-2" /><path d="M14.5 6.5 18 3h3v3l-3.5 3.5" /><path d="m5 14 4 4" /><path d="m7 17-3 3" /><path d="m3 19 2 2" /></>, 20, 2),
   reply: svg(<><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></>, 16, 2.4),
   shuffle: svg(<><path d="M3 7h3.5c3 0 4 2 5.5 5s2.5 5 5.5 5H21" /><path d="m18 14 3 3-3 3" /><path d="M3 17h3.5c1.4 0 2.3-.4 3-1.2" /><path d="M14.5 8.2c.7-.8 1.6-1.2 3-1.2H21" /><path d="m18 4 3 3-3 3" /></>, 22, 2.2),
+  flask: svg(<><path d="M9 3h6" /><path d="M10 3v6l-5.2 9a2 2 0 0 0 1.7 3h11a2 2 0 0 0 1.7-3L14 9V3" /><path d="M7.5 15h9" /></>, 24),
+  ticket: svg(<><path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z" /><path d="M14 8v1.5M14 11.3v1.4M14 14.5V16" /></>, 16, 2.2),
+  camera: svg(<><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></>, 22, 2),
+  lock: svg(<><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></>, 18, 2.2),
   crown: svg(<><path d="m2 7 4.5 4L12 4l5.5 7L22 7l-2 12H4z" /></>, 22, 2),
   star: <svg aria-hidden width="14" height="14" viewBox="0 0 24 24"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="#FAB005" /></svg>,
   /** 온도(우리 화폐): 악수 */

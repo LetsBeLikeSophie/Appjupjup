@@ -83,16 +83,26 @@ export function IconField({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<s
 export const SAY_MAX = 10;
 const sayOf = (a: App) => (a.say || '').trim() || undefined;
 const PER_LAYER = 14, LAYERS = 3, COLS = 3, ROWS = 5;
-export function IconHeap({ apps, gotIds, hrefOf, onPick }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; onPick?: (a: App) => void }) {
+export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; onPick?: (a: App) => void; saveKey?: string }) {
   const { t } = useApp();
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
   const [wh, setWh] = useState<[number, number] | null>(null);
   const [deal, setDeal] = useState(0);
+  // 옮긴 자리는 화면 비율(0~1)로 기억 → 폰에 저장, 다시 들어와도 그대로 (다시 쏟기 전까지)
   const moved = useRef(new Map<string, { x: number; y: number; z: number }>());
   const top = useRef(100);
+  const store = saveKey ? `aj-heap:${saveKey}` : null;
+  const save = (d: number) => {
+    if (!store) return;
+    try { localStorage.setItem(store, JSON.stringify({ deal: d, top: top.current, moved: [...moved.current] })); } catch {}
+  };
   useEffect(() => {
     const el = box.current!;
+    if (store) try {
+      const v = JSON.parse(localStorage.getItem(store) || 'null');
+      if (v) { moved.current = new Map(v.moved); top.current = v.top || 100; setDeal(v.deal || 0); }
+    } catch {}
     const measure = () => { if (el.clientWidth > 0) setWh((o) => (o && o[0] === el.clientWidth && o[1] === el.clientHeight ? o : [el.clientWidth, el.clientHeight])); };
     measure();
     const ro = new ResizeObserver(measure);
@@ -106,7 +116,7 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick }: { apps: App[]; gotIds
   const start = ordered.length > per ? (deal * per) % ordered.length : 0;
   const batch = ordered.length > per ? [...ordered, ...ordered].slice(start, start + per) : ordered;
 
-  const redeal = () => { moved.current.clear(); top.current = 100; setBubbles([]); setDeal((d) => d + 1); };
+  const redeal = () => { moved.current.clear(); top.current = 100; setBubbles([]); save(deal + 1); setDeal(deal + 1); };
 
   // 앱이 떠드는 말풍선: 맨 위에 보이는 앱 중 아무나, 짧게 떴다 사라짐 (동시에 최대 3개)
   const [bubbles, setBubbles] = useState<{ k: number; id: string; text: string; x: number; y: number }[]>([]);
@@ -153,7 +163,7 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick }: { apps: App[]; gotIds
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
       el.classList.remove('lift');
-      if (drag) moved.current.set(a.id, { x: parseFloat(el.dataset.x!), y: parseFloat(el.dataset.y!), z: top.current });
+      if (drag) { moved.current.set(a.id, { x: parseFloat(el.dataset.x!) / W, y: parseFloat(el.dataset.y!) / H, z: top.current }); save(deal); }
       else if (onPick) onPick(a);
       else router.push(hrefOf ? hrefOf(a) : `/app/${a.id}`);
     };
@@ -183,7 +193,7 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick }: { apps: App[]; gotIds
         {wh && batch.map((a, i) => {
           const p = place(a, i);
           const m = moved.current.get(a.id);
-          const x = m ? m.x : p.x, y = m ? m.y : p.y;
+          const x = m ? Math.min(wh[0] - p.size, m.x * wh[0]) : p.x, y = m ? Math.min(wh[1] - p.size, m.y * wh[1]) : p.y;
           return (
             <span key={`${a.id}:${deal}`} className="heap-item" role="link" aria-label={a.name}
               data-id={a.id} data-say={sayOf(a)} data-x={x} data-y={y} data-s={p.size} data-layer={m ? 0 : p.layer}
@@ -215,7 +225,7 @@ export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, on
       {list === null && <Loading />}
       {list?.length === 0 && <div className="loading">{t.empty}</div>}
       {list && list.length > 0 && (heap
-        ? <IconHeap key={`${device}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} />
+        ? <IconHeap key={`${device}:${cat}`} saveKey={`${device ?? 'all'}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} />
         : <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} />)}
     </div>
   );

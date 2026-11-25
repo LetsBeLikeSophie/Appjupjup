@@ -78,7 +78,14 @@ export function TabBar() {
   const { unread, t } = useApp();
   // 앱 상세·밸런스 게임은 아래에 자기 버튼이 있어서 메뉴를 숨겨요
   if (path.startsWith('/app/') || path.startsWith('/game')) return null;
-  const items = [
+  // /demo 안에서는 시험용 메뉴 4칸 (테스트 칸은 아직 시험 중)
+  const demo = path.startsWith('/demo');
+  const items = demo ? [
+    { href: '/demo', icon: Icon.home, label: t.appName },
+    { href: '/demo/test', icon: Icon.flask, label: t.test },
+    { href: '/demo/alerts', icon: Icon.bell, label: t.alerts, dot: true },
+    { href: '/demo/me', icon: Icon.user, label: t.me },
+  ] : [
     { href: '/', icon: Icon.home, label: t.appName },
     { href: '/alerts', icon: Icon.bell, label: t.alerts, dot: unread > 0 },
     { href: '/me', icon: Icon.user, label: t.me },
@@ -87,7 +94,7 @@ export function TabBar() {
     <div className="tabwrap">
       <nav className="tabbar" aria-label="menu">
         {items.map((i) => {
-          const on = i.href === '/' ? path === '/' : path.startsWith(i.href);
+          const on = i.href === '/' || i.href === '/demo' ? path === i.href : path.startsWith(i.href);
           return (
             <Link key={i.href} href={i.href} aria-label={i.label} aria-current={on ? 'page' : undefined} className={on ? 'on' : ''}>
               {i.icon}

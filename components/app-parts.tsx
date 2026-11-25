@@ -27,13 +27,12 @@ export function CountryChip({ all, countries, tone }: { all: boolean; countries:
   return <Chip tone={tone}>{flag(countries[0])}{countries.length > 1 ? ` +${countries.length - 1}` : ''}</Chip>;
 }
 
-/** 앱 칩 묶음: 카테고리 · 기기 · 나라 */
+/** 앱 칩 묶음: 카테고리 · 기기 (나라는 거르기에만 씀, 표시 안 함) */
 export function AppChips({ app, tone }: { app: Pick<App, 'platform' | 'stage' | 'all_countries' | 'countries' | 'category'>; tone?: ChipTone }) {
   return (
     <div className="chips">
       <CategoryChip cat={app.category} tone={tone} />
       <PlatformChip platform={app.platform} stage={app.stage} tone={tone} />
-      <CountryChip all={app.all_countries} countries={app.countries || []} tone={tone} />
     </div>
   );
 }
