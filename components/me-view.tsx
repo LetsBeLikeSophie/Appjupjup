@@ -4,7 +4,7 @@ import { flag, countryName, type App, type Profile } from '@/lib/supabase';
 import { Icon, IconButton, Temp, WhoIcon, WhoName } from './ui';
 import { Page, Section, Sheet, SheetHeader } from './layout';
 import { AppTile } from './app-parts';
-import { PointsCard, TestSections, type TestData } from './test-view';
+import { APP_COST, PointsCard, TestSections, Ticket, type TestData } from './test-view';
 
 type Lite = Pick<App, 'id' | 'name' | 'icon_url'>;
 
@@ -22,18 +22,19 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
         {apps.map((a) => <AppTile key={a.id} app={a} size={64} star={a.is_primary && apps.length > 1} onClick={() => onEditApp(a)} />)}
         {apps.length < 3 && (
           <button className="tile" onClick={onUpload} aria-label={t.upload}>
-            <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted">{t.publish}</span>
+            <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted">{test && apps.length > 0 ? <Ticket n={APP_COST} /> : t.publish}</span>
           </button>
         )}
       </div>
 
-      <div className={test ? 'stats' : ''}>
-        <div className={`temp-card ${test ? 'stat' : ''}`}>
-          <Temp value={profile.score} big />
-          <span className="t-sub">{t.gotN} {gotApps.length} · {t.commentN} {commentCount}</span>
-        </div>
-        {test && <PointsCard points={test.points} />}
-      </div>
+      {test
+        ? <PointsCard points={test.points} sub={`${t.gotN} ${gotApps.length} · ${t.commentN} ${commentCount}`} />
+        : (
+          <div className="temp-card">
+            <Temp value={profile.score} big />
+            <span className="t-sub">{t.gotN} {gotApps.length} · {t.commentN} {commentCount}</span>
+          </div>
+        )}
 
       {test && <TestSections d={test} />}
 

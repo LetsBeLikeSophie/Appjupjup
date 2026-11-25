@@ -208,7 +208,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .tile { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; padding: 0; background: none; flex-shrink: 0; }
 .tile-name { font-size: var(--fs-sub); font-weight: var(--fw-mid); color: var(--text2); text-align: center; }
 .add-icon { width: 64px; height: 64px; border-radius: 15px; background: var(--surface); color: #A2A6AD; display: inline-flex; align-items: center; justify-content: center; }
-.temp-card { background: var(--surface); border-radius: var(--r-card); padding: var(--pad); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.temp-card { width: 100%; border: 0; text-align: left; background: var(--surface); border-radius: var(--r-card); padding: var(--pad); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .person-guest { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 12px; }
 
 /* ---------- 밸런스 게임 ---------- */
@@ -316,11 +316,18 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .dev-seg button.on { background: var(--primary-soft); color: var(--primary-ink); }
 
 /* 테스터 교환 (/demo/test) */
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-list); }
-.temp-card.stat { flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; border: 0; text-align: left; }
 .ticket { display: inline-flex; align-items: center; gap: 2px; font-size: var(--fs-sub); font-weight: var(--fw-strong); color: var(--ink); flex-shrink: 0; }
 .ticket svg { width: 14px; height: 14px; }
 .ticket.on { color: var(--primary-ink); }
+.ticket.big { font-size: var(--fs-hero); letter-spacing: -1.5px; gap: 8px; line-height: 1; }
+.ticket.big svg { width: 36px; height: 36px; }
+.reward-tag { flex-shrink: 0; height: var(--chip-h); padding: 0 8px; border-radius: 13px; background: var(--soft); display: inline-flex; align-items: center; }
+.reward-tag.bonus, .slot.reward.bonus { background: var(--primary); }
+.reward-tag.bonus .ticket, .slot.reward.bonus .ticket { color: var(--on-primary); }
+.boost { display: inline-flex; color: var(--primary); flex-shrink: 0; }
+.how-os { display: inline-flex; color: var(--sub); width: 18px; }
+.mine-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: 0; padding: 0; background: none; text-align: left; }
+:root:has(.demo-mark) .temp { display: none; }
 .mk-test { position: absolute; top: -7px; left: -7px; width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.14); }
 .mk-test svg { width: 13px; height: 13px; }
 .btn-sm.on { background: var(--soft); color: var(--sub); }

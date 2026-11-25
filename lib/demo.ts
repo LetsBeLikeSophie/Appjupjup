@@ -100,13 +100,20 @@ export const NOTICES: Notice[] = [
 const tester = (i: number): Person => ({ id: `t${i}`, nickname: '줍줍이', tag: 3100 + i * 37, score: 100 + i, apps: [] });
 const devOf = (i: number, a: App): Person => ({ ...tester(i), apps: [{ id: a.id, name: a.name, icon_url: a.icon_url, is_primary: true }] });
 const filmDev = devOf(9, APPS[3]);
-export const TEST_POINTS = 4;
-// 14일·12명·캡처는 구글 플레이 조건이라 안드로이드 앱만
-export const RECRUIT: Recruit[] = [1, 2, 5, 11].map((i, k) => ({ app: APPS[i], joined: [3, 9, 5, 7][k], need: 12 }));
+export const TEST_POINTS = 1;
+// 목록 순서는 sortRecruit(🔥 → 12명에 가까움 + 남을 많이 테스트해 준 사람). 애플은 1·2·3일
+export const RECRUIT: Recruit[] = [
+  { app: APPS[2], joined: 9, need: 12, given: 6 },
+  { app: APPS[1], joined: 4, need: 12, given: 9, boost: true },
+  { app: APPS[0], joined: 5, need: 12, given: 3 },
+  { app: APPS[5], joined: 10, need: 12, given: 2 },
+  { app: APPS[11], joined: 2, need: 12, given: 1 },
+  { app: APPS[3], joined: 1, need: 12, given: 0 },
+];
 export const JOINED: Joined[] = [
   { app: APPS[8], day: 7, done: [true, false, false] },
-  { app: APPS[4], day: 3, done: [true, false, false] },
-  { app: APPS[7], day: 14, done: [true, true, false] },
+  { app: APPS[6], day: 2, done: [true, false, false] },
+  { app: APPS[4], day: 3, done: [true, false, false], bonus: 2 },
 ];
 export const MY_TEST: MyTest = {
   app: APPS[10], need: 12,
@@ -130,5 +137,5 @@ export const TEST: TestData = { points: TEST_POINTS, recruit: RECRUIT, joined: J
 /** 홈 가짜 앱 중 테스터 모집 중인 것 (5개 중 1개) */
 export const recruitOf = (a: App): Recruit | null => {
   const i = Number(a.id.replace(/\D/g, ''));
-  return a.platform === 'android' && i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12 } : null;
+  return i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12, given: i % 4, boost: i % 25 === 2 } : null;
 };
