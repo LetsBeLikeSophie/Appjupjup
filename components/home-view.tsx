@@ -57,7 +57,7 @@ function DeviceSeg({ device, setDevice }: { device: Device; setDevice: (d: Devic
 }
 
 /** 바닥에 흩어진 아이콘. 자리·크기·기울기는 앱마다 고정 */
-export function IconField({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string }) {
+export function IconField({ apps, gotIds, hrefOf, testIds }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; testIds?: Set<string> }) {
   return (
     <div className="field-icons">
       {apps.map((a, i) => {
@@ -68,7 +68,7 @@ export function IconField({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<s
         return (
           <Link key={a.id} href={hrefOf ? hrefOf(a) : `/app/${a.id}`} className="pick-cell" aria-label={a.name}>
             <span className="pick-item" style={{ transform: `translate(${dx}px, ${dy}px)` }}>
-              <AppIcon src={a.icon_url} size={size} tilt={tiltOf(a.id)}><Marker app={a} got={gotIds.has(a.id)} /></AppIcon>
+              <AppIcon src={a.icon_url} size={size} tilt={tiltOf(a.id)}><Marker app={a} got={gotIds.has(a.id)} test={testIds?.has(a.id)} /></AppIcon>
               <span className="pick-name ellipsis">{a.name}</span>
             </span>
           </Link>
@@ -83,7 +83,7 @@ export function IconField({ apps, gotIds, hrefOf }: { apps: App[]; gotIds: Set<s
 export const SAY_MAX = 10;
 const sayOf = (a: App) => (a.say || '').trim() || undefined;
 const PER_LAYER = 14, LAYERS = 3, COLS = 3, ROWS = 5;
-export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; onPick?: (a: App) => void; saveKey?: string }) {
+export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; onPick?: (a: App) => void; saveKey?: string; testIds?: Set<string> }) {
   const { t } = useApp();
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
@@ -199,7 +199,7 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey }: { apps: App[
               data-id={a.id} data-say={sayOf(a)} data-x={x} data-y={y} data-s={p.size} data-layer={m ? 0 : p.layer}
               style={{ left: x, top: y, zIndex: m ? m.z : (LAYERS - p.layer) * 30 + (i % PER_LAYER), animationDelay: `${(LAYERS - 1 - p.layer) * 120 + (i % PER_LAYER) * 18}ms` }}
               onPointerDown={(e) => down(e, a)}>
-              <AppIcon src={a.icon_url} size={p.size} tilt={tiltOf(a.id + deal)}><Marker app={a} got={gotIds.has(a.id)} /></AppIcon>
+              <AppIcon src={a.icon_url} size={p.size} tilt={tiltOf(a.id + deal)}><Marker app={a} got={gotIds.has(a.id)} test={testIds?.has(a.id)} /></AppIcon>
             </span>
           );
         })}
@@ -211,7 +211,7 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey }: { apps: App[
 }
 
 /** 홈 그리기 (데이터는 page에서) */
-export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, onPick, device, setDevice }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
+export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, onPick, device, setDevice, testIds }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; testIds?: Set<string>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
   const { t } = useApp();
   const mine = apps && device ? byDevice(apps, device) : apps;
   const list = mine ? filterApps(mine, cat) : null;
@@ -225,8 +225,8 @@ export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, on
       {list === null && <Loading />}
       {list?.length === 0 && <div className="loading">{t.empty}</div>}
       {list && list.length > 0 && (heap
-        ? <IconHeap key={`${device}:${cat}`} saveKey={`${device ?? 'all'}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} />
-        : <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} />)}
+        ? <IconHeap key={`${device}:${cat}`} saveKey={`${device ?? 'all'}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} testIds={testIds} />
+        : <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} testIds={testIds} />)}
     </div>
   );
 }

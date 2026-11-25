@@ -78,13 +78,12 @@ export function TabBar() {
   const { unread, t } = useApp();
   // 앱 상세·밸런스 게임은 아래에 자기 버튼이 있어서 메뉴를 숨겨요
   if (path.startsWith('/app/') || path.startsWith('/game')) return null;
-  // /demo 안에서는 시험용 메뉴 4칸 (테스트 칸은 아직 시험 중)
+  // /demo 안에서는 시험용 메뉴 (내 정보 점 = 오늘 찍을 테스트 캡처)
   const demo = path.startsWith('/demo');
   const items = demo ? [
     { href: '/demo', icon: Icon.home, label: t.appName },
-    { href: '/demo/test', icon: Icon.flask, label: t.test },
     { href: '/demo/alerts', icon: Icon.bell, label: t.alerts, dot: true },
-    { href: '/demo/me', icon: Icon.user, label: t.me },
+    { href: '/demo/me', icon: Icon.user, label: t.me, dot: true },
   ] : [
     { href: '/', icon: Icon.home, label: t.appName },
     { href: '/alerts', icon: Icon.bell, label: t.alerts, dot: unread > 0 },

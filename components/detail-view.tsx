@@ -4,6 +4,7 @@ import { useApp } from '@/lib/ctx';
 import type { App, Comment, Person } from '@/lib/supabase';
 import { AppIcon, GetButton, Icon, IconButton, Shots, Temp, WhoIcon, WhoName } from './ui';
 import { AppChips } from './app-parts';
+import { RecruitStrip, type Recruit } from './test-view';
 
 function ago(iso: string, locale: string) {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -89,7 +90,7 @@ function CommentBar({ app, me, onSend }: { app: App; me: Person | null; onSend: 
 }
 
 /** 앱 상세 그리기 (데이터는 page에서) */
-export function DetailView({ app, comments, me, from, h }: { app: App; comments: Comment[] | null; me: Person | null; from: App | null; h: Handlers }) {
+export function DetailView({ app, comments, me, from, h, recruit }: { app: App; comments: Comment[] | null; me: Person | null; from: App | null; h: Handlers; recruit?: Recruit | null }) {
   const { t } = useApp();
   return (
     <div className="detail">
@@ -106,6 +107,7 @@ export function DetailView({ app, comments, me, from, h }: { app: App; comments:
         {app.tagline && <p className="t-body t-muted">{app.tagline}</p>}
         <AppChips app={app} />
       </div>
+      {recruit && <RecruitStrip r={recruit} />}
       <Shots urls={app.screenshots} height={240} />
       <section className="comments" aria-label={t.comments}>
         {comments?.map((c) => <CommentRow key={c.id} c={c} app={app} myId={me?.id} h={h} />)}

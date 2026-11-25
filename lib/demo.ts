@@ -1,6 +1,6 @@
 // 가짜 앱 데이터 (시험용 /demo, /preview)
 import type { App, Comment, Notice, Person, Profile } from './supabase';
-import type { Joined, MyTest, Recruit } from '@/components/test-view';
+import type { Joined, MyTest, Recruit, TestData } from '@/components/test-view';
 
 export const fakeIcon = (bg: string, e: string) =>
   `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><text x="50" y="66" font-size="48" text-anchor="middle">${e}</text></svg>`)}`;
@@ -96,7 +96,7 @@ export const NOTICES: Notice[] = [
 ];
 
 
-// ---- 테스터 교환 화면 (/demo/test) ----
+// ---- 테스터 교환 (/demo/me, 홈 플라스크 표시) ----
 const tester = (i: number): Person => ({ id: `t${i}`, nickname: '줍줍이', tag: 3100 + i * 37, score: 100 + i, apps: [] });
 const devOf = (i: number, a: App): Person => ({ ...tester(i), apps: [{ id: a.id, name: a.name, icon_url: a.icon_url, is_primary: true }] });
 const filmDev = devOf(9, APPS[3]);
@@ -123,4 +123,11 @@ export const MY_TEST: MyTest = {
     { who: people[2], body: '알림 시간 바꾸고 싶어요', day: 7 },
     { who: tester(2), body: '첫 화면 귀여워요', day: 1 },
   ],
+};
+
+export const TEST: TestData = { points: TEST_POINTS, recruit: RECRUIT, joined: JOINED, mine: [MY_TEST] };
+/** 홈 가짜 앱 중 테스터 모집 중인 것 (5개 중 1개) */
+export const recruitOf = (a: App): Recruit | null => {
+  const i = Number(a.id.replace(/\D/g, ''));
+  return i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12 } : null;
 };

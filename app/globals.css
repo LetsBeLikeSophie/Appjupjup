@@ -316,8 +316,29 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .dev-seg button.on { background: var(--primary-soft); color: var(--primary-ink); }
 
 /* 테스터 교환 (/demo/test) */
-.cat-row.flush { padding: 0; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter); }
-.points { display: inline-flex; align-items: center; gap: 4px; height: var(--btn-sm-h); padding: 0 12px; border-radius: 18px; background: var(--surface); font-size: var(--fs-card); font-weight: var(--fw-strong); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-list); }
+.temp-card.stat { flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; border: 0; text-align: left; }
+.ticket { display: inline-flex; align-items: center; gap: 2px; font-size: var(--fs-sub); font-weight: var(--fw-strong); color: var(--ink); flex-shrink: 0; }
+.ticket svg { width: 14px; height: 14px; }
+.ticket.on { color: var(--primary-ink); }
+.mk-test { position: absolute; top: -7px; left: -7px; width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.14); }
+.mk-test svg { width: 13px; height: 13px; }
+.btn-sm.on { background: var(--soft); color: var(--sub); }
+.btn-sm svg { width: 14px; height: 14px; }
+.find-row { min-height: 60px; }
+.find-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.find-icon svg { width: 20px; height: 20px; }
+.who-stack { display: inline-flex; flex-shrink: 0; }
+.who-stack > * { margin-left: -8px; box-shadow: 0 0 0 2px var(--surface); border-radius: 50%; }
+.recruit-row { min-height: 56px; }
+.how { display: flex; flex-direction: column; gap: var(--gap); padding: 4px 0 8px; }
+.how-row { display: flex; flex-direction: column; gap: 8px; padding: var(--pad); border-radius: var(--r-card); background: var(--soft); }
+.how-flow { display: flex; align-items: center; gap: 10px; }
+.how-cam { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.how-cam svg { width: 22px; height: 22px; }
+.how-arrow { color: var(--sub); display: inline-flex; }
+.how-flow .ticket { font-size: var(--fs-section); }
+.how-flow .ticket svg { width: 20px; height: 20px; }
 .col1 { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .meter { display: flex; align-items: center; gap: 8px; }
 .meter-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; }
@@ -328,8 +349,13 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .days i.ck { background: var(--primary-soft); box-shadow: inset 0 0 0 1.5px var(--sub); }
 .days i.ck.on:not(.ok) { background: var(--accent); box-shadow: none; }
 .days i.ck.ok { background: var(--ink); box-shadow: none; }
-.day-badge { flex-shrink: 0; font-size: var(--fs-card); font-weight: var(--fw-strong); }
 .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.slots.four { grid-template-columns: repeat(4, 1fr); }
+.slot.reward { background: var(--soft); color: var(--sub); }
+.slot.reward .ticket { color: var(--sub); font-size: var(--fs-card); }
+.slot.reward.got { background: var(--primary-soft); }
+.slot.reward.got .ticket { color: var(--primary-ink); }
+.slot-now { color: var(--primary-ink); font-weight: var(--fw-mid); }
 .slot-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .slot { position: relative; width: 100%; aspect-ratio: 1; border: 0; border-radius: 14px; background: var(--soft); color: var(--sub); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; }
 .slot img { width: 100%; height: 100%; object-fit: cover; }

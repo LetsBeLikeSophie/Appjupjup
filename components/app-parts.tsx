@@ -52,9 +52,10 @@ export function CountryEditor({ world, setWorld, cc, setCc }: { world: boolean; 
 export const tiltOf = (id: string) => ((hash(id + 't') % 17) - 8);
 
 /** 아이콘에 붙는 표시는 하나만: 새로 나옴 → 주움 → 댓글 수 */
-export function Marker({ app, got }: { app: App; got: boolean }) {
+export function Marker({ app, got, test }: { app: App; got: boolean; test?: boolean }) {
   if (isFresh(app) && !got) return <i className="mk-fresh" aria-label="new" />;
   if (got) return <span className="mk-got">{Icon.check}</span>;
+  if (test) return <span className="mk-test" aria-label="test">{Icon.flask}</span>;
   if (app.feedback_count > 0) return <span className="mk-count">{app.feedback_count > 9 ? '9+' : app.feedback_count}</span>;
   return null;
 }

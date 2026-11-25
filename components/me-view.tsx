@@ -4,12 +4,13 @@ import { flag, countryName, type App, type Profile } from '@/lib/supabase';
 import { Icon, IconButton, Temp, WhoIcon, WhoName } from './ui';
 import { Page, Section, Sheet, SheetHeader } from './layout';
 import { AppTile } from './app-parts';
+import { PointsCard, TestSections, type TestData } from './test-view';
 
 type Lite = Pick<App, 'id' | 'name' | 'icon_url'>;
 
 /** 내 정보 그리기 (데이터는 page에서) */
-export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUpload, onSettings }: {
-  profile: Profile; apps: App[]; gotApps: Lite[]; commentCount: number;
+export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUpload, onSettings, test }: {
+  profile: Profile; apps: App[]; gotApps: Lite[]; commentCount: number; test?: TestData;
   onEditApp: (a: App) => void; onUpload: () => void; onSettings: () => void;
 }) {
   const { t } = useApp();
@@ -26,10 +27,15 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
         )}
       </div>
 
-      <div className="temp-card">
-        <Temp value={profile.score} big />
-        <span className="t-sub">{t.gotN} {gotApps.length} · {t.commentN} {commentCount}</span>
+      <div className={test ? 'stats' : ''}>
+        <div className={`temp-card ${test ? 'stat' : ''}`}>
+          <Temp value={profile.score} big />
+          <span className="t-sub">{t.gotN} {gotApps.length} · {t.commentN} {commentCount}</span>
+        </div>
+        {test && <PointsCard points={test.points} />}
       </div>
+
+      {test && <TestSections d={test} />}
 
       <Section title={t.gotApps} aside={<span className="t-sub">{gotApps.length}</span>}>
         {gotApps.length > 0 && (
