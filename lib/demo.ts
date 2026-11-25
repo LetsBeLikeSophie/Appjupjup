@@ -101,10 +101,10 @@ const tester = (i: number): Person => ({ id: `t${i}`, nickname: '줍줍이', tag
 const devOf = (i: number, a: App): Person => ({ ...tester(i), apps: [{ id: a.id, name: a.name, icon_url: a.icon_url, is_primary: true }] });
 const filmDev = devOf(9, APPS[3]);
 export const TEST_POINTS = 1;
-// 목록 순서는 sortRecruit(🔥 → 12명에 가까움 + 남을 많이 테스트해 준 사람). 애플은 1·2·3일
+// 목록 순서는 sortRecruit(보상 큰 앱 → 12명에 가까움 + 남을 많이 테스트해 준 사람). 애플은 1·2·3일
 export const RECRUIT: Recruit[] = [
   { app: APPS[2], joined: 9, need: 12, given: 6 },
-  { app: APPS[1], joined: 4, need: 12, given: 9, boost: true },
+  { app: APPS[1], joined: 4, need: 12, given: 9, stake: 2 },
   { app: APPS[0], joined: 5, need: 12, given: 3 },
   { app: APPS[5], joined: 10, need: 12, given: 2 },
   { app: APPS[11], joined: 2, need: 12, given: 1 },
@@ -116,7 +116,7 @@ export const JOINED: Joined[] = [
   { app: APPS[4], day: 3, done: [true, false, false], bonus: 2 },
 ];
 export const MY_TEST: MyTest = {
-  app: APPS[10], need: 12,
+  app: APPS[10], need: 12, stake: 3, locked: 2,
   testers: [
     { who: filmDev, day: 9, done: [true, true, false] },
     { who: people[2], day: 8, done: [true, true, false] },
@@ -137,5 +137,5 @@ export const TEST: TestData = { points: TEST_POINTS, recruit: RECRUIT, joined: J
 /** 홈 가짜 앱 중 테스터 모집 중인 것 (5개 중 1개) */
 export const recruitOf = (a: App): Recruit | null => {
   const i = Number(a.id.replace(/\D/g, ''));
-  return i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12, given: i % 4, boost: i % 25 === 2 } : null;
+  return i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12, given: i % 4, stake: i % 25 === 2 ? 1 : 0 } : null;
 };

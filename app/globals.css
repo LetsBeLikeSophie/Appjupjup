@@ -321,10 +321,16 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .ticket.on { color: var(--primary-ink); }
 .ticket.big { font-size: var(--fs-hero); letter-spacing: -1.5px; gap: 8px; line-height: 1; }
 .ticket.big svg { width: 36px; height: 36px; }
-.reward-tag { flex-shrink: 0; height: var(--chip-h); padding: 0 8px; border-radius: 13px; background: var(--soft); display: inline-flex; align-items: center; }
-.reward-tag.bonus, .slot.reward.bonus { background: var(--primary); }
-.reward-tag.bonus .ticket, .slot.reward.bonus .ticket { color: var(--on-primary); }
-.boost { display: inline-flex; color: var(--primary); flex-shrink: 0; }
+.reward-tag { flex-shrink: 0; display: inline-flex; align-items: center; }
+.reward-tag .ticket { color: var(--sub); font-weight: var(--fw-mid); }
+.reward-tag.bonus .ticket, .slot.reward.bonus .ticket { color: var(--ink); font-weight: var(--fw-strong); font-size: var(--fs-card); }
+.stake { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.stake-btn { width: 30px; height: 30px; border: 0; border-radius: 15px; background: var(--soft); font-size: var(--fs-card); font-weight: var(--fw-strong); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.stake-btn:disabled { opacity: .35; }
+.stake-n { display: inline-flex; flex-direction: column; align-items: center; min-width: 30px; }
+.stake-n .ticket { font-size: var(--fs-card); }
+.stake-lock { display: inline-flex; align-items: center; gap: 1px; font-size: var(--fs-tiny); color: var(--sub); }
+.stake-lock svg { width: 10px; height: 10px; }
 .how-os { display: inline-flex; color: var(--sub); width: 18px; }
 .mine-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: 0; padding: 0; background: none; text-align: left; }
 :root:has(.demo-mark) .temp { display: none; }
