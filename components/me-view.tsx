@@ -13,7 +13,7 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
   profile: Profile; apps: App[]; gotApps: Lite[]; commentCount: number; test?: TestData;
   onEditApp: (a: App) => void; onUpload: () => void; onSettings: () => void;
 }) {
-  const { t } = useApp();
+  const { t, toast } = useApp();
   const who = { id: profile.id, nickname: profile.nickname, tag: profile.tag, score: profile.score, apps };
   return (
     <Page title={t.me} action={<IconButton label={t.settings} tone="white" onClick={onSettings}>{Icon.gear}</IconButton>}>
@@ -21,7 +21,7 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
         {apps.length === 0 && <span className="tile"><WhoIcon who={who} size={64} /><span className="tile-name"><WhoName who={who} /></span></span>}
         {apps.map((a) => <AppTile key={a.id} app={a} size={64} star={a.is_primary && apps.length > 1} onClick={() => onEditApp(a)} />)}
         {apps.length < 3 && (
-          <button className="tile" onClick={onUpload} aria-label={t.upload}>
+          <button className="tile" onClick={() => (test && apps.length > 0 && test.points < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
             <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted">{test && apps.length > 0 ? <Ticket n={APP_COST} /> : t.publish}</span>
           </button>
         )}

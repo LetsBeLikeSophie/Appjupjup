@@ -41,10 +41,10 @@ export function Meter({ n, need }: { n: number; need: number }) {
 }
 
 /** 캡처 칸: 했음 / 오늘 열림 / 아직 */
-function Slot({ state, src, label }: { state: 'done' | 'open' | 'locked'; src?: string; label: string }) {
+function Slot({ state, src, label, onClick }: { state: 'done' | 'open' | 'locked'; src?: string; label: string; onClick?: () => void }) {
   return (
     <div className="slot-col">
-      <button className={`slot ${state}`} disabled={state === 'locked'} aria-label={label}>
+      <button className={`slot ${state}`} aria-label={label} onClick={onClick}>
         {state === 'done' && src && <img src={src} alt="" />}
         {state === 'done' && <span className="slot-ok">{Icon.check}</span>}
         {state === 'open' && Icon.camera}
@@ -57,9 +57,19 @@ function Slot({ state, src, label }: { state: 'done' | 'open' | 'locked'; src?: 
 
 /** 참여 중 카드: 캡처 3칸 → 끝나면 🎫 */
 function JoinedCard({ j }: { j: Joined }) {
-  const { t } = useApp();
+  const { t, toast } = useApp();
   const checks = checksOf(j.app);
-  const all = j.done.every(Boolean);
+  const [done, setDone] = useState(j.done);
+  const [fb, setFb] = useState('');
+  const all = done.every(Boolean);
+  const tap = (i: number, c: number) => {
+    if (done[i]) return;
+    if (c > j.day) { toast(`${c}${t.day}${t.opensOn}`); return; }
+    const next = done.map((d, k) => d || k === i);
+    setDone(next);
+    toast(next.every(Boolean) ? `🎫+${j.bonus || 1}${t.gotT}` : `${c}${t.day}${t.captured}`);
+  };
+  const send = () => { if (!fb.trim()) return; setFb(''); toast(t.sent); };
   return (
     <div className="card">
       <div className="row gap12">
@@ -69,15 +79,18 @@ function JoinedCard({ j }: { j: Joined }) {
       </div>
       <div className="slots four">
         {checks.map((c, i) => (
-          <Slot key={c} label={`${c}${t.day}`} src={j.app.screenshots[0]}
-            state={j.done[i] ? 'done' : c <= j.day ? 'open' : 'locked'} />
+          <Slot key={c} label={`${c}${t.day}`} src={j.app.screenshots[0]} onClick={() => tap(i, c)}
+            state={done[i] ? 'done' : c <= j.day ? 'open' : 'locked'} />
         ))}
         <div className="slot-col">
           <span className={`slot reward ${all ? 'got' : ''} ${(j.bonus || 1) > 1 ? 'bonus' : ''}`}><Ticket n={j.bonus || 1} plus /></span>
           <span className="t-sub">{t.points}</span>
         </div>
       </div>
-      <div className="field-wrap"><input placeholder={t.feedbackPh} maxLength={60} /><button className="icon-btn" aria-label="send">{Icon.send}</button></div>
+      <div className="field-wrap">
+        <input placeholder={t.feedbackPh} maxLength={60} value={fb} onChange={(e) => setFb(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} enterKeyHint="send" />
+        <button className="icon-btn" aria-label="send" onClick={send}>{Icon.send}</button>
+      </div>
     </div>
   );
 }
@@ -99,7 +112,7 @@ export function RecruitRow({ r, joined, full, onJoin }: { r: Recruit; joined: bo
       <span className={`reward-tag ${b > 1 ? 'bonus' : ''}`}><Ticket n={b} plus /></span>
       {joined
         ? <span className="btn-sm on">{Icon.check}</span>
-        : <button className="btn-sm primary" disabled={full} onClick={onJoin}>{t.join}</button>}
+        : <button className={`btn-sm primary ${full ? 'dim' : ''}`} onClick={onJoin}>{t.join}</button>}
     </div>
   );
 }
@@ -131,7 +144,7 @@ function HowSheet({ open, points, onClose }: { open: boolean; points: number; on
 
 /** 모집 목록 시트 */
 function RecruitSheet({ open, list, joinedCount, onClose }: { open: boolean; list: Recruit[]; joinedCount: number; onClose: () => void }) {
-  const { t } = useApp();
+  const { t, toast } = useApp();
   const [mine, setMine] = useState<Set<string>>(new Set());
   const n = joinedCount + mine.size;
   return (
@@ -140,7 +153,11 @@ function RecruitSheet({ open, list, joinedCount, onClose }: { open: boolean; lis
       <div className="testers">
         {sortRecruit(list).map((r) => (
           <RecruitRow key={r.app.id} r={r} joined={mine.has(r.app.id)} full={n >= MAX_JOIN}
-            onJoin={() => setMine((s) => new Set(s).add(r.app.id))} />
+            onJoin={() => {
+              if (n >= MAX_JOIN) { toast(t.maxJoin); return; }
+              setMine((s) => new Set(s).add(r.app.id));
+              toast(`${t.joinedT} · 🎫+${bonusOf(r)}`);
+            }} />
         ))}
       </div>
     </Sheet>
@@ -199,6 +216,7 @@ export function PointsCard({ points, sub }: { points: number; sub?: string }) {
 
 /** 내 앱 테스터 한 줄: 사람 n/12 · 🎫 걸기 [− n +] (잠긴 것은 못 뺌) */
 function MineRow({ m, onOpen }: { m: MyTest; onOpen: () => void }) {
+  const { t, toast } = useApp();
   const [stake, setStake] = useState(m.stake);
   return (
     <div className="list-row">
@@ -210,9 +228,9 @@ function MineRow({ m, onOpen }: { m: MyTest; onOpen: () => void }) {
         </span>
       </button>
       <span className="stake">
-        <button className="stake-btn" aria-label="-" disabled={stake <= m.locked} onClick={() => setStake((n) => n - 1)}>−</button>
+        <button className={`stake-btn ${stake <= m.locked ? 'dim' : ''}`} aria-label="-" onClick={() => { if (stake <= m.locked) { toast(t.stakeLocked); return; } setStake((n) => n - 1); toast(`🎫1${t.unstaked}`); }}>−</button>
         <span className="stake-n"><Ticket n={stake} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
-        <button className="stake-btn" aria-label="+" onClick={() => setStake((n) => n + 1)}>+</button>
+        <button className="stake-btn" aria-label="+" onClick={() => { setStake((n) => n + 1); toast(`🎫1${t.staked}`); }}>+</button>
       </span>
     </div>
   );
@@ -249,7 +267,7 @@ export function TestSections({ d }: { d: TestData }) {
 
 /** 앱 상세 안 모집 띠: 사람 n/12 · 🎫+n · [참여] */
 export function RecruitStrip({ r }: { r: Recruit }) {
-  const { t } = useApp();
+  const { t, toast } = useApp();
   const [joined, setJoined] = useState(false);
   const b = bonusOf(r);
   return (
@@ -263,7 +281,7 @@ export function RecruitStrip({ r }: { r: Recruit }) {
         <span className={`reward-tag ${b > 1 ? 'bonus' : ''}`}><Ticket n={b} plus /></span>
         {joined
           ? <span className="btn-sm on">{Icon.check}</span>
-          : <button className="btn-sm primary" onClick={() => setJoined(true)}>{t.join}</button>}
+          : <button className="btn-sm primary" onClick={() => { setJoined(true); toast(`${t.joinedT} · 🎫+${b}`); }}>{t.join}</button>}
       </div>
     </div>
   );

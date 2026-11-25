@@ -39,7 +39,7 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
           if (!session) { openLogin(); return false; }
           const { data, error } = await sb().rpc('aj_comment', { p_app: app.id, p_body: body });
           if (error) { const k = errKey(error); toast(k === 'badword' ? t.fbBad : k === 'too_fast' ? t.tooFast : t.errGeneric); return false; }
-          if (data?.delta) { toast(`🤝 +${data.delta}`); refreshProfile(); }
+          if (data?.delta) { toast(`🤝 +${data.delta}`); refreshProfile(); } else toast(t.commented);
           reload();
           return true;
         },

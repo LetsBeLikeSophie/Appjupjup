@@ -5,6 +5,7 @@ import { fakeApps, recruitOf } from '@/lib/demo';
 import { HomeView, filterApps, byDevice, guessDevice, type Device } from '@/components/home-view';
 import { GameView } from '@/components/game-view';
 import { DetailView } from '@/components/detail-view';
+import { useApp } from '@/lib/ctx';
 import type { App } from '@/lib/supabase';
 
 const noop = () => {};
@@ -15,6 +16,7 @@ export default function Demo() {
   const [game, setGame] = useState(false);
   const [device, setDevice] = useState<Device>('all');
   const [pick, setPick] = useState<App | null>(null);
+  const { t, toast } = useApp();
   useEffect(() => { setDevice(guessDevice()); setN(Math.min(300, Math.max(2, Number(new URLSearchParams(location.search).get('n')) || 120))); }, []);
   const apps = useMemo(() => (n ? fakeApps(n) : null), [n]);
   const got = useMemo(() => new Set(['demo4', 'demo9', 'demo20']), []);
@@ -36,7 +38,7 @@ export default function Demo() {
       {pick && (
         <div className="demo-detail">
           <DetailView app={pick} comments={[]} me={null} from={null} recruit={recruitOf(pick)}
-            h={{ onSend: async () => true, onHelpful: noop, onReport: noop, onDelete: noop, onPerson: noop, onBack: () => setPick(null), onShare: noop }} />
+            h={{ onSend: async () => { toast(t.commented); return true; }, onHelpful: noop, onReport: noop, onDelete: noop, onPerson: noop, onBack: () => setPick(null), onShare: () => toast(t.copied) }} />
         </div>
       )}
     </div>

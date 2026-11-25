@@ -121,7 +121,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .btn-sm.white { background: var(--surface); }
 .btn-sm.ghost { background: none; color: var(--sub); }
 .btn-sm.danger { background: none; color: var(--bad); }
-.btn-sm:disabled { opacity: .45; }
+.btn-sm:disabled, .btn-sm.dim { opacity: .45; }
 .icon-btn { width: var(--icon-btn); height: var(--icon-btn); border: 0; border-radius: 20px; background: var(--soft); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink); }
 .icon-btn.white { background: var(--surface); }
 .icon-btn.primary { width: 44px; height: 44px; border-radius: 22px; background: var(--primary); color: var(--on-primary); }
@@ -326,7 +326,7 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .reward-tag.bonus .ticket, .slot.reward.bonus .ticket { color: var(--ink); font-weight: var(--fw-strong); font-size: var(--fs-card); }
 .stake { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .stake-btn { width: 30px; height: 30px; border: 0; border-radius: 15px; background: var(--soft); font-size: var(--fs-card); font-weight: var(--fw-strong); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-.stake-btn:disabled { opacity: .35; }
+.stake-btn.dim { opacity: .35; }
 .stake-n { display: inline-flex; flex-direction: column; align-items: center; min-width: 30px; }
 .stake-n .ticket { font-size: var(--fs-card); }
 .stake-lock { display: inline-flex; align-items: center; gap: 1px; font-size: var(--fs-tiny); color: var(--sub); }
