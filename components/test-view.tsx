@@ -38,6 +38,17 @@ export const bonusOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => 1 + (r
 export const sortRecruit = (l: Recruit[]) => [...l].sort((a, b) => bonusOf(b) - bonusOf(a) || (b.joined * 2 + b.given) - (a.joined * 2 + a.given));
 
 /** 🎫 숫자 */
+/** 보상: 기본(+마지막 자리 진하게) + 주인이 건 몫은 따로 칸 */
+export function Reward({ r }: { r: Pick<Recruit, 'joined' | 'need' | 'stake'> }) {
+  const base = bonusOf({ ...r, stake: 0 });
+  return (
+    <span className={`reward-tag ${base > 1 ? 'bonus' : ''}`}>
+      <Ticket n={base} plus />
+      {(r.stake || 0) > 0 && <span className="chip reward-stake"><Ticket n={1} plus /></span>}
+    </span>
+  );
+}
+
 export function Ticket({ n, plus, tone }: { n: number | string; plus?: boolean; tone?: 'on' }) {
   return <span className={`ticket ${tone || ''}`}>{Icon.ticket}{plus ? '+' : ''}{n}</span>;
 }
@@ -124,7 +135,6 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
 /** 모집 한 줄: [아이콘] 이름·사람 n/12 · 🎫+n · [참여] */
 export function RecruitRow({ r, joined, full, onJoin }: { r: Recruit; joined: boolean; full: boolean; onJoin: () => void }) {
   const { t } = useApp();
-  const b = bonusOf(r);
   return (
     <div className="row gap12 recruit-row">
       <AppIcon src={r.app.icon_url} size={44} />
@@ -135,7 +145,7 @@ export function RecruitRow({ r, joined, full, onJoin }: { r: Recruit; joined: bo
         </div>
         <Meter n={r.joined + (joined ? 1 : 0)} need={r.need} />
       </div>
-      <span className={`reward-tag ${b > 1 ? 'bonus' : ''}`}><Ticket n={b} plus /></span>
+      <Reward r={r} />
       {joined
         ? <span className="btn-sm on">{Icon.check}</span>
         : <button className={`btn-sm primary ${full ? 'dim' : ''}`} onClick={onJoin}>{t.join}</button>}
@@ -332,7 +342,7 @@ export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joine
           <span className="t-card">{t.testers}</span>
           <Meter n={r.joined + (joined && !joined0 ? 1 : 0)} need={r.need} />
         </div>
-        <span className={`reward-tag ${b > 1 ? 'bonus' : ''}`}><Ticket n={b} plus /></span>
+        <Reward r={r} />
         {joined
           ? <span className="btn-sm on">{Icon.check}</span>
           : <button className="btn-sm primary" onClick={async () => { if (await onJoin(r)) { setJoined(true); toast(`${t.joinedT} · 🎫+${b}`); } }}>{t.join}</button>}

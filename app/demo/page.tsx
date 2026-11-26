@@ -20,7 +20,7 @@ export default function Demo() {
   useEffect(() => { setDevice(guessDevice()); setN(Math.min(300, Math.max(2, Number(new URLSearchParams(location.search).get('n')) || 120))); }, []);
   const apps = useMemo(() => (n ? fakeApps(n) : null), [n]);
   const got = useMemo(() => new Set(['demo4', 'demo9', 'demo20']), []);
-  const testIds = useMemo(() => new Set((apps || []).filter((a) => recruitOf(a)).map((a) => a.id)), [apps]);
+  const testIds = useMemo(() => new Map((apps || []).flatMap((a) => { const r = recruitOf(a); return r ? [[a.id, (r.stake || 0) > 0 ? 'stake' : 'test'] as const] : []; })), [apps]);
   if (!apps) return null;
   if (game) {
     const mine = byDevice(apps, device).length >= 2 ? byDevice(apps, device) : apps;

@@ -140,5 +140,5 @@ export const TEST_H: TestH = { join: yes, note: yes, stake: yes, open: yes, capt
 /** 홈 가짜 앱 중 테스터 모집 중인 것 (5개 중 1개) */
 export const recruitOf = (a: App): Recruit | null => {
   const i = Number(a.id.replace(/\D/g, ''));
-  return i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12, given: i % 4, stake: i % 25 === 2 ? 1 : 0 } : null;
+  return i % 5 === 2 ? { app: a, joined: (i * 7) % 11, need: 12, given: i % 4, stake: i % 15 === 2 ? 1 : 0 } : null;
 };

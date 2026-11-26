@@ -331,6 +331,9 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .mine-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: 0; padding: 0; background: none; text-align: left; }
 .mk-test { position: absolute; top: -7px; left: -7px; width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.14); }
 .mk-test svg { width: 13px; height: 13px; }
+.reward-tag { gap: 4px; }
+.reward-stake { background: var(--primary-soft); }
+.reward-stake .ticket { color: var(--ink); font-weight: var(--fw-strong); }
 .btn-sm.on { background: var(--soft); color: var(--sub); }
 .btn-sm svg { width: 14px; height: 14px; }
 .find-row { min-height: 60px; }
