@@ -21,8 +21,8 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
         {apps.length === 0 && <span className="tile"><WhoIcon who={who} size={64} /><span className="tile-name"><WhoName who={who} /></span></span>}
         {apps.map((a) => <AppTile key={a.id} app={a} size={64} star={a.is_primary && apps.length > 1} onClick={() => onEditApp(a)} />)}
         {apps.length < 3 && (
-          <button className="tile" onClick={() => (apps.length > 0 && profile.tickets < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
-            <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted">{apps.length > 0 ? <Ticket n={APP_COST} /> : t.publish}</span>
+          <button className="tile" onClick={() => (profile.tickets < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
+            <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted"><Ticket n={APP_COST} /></span>
           </button>
         )}
       </div>
