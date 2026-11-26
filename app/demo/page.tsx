@@ -37,7 +37,7 @@ export default function Demo() {
       <HomeView apps={apps} cat={cat} setCat={setCat} gotIds={got} gameHref="#" hrefOf={() => "#"} heap testIds={testIds} onPick={setPick} device={device} setDevice={(d) => { setDevice(d); setCat('all'); }} />
       {pick && (
         <div className="demo-detail">
-          <DetailView app={pick} comments={[]} me={null} from={null} recruit={recruitOf(pick)}
+          <DetailView app={pick} comments={[]} me={null} from={null} recruit={recruitOf(pick)} onJoin={async () => true}
             h={{ onSend: async () => { toast(t.commented); return true; }, onHelpful: noop, onReport: noop, onDelete: noop, onPerson: noop, onBack: () => setPick(null), onShare: () => toast(t.copied) }} />
         </div>
       )}

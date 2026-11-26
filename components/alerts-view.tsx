@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useApp } from '@/lib/ctx';
 import { primaryApp, type Notice } from '@/lib/supabase';
-import { AppIcon, Icon, Temp, WhoIcon, WhoName } from './ui';
+import { AppIcon, Icon, WhoIcon, WhoName } from './ui';
 import { Empty, Loading, Page } from './layout';
 import { ago } from './detail-view';
 
@@ -30,7 +30,6 @@ export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
         <span className="col grow">
           <span className="row-title"><span className="t-body ellipsis">{title}</span><span className="t-sub">{when}</span></span>
           <span className="row gap6">
-            {n.delta ? <Temp value={`+${n.delta}`} /> : null}
             {sub && <span className="t-sub ellipsis">{sub}</span>}
           </span>
         </span>
@@ -39,7 +38,7 @@ export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
       {canVisit && actorApp && (
         <div className="visit">
           <AppIcon src={actorApp.icon_url} size={44} />
-          <span className="col grow"><b className="t-body ellipsis">{actorApp.name}</b>{n.actor && <Temp value={n.actor.score} />}</span>
+          <span className="col grow"><b className="t-body ellipsis">{actorApp.name}</b></span>
           <Link className="visit-btn" href={`/app/${actorApp.id}?from=${n.app_id}`}>{Icon.reply}{t.visit}</Link>
         </div>
       )}

@@ -14,6 +14,9 @@ type Ctx = {
   locale: Locale;
   country: string;
   unread: number;
+  /** 오늘 찍을 테스트 캡처가 있나 (하단 내 정보 점) */
+  testDue: boolean;
+  refreshTestDue: () => Promise<void>;
   /** 내가 올린 앱 (대표 앱이 곧 나) */
   myApps: App[];
   /** 내가 주운 앱 id */
@@ -48,7 +51,7 @@ const take = (): Pending => {
 
 export function errKey(e: unknown): string {
   const m = (e as { message?: string })?.message || '';
-  const k = ['badword', 'too_fast', 'already', 'duplicate', 'app_limit', 'bad_link', 'own_app', 'login_required'].find((x) => m.includes(x));
+  const k = ['badword', 'too_fast', 'already', 'duplicate', 'app_limit', 'bad_link', 'own_app', 'login_required', 'need_tickets', 'max_join', 'full', 'same_photo', 'not_yet', 'missed', 'stake_locked'].find((x) => m.includes(x));
   return k || 'generic';
 }
 
@@ -57,6 +60,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [testDue, setTestDue] = useState(false);
   const [myApps, setMyApps] = useState<App[]>([]);
   const [gotIds, setGotIds] = useState<Set<string>>(new Set());
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -105,6 +109,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUnread(count || 0);
   }, []);
 
+  const refreshTestDue = useCallback(async () => {
+    const s = (await sb().auth.getSession()).data.session;
+    if (!s) { setTestDue(false); return; }
+    const { data } = await sb().rpc('aj_test_due');
+    setTestDue(!!data);
+  }, []);
+
   useEffect(() => {
     const db = sb();
     db.auth.getSession().then(async ({ data }) => {
@@ -125,7 +136,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, [loadProfile]);
 
-  useEffect(() => { refreshUnread(); refreshMine(); }, [session, refreshUnread, refreshMine]);
+  useEffect(() => { refreshUnread(); refreshMine(); refreshTestDue(); }, [session, refreshUnread, refreshMine, refreshTestDue]);
 
   const showPicked = useCallback((app: App) => {
     setPicked(app);
@@ -163,12 +174,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const value = useMemo<Ctx>(() => ({
-    session, profile, ready, t, locale, country, unread, myApps, gotIds, toast, toastMsg, picked,
+    session, profile, ready, t, locale, country, unread, testDue, refreshTestDue, myApps, gotIds, toast, toastMsg, picked,
     loginOpen, openLogin: openLoginInner, closeLogin: () => setLoginOpen(false),
     uploadOpen, setUploadOpen, welcomeOpen, closeWelcome,
     refreshProfile, refreshMine, refreshUnread, download,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [session, profile, ready, t, locale, country, unread, myApps, gotIds, toastMsg, picked, loginOpen, uploadOpen, welcomeOpen, download, refreshUnread, refreshMine, loadProfile, toast]);
+  }), [session, profile, ready, t, locale, country, unread, testDue, refreshTestDue, myApps, gotIds, toastMsg, picked, loginOpen, uploadOpen, welcomeOpen, download, refreshUnread, refreshMine, loadProfile, toast]);
 
   return <C.Provider value={value}>{children}</C.Provider>;
 }

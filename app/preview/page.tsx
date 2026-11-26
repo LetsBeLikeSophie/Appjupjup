@@ -1,7 +1,7 @@
 'use client';
 // 로그인 없이 가짜 데이터로 화면 확인 (내 컴퓨터 localhost에서만). /preview?s=home|game|detail|me|alerts|welcome|login|person
 import { useEffect, useState } from 'react';
-import { APPS, COMMENTS, NOTICES, me, people, profile } from '@/lib/demo';
+import { APPS, COMMENTS, NOTICES, me, people, profile, TEST, TEST_H } from '@/lib/demo';
 import { HomeView } from '@/components/home-view';
 import { GameView } from '@/components/game-view';
 import { DetailView } from '@/components/detail-view';
@@ -24,7 +24,7 @@ export default function Preview() {
     case 'game': return <GameView pool={APPS.filter((a) => a.owner_id !== 'me')} onClose={noop} />;
     case 'detail': return <DetailView app={APPS[1]} comments={COMMENTS} me={me} from={APPS[10]}
       h={{ onSend: async () => true, onHelpful: noop, onReport: noop, onDelete: noop, onPerson: noop, onBack: noop, onShare: noop }} />;
-    case 'me': return <MeView profile={profile} apps={[APPS[10], APPS[5]].map((a, i) => ({ ...a, is_primary: i === 0 }))} gotApps={APPS.slice(0, 7)} commentCount={7} onEditApp={noop} onUpload={noop} onSettings={noop} />;
+    case 'me': return <MeView profile={profile} apps={[APPS[10], APPS[5]].map((a, i) => ({ ...a, is_primary: i === 0 }))} gotApps={APPS.slice(0, 7)} commentCount={7} onEditApp={noop} onUpload={noop} onSettings={noop} test={TEST} testH={TEST_H} />;
     case 'alerts': return <AlertsView list={NOTICES} myId="me" />;
     case 'welcome': return <WelcomeSheet sample={sample} force />;
     case 'login': return <LoginSheet sample={sample} force />;

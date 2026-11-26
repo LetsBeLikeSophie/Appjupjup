@@ -1,8 +1,9 @@
 'use client';
-// 테스터 교환 부품: 내 정보 안에 들어가요 (지금은 화면만, 가짜 데이터 /demo/me)
-// 🎫 = 노출권. 얻기: 남의 앱 테스트 끝(안드로이드 1·7·14일 / 애플 1·2·3일 캡처) → +1, 마지막 3자리 → +2
-//              쓰기: 앱 하나 더 올리기 🎫2 · 내 앱에 🎫 걸기(테스터 보상 +1, 참여 순간 그 사람 몫으로 잠김, 안 잠긴 것만 뺄 수 있음, 탈락하면 돌아옴)
-import { useState } from 'react';
+// 테스터 교환 부품: 내 정보 안 · 상세 띠. 데이터와 동작(h)은 page에서 (진짜: lib/test.ts, 시험: lib/demo.ts)
+// 🎫 얻기: 남의 앱 테스트 끝(안드로이드 1·7·14일 / 애플 1·2·3일 캡처) → 보상(1 + 마지막 3자리 1 + 주인이 건 티켓 1)
+// 🎫 쓰기: 2·3번째 앱 올리기 2장 · 내 앱에 걸기(테스터 보상 +1, 참여 순간 그 사람 몫으로 잠김, 안 잠긴 것만 뺄 수 있음, 탈락하면 돌아옴)
+// 규칙 숫자는 DB(supabase/migrations/11_tester_exchange.sql)와 같아야 해요
+import { useRef, useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import type { App, Person } from '@/lib/supabase';
 import { AppIcon, Icon, WhoIcon, WhoName } from './ui';
@@ -12,13 +13,25 @@ import { Section, Sheet, SheetHeader } from './layout';
 export const MAX_JOIN = 10;
 export const APP_COST = 2;
 export type Recruit = { app: App; joined: number; need: number; given: number; stake?: number };
-export type Joined = { app: App; day: number; done: boolean[]; bonus?: number };
-export type Tester = { who: Person; day: number; done: boolean[] };
-export type MyTest = { app: App; need: number; testers: Tester[]; feedback: { who: Person; body: string; day: number }[]; stake: number; locked: number };
+export type Joined = { id: string; app: App; day: number; done: boolean[]; shots?: (string | null)[]; bonus?: number };
+export type Tester = { who: Person; day: number; done: boolean[]; failed?: boolean };
+export type MyTest = { app: App; open: boolean; need: number; testers: Tester[]; feedback: { who: Person; body: string; day: number }[]; stake: number; locked: number };
 export type TestData = { points: number; recruit: Recruit[]; joined: Joined[]; mine: MyTest[] };
+/** 동작: 성공하면 true(캡처는 'ok'|'done'), 실패 토스트는 h 쪽에서 */
+export type TestH = {
+  join: (r: Recruit) => Promise<boolean>;
+  capture: (j: Joined, idx: number, file: File) => Promise<'ok' | 'done' | null>;
+  note: (j: Joined, body: string) => Promise<boolean>;
+  stake: (m: MyTest, delta: 1 | -1) => Promise<boolean>;
+  open: (m: MyTest) => Promise<boolean>;
+};
 
 /** 캡처 날: 안드로이드는 구글 조건 14일, 애플은 서로 다른 날 3번 */
 export const checksOf = (a: Pick<App, 'platform'>) => (a.platform === 'ios' ? [1, 2, 3] : [1, 7, 14]);
+/** 칸마다 마지막 날 (넘기면 탈락) */
+export const deadlinesOf = (a: Pick<App, 'platform'>) => (a.platform === 'ios' ? [3, 4, 5] : [6, 13, 16]);
+/** 참여한 날 = 1일 (24시간마다 하루) */
+export const dayOf = (joinedAt: string, at = Date.now()) => Math.floor((at - new Date(joinedAt).getTime()) / 86400000) + 1;
 /** 보상: 기본 1 + 마지막 3자리(10~12번째) 1 + 주인이 건 티켓 남아 있으면 1 */
 export const bonusOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => 1 + (r.joined >= r.need - 3 ? 1 : 0) + ((r.stake || 0) > 0 ? 1 : 0);
 /** 목록 순서: 보상 큰 앱 → 12명에 가까움 + 남을 많이 테스트해 준 사람 */
@@ -40,36 +53,49 @@ export function Meter({ n, need }: { n: number; need: number }) {
   );
 }
 
-/** 캡처 칸: 했음 / 오늘 열림 / 아직 */
-function Slot({ state, src, label, onClick }: { state: 'done' | 'open' | 'locked'; src?: string; label: string; onClick?: () => void }) {
+/** 캡처 칸: 했음 / 열림(누르면 사진 고르기) / 아직 */
+function Slot({ state, src, label, busy, onTap, onFile }: { state: 'done' | 'open' | 'locked'; src?: string | null; label: string; busy?: boolean; onTap: () => void; onFile: (f: File) => void }) {
+  const file = useRef<HTMLInputElement>(null);
   return (
     <div className="slot-col">
-      <button className={`slot ${state}`} aria-label={label} onClick={onClick}>
+      <button className={`slot ${state} ${busy ? 'busy' : ''}`} aria-label={label} disabled={busy}
+        onClick={() => (state === 'open' ? file.current?.click() : onTap())}>
         {state === 'done' && src && <img src={src} alt="" />}
         {state === 'done' && <span className="slot-ok">{Icon.check}</span>}
         {state === 'open' && Icon.camera}
         {state === 'locked' && Icon.lock}
       </button>
+      <input ref={file} type="file" accept="image/*" hidden
+        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFile(f); }} />
       <span className={`t-sub ${state === 'open' ? 'slot-now' : ''}`}>{label}</span>
     </div>
   );
 }
 
 /** 참여 중 카드: 캡처 3칸 → 끝나면 🎫 */
-function JoinedCard({ j }: { j: Joined }) {
+function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
   const { t, toast } = useApp();
   const checks = checksOf(j.app);
   const [done, setDone] = useState(j.done);
+  const [busy, setBusy] = useState(-1);
   const [fb, setFb] = useState('');
   const all = done.every(Boolean);
-  const tap = (i: number, c: number) => {
-    if (done[i]) return;
-    if (c > j.day) { toast(`${c}${t.day}${t.opensOn}`); return; }
-    const next = done.map((d, k) => d || k === i);
-    setDone(next);
-    toast(next.every(Boolean) ? `🎫+${j.bonus || 1}${t.gotT}` : `${c}${t.day}${t.captured}`);
+  // 열림: 그날이 됐고 앞 칸을 찍었을 때
+  const stateOf = (i: number, c: number) => (done[i] ? 'done' : c <= j.day && (i === 0 || done[i - 1]) ? 'open' : 'locked');
+  const tapLocked = (i: number, c: number) => { if (!done[i]) toast(c > j.day ? `${c}${t.day}${t.opensOn}` : t.prevFirst); };
+  const shoot = async (i: number, c: number, f: File) => {
+    setBusy(i);
+    const r = await h.capture(j, i, f);
+    setBusy(-1);
+    if (!r) return;
+    setDone((d) => d.map((x, k) => x || k === i));
+    toast(r === 'done' ? `🎫+${j.bonus || 1}${t.gotT}` : `${c}${t.day}${t.captured}`);
   };
-  const send = () => { if (!fb.trim()) return; setFb(''); toast(t.sent); };
+  const send = async () => {
+    const b = fb.trim();
+    if (!b) return;
+    if (await h.note(j, b)) { setFb(''); toast(t.sent); }
+  };
   return (
     <div className="card">
       <div className="row gap12">
@@ -79,8 +105,8 @@ function JoinedCard({ j }: { j: Joined }) {
       </div>
       <div className="slots four">
         {checks.map((c, i) => (
-          <Slot key={c} label={`${c}${t.day}`} src={j.app.screenshots[0]} onClick={() => tap(i, c)}
-            state={done[i] ? 'done' : c <= j.day ? 'open' : 'locked'} />
+          <Slot key={c} label={`${c}${t.day}`} src={j.shots ? j.shots[i] : j.app.screenshots[0]} busy={busy === i}
+            state={stateOf(i, c)} onTap={() => tapLocked(i, c)} onFile={(f) => shoot(i, c, f)} />
         ))}
         <div className="slot-col">
           <span className={`slot reward ${all ? 'got' : ''} ${(j.bonus || 1) > 1 ? 'bonus' : ''}`}><Ticket n={j.bonus || 1} plus /></span>
@@ -143,21 +169,23 @@ function HowSheet({ open, points, onClose }: { open: boolean; points: number; on
 }
 
 /** 모집 목록 시트 */
-function RecruitSheet({ open, list, joinedCount, onClose }: { open: boolean; list: Recruit[]; joinedCount: number; onClose: () => void }) {
+function RecruitSheet({ open, list, joinedCount, h, onClose }: { open: boolean; list: Recruit[]; joinedCount: number; h: TestH; onClose: () => void }) {
   const { t, toast } = useApp();
   const [mine, setMine] = useState<Set<string>>(new Set());
-  const n = joinedCount + mine.size;
+  // 참여하면 다시 읽어서 목록에서 빠지고 joinedCount에 들어가요 (시험 화면은 목록에 남음)
+  const n = joinedCount + [...mine].filter((id) => list.some((r) => r.app.id === id)).length;
+  const join = async (r: Recruit) => {
+    if (n >= MAX_JOIN) { toast(t.maxJoin); return; }
+    if (!(await h.join(r))) return;
+    setMine((s) => new Set(s).add(r.app.id));
+    toast(`${t.joinedT} · 🎫+${bonusOf(r)}`);
+  };
   return (
     <Sheet open={open} onClose={onClose} label={t.findTest} tall>
       <SheetHeader title={t.findTest} sub={`${t.joining} ${n}/${MAX_JOIN}`} onClose={onClose} />
       <div className="testers">
         {sortRecruit(list).map((r) => (
-          <RecruitRow key={r.app.id} r={r} joined={mine.has(r.app.id)} full={n >= MAX_JOIN}
-            onJoin={() => {
-              if (n >= MAX_JOIN) { toast(t.maxJoin); return; }
-              setMine((s) => new Set(s).add(r.app.id));
-              toast(`${t.joinedT} · 🎫+${bonusOf(r)}`);
-            }} />
+          <RecruitRow key={r.app.id} r={r} joined={mine.has(r.app.id)} full={n >= MAX_JOIN} onJoin={() => join(r)} />
         ))}
       </div>
     </Sheet>
@@ -166,11 +194,14 @@ function RecruitSheet({ open, list, joinedCount, onClose }: { open: boolean; lis
 
 function TesterRow({ x, checks }: { x: Tester; checks: number[] }) {
   return (
-    <div className="tester">
+    <div className={`tester ${x.failed ? 'failed' : ''}`}>
       <WhoIcon who={x.who} size={34} />
       <span className="t-body ellipsis tester-name"><WhoName who={x.who} /></span>
       <span className="mini-slots">
-        {checks.map((c, i) => <i key={c} className={x.done[i] ? 'ok' : c < x.day ? 'miss' : ''}>{!x.done[i] && c < x.day && Icon.close}</i>)}
+        {checks.map((c, i) => {
+          const miss = !x.done[i] && (x.failed || c < x.day);
+          return <i key={c} className={x.done[i] ? 'ok' : miss ? 'miss' : ''}>{miss && Icon.close}</i>;
+        })}
       </span>
     </div>
   );
@@ -182,19 +213,21 @@ function TestersSheet({ m, onClose }: { m: MyTest | null; onClose: () => void })
   if (!m) return null;
   return (
     <Sheet open onClose={onClose} label={t.testers} tall>
-      <SheetHeader title={m.app.name} leading={<AppIcon src={m.app.icon_url} size={44} />} sub={<Meter n={m.testers.length} need={m.need} />} onClose={onClose} />
+      <SheetHeader title={m.app.name} leading={<AppIcon src={m.app.icon_url} size={44} />} sub={<Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} />} onClose={onClose} />
       <div className="testers">{m.testers.map((x, i) => <TesterRow key={i} x={x} checks={checksOf(m.app)} />)}</div>
-      <Section title={t.feedback} aside={<span className="t-sub">{m.feedback.length}</span>}>
-        {m.feedback.map((f, i) => (
-          <div key={i} className="cm">
-            <WhoIcon who={f.who} size={34} />
-            <div className="cm-body">
-              <span className="cm-head"><span className="cm-name ellipsis"><WhoName who={f.who} /></span><span className="t-sub">{f.day}{t.day}</span></span>
-              <span className="t-body">{f.body}</span>
+      {m.feedback.length > 0 && (
+        <Section title={t.feedback} aside={<span className="t-sub">{m.feedback.length}</span>}>
+          {m.feedback.map((f, i) => (
+            <div key={i} className="cm">
+              <WhoIcon who={f.who} size={34} />
+              <div className="cm-body">
+                <span className="cm-head"><span className="cm-name ellipsis"><WhoName who={f.who} /></span><span className="t-sub">{f.day}{t.day}</span></span>
+                <span className="t-body">{f.body}</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </Section>
+          ))}
+        </Section>
+      )}
     </Sheet>
   );
 }
@@ -214,37 +247,58 @@ export function PointsCard({ points, sub }: { points: number; sub?: string }) {
   );
 }
 
-/** 내 앱 테스터 한 줄: 사람 n/12 · 🎫 걸기 [− n +] (잠긴 것은 못 뺌) */
-function MineRow({ m, onOpen }: { m: MyTest; onOpen: () => void }) {
+/** 내 앱 한 줄: 모집 전이면 [테스터 모으기], 모집 중이면 사람 n/12 · 🎫 걸기 [− n +] (잠긴 것은 못 뺌) */
+function MineRow({ m, h, onOpen }: { m: MyTest; h: TestH; onOpen: () => void }) {
   const { t, toast } = useApp();
   const [stake, setStake] = useState(m.stake);
+  const [open, setOpen] = useState(m.open);
+  const [busy, setBusy] = useState(false);
+  const change = async (d: 1 | -1) => {
+    if (busy) return;
+    if (d === -1 && stake < 1) { toast(t.stakeLocked); return; }
+    setBusy(true);
+    const ok = await h.stake(m, d);
+    setBusy(false);
+    if (!ok) return;
+    setStake((n) => n + d);
+    toast(`🎫1${d === 1 ? t.staked : t.unstaked}`);
+  };
+  if (!open) {
+    return (
+      <div className="list-row">
+        <AppIcon src={m.app.icon_url} size={44} />
+        <span className="t-card ellipsis grow">{m.app.name}</span>
+        <button className="btn-sm primary" disabled={busy} onClick={async () => { setBusy(true); const ok = await h.open(m); setBusy(false); if (ok) setOpen(true); }}>{Icon.user}{t.openTest}</button>
+      </div>
+    );
+  }
   return (
     <div className="list-row">
       <button className="mine-open" onClick={onOpen}>
         <AppIcon src={m.app.icon_url} size={44} />
         <span className="col1">
           <span className="t-card ellipsis">{m.app.name}</span>
-          <Meter n={m.testers.length} need={m.need} />
+          <Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} />
         </span>
       </button>
       <span className="stake">
-        <button className={`stake-btn ${stake <= m.locked ? 'dim' : ''}`} aria-label="-" onClick={() => { if (stake <= m.locked) { toast(t.stakeLocked); return; } setStake((n) => n - 1); toast(`🎫1${t.unstaked}`); }}>−</button>
-        <span className="stake-n"><Ticket n={stake} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
-        <button className="stake-btn" aria-label="+" onClick={() => { setStake((n) => n + 1); toast(`🎫1${t.staked}`); }}>+</button>
+        <button className={`stake-btn ${stake < 1 ? 'dim' : ''}`} aria-label="-" onClick={() => change(-1)}>−</button>
+        <span className="stake-n"><Ticket n={stake + m.locked} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
+        <button className="stake-btn" aria-label="+" onClick={() => change(1)}>+</button>
       </span>
     </div>
   );
 }
 
 /** 내 정보 안 테스트 묶음: 참여 중 + 찾기 / 내 앱 테스터 */
-export function TestSections({ d }: { d: TestData }) {
+export function TestSections({ d, h }: { d: TestData; h: TestH }) {
   const { t } = useApp();
   const [find, setFind] = useState(false);
   const [open, setOpen] = useState<MyTest | null>(null);
   return (
     <>
       <Section title={t.joining} aside={<span className="t-sub">{d.joined.length}/{MAX_JOIN}</span>}>
-        {d.joined.map((j) => <JoinedCard key={j.app.id} j={j} />)}
+        {d.joined.map((j) => <JoinedCard key={`${j.id}:${j.done.join()}`} j={j} h={h} />)}
         <button className="list-row find-row" onClick={() => setFind(true)}>
           <span className="find-icon">{Icon.plus}</span>
           <span className="t-card grow">{t.findTest}</span>
@@ -255,20 +309,20 @@ export function TestSections({ d }: { d: TestData }) {
 
       {d.mine.length > 0 && (
         <Section title={t.testers}>
-          {d.mine.map((m) => <MineRow key={m.app.id} m={m} onOpen={() => setOpen(m)} />)}
+          {d.mine.map((m) => <MineRow key={`${m.app.id}:${m.open}:${m.stake}:${m.locked}`} m={m} h={h} onOpen={() => setOpen(m)} />)}
         </Section>
       )}
 
-      <RecruitSheet open={find} list={d.recruit} joinedCount={d.joined.length} onClose={() => setFind(false)} />
+      <RecruitSheet open={find} list={d.recruit} joinedCount={d.joined.length} h={h} onClose={() => setFind(false)} />
       <TestersSheet m={open} onClose={() => setOpen(null)} />
     </>
   );
 }
 
 /** 앱 상세 안 모집 띠: 사람 n/12 · 🎫+n · [참여] */
-export function RecruitStrip({ r }: { r: Recruit }) {
+export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joined?: boolean; onJoin: (r: Recruit) => Promise<boolean> }) {
   const { t, toast } = useApp();
-  const [joined, setJoined] = useState(false);
+  const [joined, setJoined] = useState(!!joined0);
   const b = bonusOf(r);
   return (
     <div className="card recruit-strip">
@@ -276,12 +330,12 @@ export function RecruitStrip({ r }: { r: Recruit }) {
         <span className="find-icon">{Icon.flask}</span>
         <div className="col1">
           <span className="t-card">{t.testers}</span>
-          <Meter n={r.joined + (joined ? 1 : 0)} need={r.need} />
+          <Meter n={r.joined + (joined && !joined0 ? 1 : 0)} need={r.need} />
         </div>
         <span className={`reward-tag ${b > 1 ? 'bonus' : ''}`}><Ticket n={b} plus /></span>
         {joined
           ? <span className="btn-sm on">{Icon.check}</span>
-          : <button className="btn-sm primary" onClick={() => { setJoined(true); toast(`${t.joinedT} · 🎫+${b}`); }}>{t.join}</button>}
+          : <button className="btn-sm primary" onClick={async () => { if (await onJoin(r)) { setJoined(true); toast(`${t.joinedT} · 🎫+${b}`); } }}>{t.join}</button>}
       </div>
     </div>
   );

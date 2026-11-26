@@ -89,12 +89,6 @@ export function Chip({ tone = 'soft', className = '', style, children, ...rest }
   return <span className={`chip ${tone === 'soft' ? '' : tone} ${className}`} style={style} {...rest}>{children}</span>;
 }
 
-/** 온도: 악수 + 숫자 */
-export function Temp({ value, big }: { value: number | string; big?: boolean }) {
-  const { t } = useApp();
-  return <span className={`temp ${big ? 'big' : ''}`} role="img" aria-label={`${t.temp} ${value}`}>{Icon.shake}{value}</span>;
-}
-
 /** 동그란 아이콘 버튼 (40). href가 있으면 링크 */
 export function IconButton({ label, onClick, href, tone, children, disabled }: { label: string; onClick?: () => void; href?: string; tone?: 'white' | 'primary'; children: ReactNode; disabled?: boolean }) {
   const cls = `icon-btn ${tone || ''}`;

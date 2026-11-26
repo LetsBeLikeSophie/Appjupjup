@@ -6,11 +6,15 @@ import { sb, type App, type Comment, type Person } from '@/lib/supabase';
 import { loadApp, loadComments } from '@/lib/data';
 import { DetailView } from '@/components/detail-view';
 import { PersonSheet } from '@/components/person-sheet';
+import type { Recruit } from '@/components/test-view';
+import { loadBoard, myJoinFor, recruitOf, testErrMsg } from '@/lib/test';
 
 export default function AppPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { t, session, profile, myApps, openLogin, toast, refreshProfile } = useApp();
+  const { t, session, profile, myApps, openLogin, toast, refreshProfile, refreshTestDue } = useApp();
+  const [recruit, setRecruit] = useState<Recruit | null>(null);
+  const [joined, setJoined] = useState(false);
   const [app, setApp] = useState<App | null | undefined>(undefined);
   const [from, setFrom] = useState<App | null>(null);
   const [comments, setComments] = useState<Comment[] | null>(null);
@@ -24,6 +28,20 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
     if (f) loadApp(f).then(setFrom);
   }, [id, reload]);
 
+  // 테스터 모집 띠: 내 앱이 아니고 사람이 덜 찼을 때
+  useEffect(() => {
+    if (!app || app.owner_id === session?.user.id) { setRecruit(null); return; }
+    loadBoard().then((b) => setRecruit(recruitOf(b, app)));
+    if (session) myJoinFor(session.user.id, app.id).then(setJoined);
+  }, [app, session]);
+  const join = async (r: Recruit) => {
+    if (!session) { openLogin(); return false; }
+    const { error } = await sb().rpc('aj_test_join', { p_app: r.app.id });
+    if (error) { toast(testErrMsg(t as unknown as Record<string, string>, error.message)); return false; }
+    refreshTestDue();
+    return true;
+  };
+
   const me = useMemo<Person | null>(() => profile && ({
     id: profile.id, nickname: profile.nickname, tag: profile.tag, score: profile.score,
     apps: myApps.map((a) => ({ id: a.id, name: a.name, icon_url: a.icon_url, is_primary: a.is_primary })),
@@ -34,12 +52,12 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
 
   return (
     <>
-      <DetailView app={app} comments={comments} me={me} from={from} h={{
+      <DetailView app={app} comments={comments} me={me} from={from} recruit={recruit} joined={joined} onJoin={join} h={{
         onSend: async (body) => {
           if (!session) { openLogin(); return false; }
           const { data, error } = await sb().rpc('aj_comment', { p_app: app.id, p_body: body });
           if (error) { const k = errKey(error); toast(k === 'badword' ? t.fbBad : k === 'too_fast' ? t.tooFast : t.errGeneric); return false; }
-          if (data?.delta) { toast(`🤝 +${data.delta}`); refreshProfile(); } else toast(t.commented);
+          toast(t.commented);
           reload();
           return true;
         },

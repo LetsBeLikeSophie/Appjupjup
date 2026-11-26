@@ -1,6 +1,6 @@
 // 가짜 앱 데이터 (시험용 /demo, /preview)
 import type { App, Comment, Notice, Person, Profile } from './supabase';
-import type { Joined, MyTest, Recruit, TestData } from '@/components/test-view';
+import type { Joined, MyTest, Recruit, TestData, TestH } from '@/components/test-view';
 
 export const fakeIcon = (bg: string, e: string) =>
   `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/><text x="50" y="66" font-size="48" text-anchor="middle">${e}</text></svg>`)}`;
@@ -80,7 +80,7 @@ people[1].apps = [{ id: 'a10', name: '한마디', icon_url: APPS[10].icon_url, i
 people[2].apps = [{ id: 'a1', name: '세줄일기', icon_url: APPS[1].icon_url, is_primary: true }];
 APPS.forEach((a) => { a.owner = a.owner_id === 'u3' ? people[2] : people[1]; });
 
-export const profile: Profile = { id: 'me', nickname: '줍줍이', avatar_url: null, score: 118, country: 'KR', locale: 'ko', setup_done: true, tag: 4821 };
+export const profile: Profile = { id: 'me', nickname: '줍줍이', avatar_url: null, score: 118, tickets: 1, country: 'KR', locale: 'ko', setup_done: true, tag: 4821 };
 export const me: Person = { id: 'me', nickname: '줍줍이', tag: 4821, score: 118, apps: [{ id: 'a10', name: '한마디', icon_url: APPS[10].icon_url, is_primary: true }, { id: 'a5', name: '냉장고털이', icon_url: APPS[5].icon_url, is_primary: false }] };
 
 export const COMMENTS: Comment[] = [
@@ -111,12 +111,12 @@ export const RECRUIT: Recruit[] = [
   { app: APPS[3], joined: 1, need: 12, given: 0 },
 ];
 export const JOINED: Joined[] = [
-  { app: APPS[8], day: 7, done: [true, false, false] },
-  { app: APPS[6], day: 2, done: [true, false, false] },
-  { app: APPS[4], day: 3, done: [true, false, false], bonus: 2 },
+  { id: 'j8', app: APPS[8], day: 7, done: [true, false, false] },
+  { id: 'j6', app: APPS[6], day: 2, done: [true, false, false] },
+  { id: 'j4', app: APPS[4], day: 3, done: [true, false, false], bonus: 2 },
 ];
 export const MY_TEST: MyTest = {
-  app: APPS[10], need: 12, stake: 3, locked: 2,
+  app: APPS[10], open: true, need: 12, stake: 1, locked: 2,
   testers: [
     { who: filmDev, day: 9, done: [true, true, false] },
     { who: people[2], day: 8, done: [true, true, false] },
@@ -133,7 +133,10 @@ export const MY_TEST: MyTest = {
   ],
 };
 
-export const TEST: TestData = { points: TEST_POINTS, recruit: RECRUIT, joined: JOINED, mine: [MY_TEST] };
+export const TEST: TestData = { points: TEST_POINTS, recruit: RECRUIT, joined: JOINED, mine: [MY_TEST, { app: APPS[5], open: false, need: 12, stake: 0, locked: 0, testers: [], feedback: [] }] };
+/** 시험 동작: 다 성공 (사진은 안 올림) */
+const yes = async () => true;
+export const TEST_H: TestH = { join: yes, note: yes, stake: yes, open: yes, capture: async (j, i) => (j.done.filter(Boolean).length + 1 >= 3 && i === 2 ? 'done' : 'ok') };
 /** 홈 가짜 앱 중 테스터 모집 중인 것 (5개 중 1개) */
 export const recruitOf = (a: App): Recruit | null => {
   const i = Number(a.id.replace(/\D/g, ''));

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import type { App, Comment, Person } from '@/lib/supabase';
-import { AppIcon, GetButton, Icon, IconButton, Shots, Temp, WhoIcon, WhoName } from './ui';
+import { AppIcon, GetButton, Icon, IconButton, Shots, WhoIcon, WhoName } from './ui';
 import { AppChips } from './app-parts';
 import { RecruitStrip, type Recruit } from './test-view';
 
@@ -36,7 +36,7 @@ function CommentRow({ c, app, myId, h }: { c: Comment; app: App; myId?: string; 
       <div className="cm-body">
         <span className="cm-head">
           <button className="cm-name ellipsis" onClick={() => c.author && h.onPerson(c.author)}><WhoName who={c.author} /></button>
-          {isDev ? <span className="dev-tag">{t.dev}</span> : c.author && <Temp value={c.author.score} />}
+          {isDev && <span className="dev-tag">{t.dev}</span>}
           <span className="t-sub">{ago(c.created_at, locale)}</span>
         </span>
         <p className="t-body">{c.body}</p>
@@ -90,7 +90,7 @@ function CommentBar({ app, me, onSend }: { app: App; me: Person | null; onSend: 
 }
 
 /** 앱 상세 그리기 (데이터는 page에서) */
-export function DetailView({ app, comments, me, from, h, recruit }: { app: App; comments: Comment[] | null; me: Person | null; from: App | null; h: Handlers; recruit?: Recruit | null }) {
+export function DetailView({ app, comments, me, from, h, recruit, joined, onJoin }: { app: App; comments: Comment[] | null; me: Person | null; from: App | null; h: Handlers; recruit?: Recruit | null; joined?: boolean; onJoin?: (r: Recruit) => Promise<boolean> }) {
   const { t } = useApp();
   return (
     <div className="detail">
@@ -107,7 +107,7 @@ export function DetailView({ app, comments, me, from, h, recruit }: { app: App; 
         {app.tagline && <p className="t-body t-muted">{app.tagline}</p>}
         <AppChips app={app} />
       </div>
-      {recruit && <RecruitStrip r={recruit} />}
+      {recruit && onJoin && <RecruitStrip key={`${recruit.app.id}:${joined}`} r={recruit} joined={joined} onJoin={onJoin} />}
       <Shots urls={app.screenshots} height={240} />
       <section className="comments" aria-label={t.comments}>
         {comments?.map((c) => <CommentRow key={c.id} c={c} app={app} myId={me?.id} h={h} />)}

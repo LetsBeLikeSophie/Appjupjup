@@ -1,16 +1,16 @@
 'use client';
 import { useApp } from '@/lib/ctx';
 import { flag, countryName, type App, type Profile } from '@/lib/supabase';
-import { Icon, IconButton, Temp, WhoIcon, WhoName } from './ui';
-import { Page, Section, Sheet, SheetHeader } from './layout';
+import { Icon, IconButton, WhoIcon, WhoName } from './ui';
+import { Loading, Page, Section, Sheet, SheetHeader } from './layout';
 import { AppTile } from './app-parts';
-import { APP_COST, PointsCard, TestSections, Ticket, type TestData } from './test-view';
+import { APP_COST, PointsCard, TestSections, Ticket, type TestData, type TestH } from './test-view';
 
 type Lite = Pick<App, 'id' | 'name' | 'icon_url'>;
 
 /** 내 정보 그리기 (데이터는 page에서) */
-export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUpload, onSettings, test }: {
-  profile: Profile; apps: App[]; gotApps: Lite[]; commentCount: number; test?: TestData;
+export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUpload, onSettings, test, testH }: {
+  profile: Profile; apps: App[]; gotApps: Lite[]; commentCount: number; test: TestData | null; testH: TestH;
   onEditApp: (a: App) => void; onUpload: () => void; onSettings: () => void;
 }) {
   const { t, toast } = useApp();
@@ -21,22 +21,15 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
         {apps.length === 0 && <span className="tile"><WhoIcon who={who} size={64} /><span className="tile-name"><WhoName who={who} /></span></span>}
         {apps.map((a) => <AppTile key={a.id} app={a} size={64} star={a.is_primary && apps.length > 1} onClick={() => onEditApp(a)} />)}
         {apps.length < 3 && (
-          <button className="tile" onClick={() => (test && apps.length > 0 && test.points < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
-            <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted">{test && apps.length > 0 ? <Ticket n={APP_COST} /> : t.publish}</span>
+          <button className="tile" onClick={() => (apps.length > 0 && profile.tickets < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
+            <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted">{apps.length > 0 ? <Ticket n={APP_COST} /> : t.publish}</span>
           </button>
         )}
       </div>
 
-      {test
-        ? <PointsCard points={test.points} sub={`${t.gotN} ${gotApps.length} · ${t.commentN} ${commentCount}`} />
-        : (
-          <div className="temp-card">
-            <Temp value={profile.score} big />
-            <span className="t-sub">{t.gotN} {gotApps.length} · {t.commentN} {commentCount}</span>
-          </div>
-        )}
+      <PointsCard points={profile.tickets} sub={`${t.gotN} ${gotApps.length} · ${t.commentN} ${commentCount}`} />
 
-      {test && <TestSections d={test} />}
+      {test ? <TestSections d={test} h={testH} /> : <Loading />}
 
       <Section title={t.gotApps} aside={<span className="t-sub">{gotApps.length}</span>}>
         {gotApps.length > 0 && (

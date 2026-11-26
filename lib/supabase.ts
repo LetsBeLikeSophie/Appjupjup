@@ -17,6 +17,8 @@ export type Profile = {
   avatar_url: string | null;
   /** 온도: 100에서 시작, 깎이지 않아요 */
   score: number;
+  /** 🎫 티켓: 가입 1장, 남의 앱 테스트로 얻고 앱 올리기·걸기에 씀 (함수로만 바뀜) */
+  tickets: number;
   country: string;
   locale: string;
   setup_done: boolean;

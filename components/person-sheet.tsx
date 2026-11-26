@@ -1,7 +1,7 @@
 'use client';
 import { useApp } from '@/lib/ctx';
 import type { Person } from '@/lib/supabase';
-import { Temp, WhoIcon, WhoName } from './ui';
+import { WhoIcon, WhoName } from './ui';
 import { Sheet } from './layout';
 import { AppTile } from './app-parts';
 
@@ -19,7 +19,6 @@ export function PersonSheet({ person, onClose }: { person: Person | null; onClos
       ) : (
         <div className="person-guest"><WhoIcon who={person} size={72} /><b className="t-card"><WhoName who={person} /></b></div>
       )}
-      <div className="row" style={{ justifyContent: 'center' }}><Temp value={person.score} big /></div>
     </Sheet>
   );
 }

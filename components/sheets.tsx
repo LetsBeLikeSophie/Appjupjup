@@ -122,7 +122,7 @@ export function UploadSheet() {
     setBusy(false);
     if (error) {
       const k = errKey(error);
-      toast(k === 'badword' ? t.fbBad : k === 'app_limit' ? t.limit : k === 'duplicate' ? t.dup : k === 'bad_link' ? t.badLink : t.errGeneric);
+      toast(k === 'need_tickets' ? `🎫2${t.needT}` : k === 'badword' ? t.fbBad : k === 'app_limit' ? t.limit : k === 'duplicate' ? t.dup : k === 'bad_link' ? t.badLink : t.errGeneric);
       return;
     }
     setUploadOpen(false); refreshMine();

@@ -75,7 +75,7 @@ export function ListRow({ leading, title, time, sub, meta, trailing, chevron, to
 /* ---------- 하단 메뉴 ---------- */
 export function TabBar() {
   const path = usePathname();
-  const { unread, t } = useApp();
+  const { unread, testDue, t } = useApp();
   // 앱 상세·밸런스 게임은 아래에 자기 버튼이 있어서 메뉴를 숨겨요
   if (path.startsWith('/app/') || path.startsWith('/game')) return null;
   // /demo 안에서는 시험용 메뉴 (내 정보 점 = 오늘 찍을 테스트 캡처)
@@ -87,7 +87,7 @@ export function TabBar() {
   ] : [
     { href: '/', icon: Icon.home, label: t.appName },
     { href: '/alerts', icon: Icon.bell, label: t.alerts, dot: unread > 0 },
-    { href: '/me', icon: Icon.user, label: t.me },
+    { href: '/me', icon: Icon.user, label: t.me, dot: testDue },
   ];
   return (
     <div className="tabwrap">
