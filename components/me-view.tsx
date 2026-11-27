@@ -2,7 +2,7 @@
 import { useApp } from '@/lib/ctx';
 import { flag, countryName, type App, type Profile } from '@/lib/supabase';
 import { Icon, IconButton, WhoIcon, WhoName } from './ui';
-import { Loading, Page, Section, Sheet, SheetHeader } from './layout';
+import { Empty, Loading, Page, Section, Sheet, SheetHeader } from './layout';
 import { AppTile } from './app-parts';
 import { APP_COST, PointsCard, TestSections, Ticket, type TestData, type TestH } from './test-view';
 
@@ -30,11 +30,11 @@ export function MeView({ profile, apps, gotApps, onEditApp, onUpload, onSettings
       </Section>
 
       <Section title={t.gotApps} aside={<span className="t-sub">{gotApps.length}</span>}>
-        {gotApps.length > 0 && (
+        {gotApps.length > 0 ? (
           <div className="tiles scroll">
             {gotApps.map((a) => <AppTile key={a.id} app={a} size={52} href={`/app/${a.id}`} />)}
           </div>
-        )}
+        ) : <Empty>{t.empty}</Empty>}
       </Section>
 
       {test ? <TestSections d={test} h={testH} findHref={findHref} /> : <Loading />}

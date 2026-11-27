@@ -53,9 +53,10 @@ export function Missing({ onBack }: { onBack: () => void }) {
   );
 }
 
-export function Empty({ title, children }: { title?: string; children?: ReactNode }) {
+/** 빈 상태는 이것 하나. 흰 바탕 화면(상세 등)에선 soft */
+export function Empty({ title, children, soft }: { title?: string; children?: ReactNode; soft?: boolean }) {
   return (
-    <div className="empty">
+    <div className={`empty ${soft ? 'soft' : ''}`}>
       {title && <b className="t-card">{title}</b>}
       {children && <span className="t-body t-muted">{children}</span>}
     </div>

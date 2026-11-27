@@ -6,7 +6,7 @@ import { useApp } from '@/lib/ctx';
 import { hash, isFresh, type App } from '@/lib/supabase';
 import { AppIcon, Icon } from './ui';
 import { Marker, tiltOf, type TestMark } from './app-parts';
-import { Loading } from './layout';
+import { Loading, Empty } from './layout';
 
 /** 카테고리 칩: 전체 · 새로 나옴 · 앱이 있는 카테고리만 */
 export function CatChips({ apps, cat, setCat, lead, test }: { apps: App[]; cat: string; setCat: (c: string) => void; lead?: ReactNode; test?: boolean }) {
@@ -255,7 +255,7 @@ export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, on
       </header>
       {mine && <CatChips apps={mine} cat={cat} setCat={setCat} test={!!testIds?.size || cat === 'test'} lead={device && setDevice ? <DeviceSeg device={device} setDevice={setDevice} /> : undefined} />}
       {list === null && <Loading />}
-      {list?.length === 0 && <div className="loading">{t.empty}</div>}
+      {list?.length === 0 && <div className="gutter"><Empty>{t.empty}</Empty></div>}
       {list && list.length > 0 && (heap
         ? <IconHeap key={`${device}:${cat}`} saveKey={`${device ?? 'all'}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} testIds={testIds} />
         : <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} testIds={testIds} />)}

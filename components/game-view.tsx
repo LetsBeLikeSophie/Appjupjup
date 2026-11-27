@@ -1,4 +1,5 @@
 'use client';
+import { Empty } from './layout';
 import { useCallback, useEffect, useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import type { App } from '@/lib/supabase';
@@ -60,7 +61,7 @@ export function GameView({ pool, onClose, boost }: { pool: App[] | null; onClose
         <span style={{ width: 'var(--icon-btn)' }} />
       </div>
 
-      {pool && round.length === 0 && <div className="loading">{t.empty}</div>}
+      {pool && round.length === 0 && <Empty>{t.empty}</Empty>}
 
       {round.length >= 2 && (
         <div className="vs" key={`${round[pos].id}-${round[pos + 1].id}`}>

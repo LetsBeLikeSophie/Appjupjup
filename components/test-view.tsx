@@ -9,7 +9,7 @@ import { useApp } from '@/lib/ctx';
 import type { App, Person } from '@/lib/supabase';
 import { AppIcon, Icon, WhoIcon, WhoName } from './ui';
 import { PlatformChip } from './app-parts';
-import { Section, Sheet, SheetHeader } from './layout';
+import { Empty, Section, Sheet, SheetHeader } from './layout';
 
 export const MAX_JOIN = 10;
 export const APP_COST = 2;
@@ -259,6 +259,7 @@ export function TestSections({ d, h, findHref }: { d: TestData; h: TestH; findHr
   const { t } = useApp();
   return (
     <Section title={t.joining} aside={<span className="row gap12"><span className="t-sub">{d.joined.length}/{MAX_JOIN}</span><Link className="btn-sm white" href={findHref}>{Icon.flask}{t.testApps}</Link></span>}>
+      {d.joined.length === 0 && <Empty>{t.empty}</Empty>}
       {d.joined.map((j) => <JoinedCard key={`${j.id}:${j.caps.length}`} j={j} h={h} />)}
     </Section>
   );

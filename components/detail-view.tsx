@@ -1,4 +1,5 @@
 'use client';
+import { Empty } from './layout';
 import { useEffect, useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import type { App, Comment, Person } from '@/lib/supabase';
@@ -115,6 +116,7 @@ export function DetailView({ app, comments, me, from, h, recruit, joined, onJoin
       {recruit && onJoin && <RecruitStrip key={`${recruit.app.id}:${joined}`} r={recruit} joined={joined} onJoin={onJoin} />}
       <Shots urls={app.screenshots} height={240} />
       <section id="comments" className="comments" aria-label={t.comments}>
+        {comments?.length === 0 && <Empty soft>{t.empty}</Empty>}
         {comments?.map((c) => <CommentRow key={c.id} c={c} app={app} myId={me?.id} h={h} />)}
       </section>
       <CommentBar app={app} me={me} onSend={h.onSend} />
