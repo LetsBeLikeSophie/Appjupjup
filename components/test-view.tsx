@@ -38,7 +38,7 @@ export const bonusOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => 1 + (r
 /** 목록 순서: 보상 큰 앱 → 12명에 가까움 + 남을 많이 테스트해 준 사람 */
 export const sortRecruit = (l: Recruit[]) => [...l].sort((a, b) => bonusOf(b) - bonusOf(a) || (b.joined * 2 + b.given) - (a.joined * 2 + a.given));
 
-/** 🎫 표시는 이것 하나: 연회색 칩 + 숫자. +받음 / −씀 / 그냥 개수. 주황 글씨(hot) = 보너스(2장 이상·주인이 건 티켓), dim = 아직 못 받음 */
+/** 🎫 표시는 이것 하나: 연회색 칩 + 숫자. +받음 / −씀 / 그냥 개수. 주황 글씨(hot) = 보너스(Reward 2장 이상에서만), dim = 아직 못 받음 */
 export function Ticket({ n, sign, hot, dim }: { n: number; sign?: '+' | '-'; hot?: boolean; dim?: boolean }) {
   return <span className={`tk ${hot ? 'hot' : ''} ${dim ? 'dim' : ''}`}>{Icon.ticket}{sign === '-' ? '−' : sign || ''}{n}</span>;
 }
@@ -155,12 +155,12 @@ function HowSheet({ open, points, onClose }: { open: boolean; points: number; on
           {line(Icon.android, t.hAnd, t.hAndS, <Ticket n={1} sign="+" />)}
           {line(Icon.apple, t.hIos, t.hIosS, <Ticket n={1} sign="+" />)}
           {line(Icon.user, t.hLast, t.hLastS, <Ticket n={1} sign="+" />)}
-          {line(Icon.lock, t.hStaked, t.hStakedS, <Ticket n={1} sign="+" hot />)}
+          {line(Icon.lock, t.hStaked, t.hStakedS, <Ticket n={1} sign="+" />)}
         </div>
         <div className="how-row">
           <span className="how-label t-sub">{t.use}</span>
           {line(Icon.plus, t.hUpload, t.hUploadS, <Ticket n={APP_COST} sign="-" />)}
-          {line(Icon.lock, t.hStake, t.hStakeS, <Ticket n={1} sign="-" hot />)}
+          {line(Icon.lock, t.hStake, t.hStakeS, <Ticket n={1} sign="-" />)}
         </div>
       </div>
     </Sheet>
@@ -224,7 +224,7 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
         <span className="col1"><span className="t-card">{t.testers}</span><Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} /></span>
         <span className="stake">
           <button className={`stake-btn ${stake < 1 ? 'dim' : ''}`} aria-label="-" onClick={() => change(-1)}>−</button>
-          <span className="stake-n"><Ticket n={stake + m.locked} hot />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
+          <span className="stake-n"><Ticket n={stake + m.locked} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
           <button className="stake-btn" aria-label="+" onClick={() => change(1)}>+</button>
         </span>
       </div>
