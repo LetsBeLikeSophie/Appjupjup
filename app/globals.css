@@ -263,6 +263,7 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 
 /* ---------- 알림 ---------- */
 .alert { background: var(--surface); border-radius: var(--r-card); padding: 12px var(--pad); }
+.alert.hot { background: var(--primary-soft); }
 .alert-main { display: flex; align-items: center; gap: 12px; min-height: 48px; }
 .alert-who { flex-shrink: 0; display: inline-flex; }
 .alert-body { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }

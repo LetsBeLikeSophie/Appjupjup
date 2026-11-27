@@ -25,7 +25,8 @@ export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
   const leading = n.kind === 'helpful' ? <AppIcon src={n.app?.icon_url} size={40} /> : <WhoIcon who={n.actor} size={40} />;
 
   return (
-    <div className="alert alert-main">
+    // 답방할 수 있는 안 읽은 줄만 연한 바탕 (CLAUDE.md 알림 규칙)
+    <div className={`alert alert-main ${unread && canVisit ? 'hot' : ''}`}>
       {canVisit && actorApp
         ? <Link className="alert-who" href={`/app/${actorApp.id}?from=${n.app_id}`} aria-label={t.visit}>{leading}</Link>
         : leading}
