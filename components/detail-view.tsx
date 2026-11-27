@@ -77,7 +77,7 @@ function CommentBar({ app, me, onSend }: { app: App; me: Person | null; onSend: 
         </div>
       )}
       <div className="cbar-row">
-        {me && <WhoIcon who={me} size={36} />}
+        {me && <WhoIcon who={me} size={34} />}
         <label className="sr" htmlFor="cm-in">{t.commentPh}</label>
         <input id="cm-in" className={`cbar-in ${open ? 'on' : ''}`} placeholder={t.commentPh} maxLength={100} value={text}
           onFocus={() => { if (!session) { openLogin(); return; } setFocus(true); }} onBlur={() => setFocus(false)}

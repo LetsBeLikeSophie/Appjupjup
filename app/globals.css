@@ -15,7 +15,7 @@
   --primary: #F26A1B; --primary-press: #DA5C12; --primary-soft: #E3E3DD; --primary-ink: var(--ink); --on-primary: #fff;
   --accent: var(--primary); --ok: #0B7A45; --bad: #C0262D; --star: #FAB005;
 
-  --gutter: 20px; --gap: 16px; --gap-list: 8px; --pad: 16px;
+  --gutter: 20px; --gap: 16px; --gap-list: 8px; --pad: 16px; --top: 24px;
   --r-card: 20px; --r-sheet: 28px; --r-field: 16px;
 
   --fs-title: 24px; --fs-name: 20px; --fs-section: 17px; --fs-card: 15px; --fs-body: 14px; --fs-sub: 12px;
@@ -70,7 +70,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .gutter { padding-left: var(--gutter); padding-right: var(--gutter); }
 
 /* ---------- 화면 틀 ---------- */
-.page { padding: calc(24px + env(safe-area-inset-top)) var(--gutter) 0; display: flex; flex-direction: column; gap: var(--gap); }
+.page { padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) 0; display: flex; flex-direction: column; gap: var(--gap); }
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--icon-btn); }
 .section { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--btn-sm-h); }
@@ -172,7 +172,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .mk-star { top: -7px; left: -7px; width: 22px; height: 22px; border-radius: 11px; }
 
 /* ---------- 홈: 아이콘 줍기 ---------- */
-.home-head { padding: calc(24px + env(safe-area-inset-top)) var(--gutter) 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.home-head { padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .game-btn { height: var(--icon-btn); padding: 0 14px; border-radius: 20px; background: var(--surface); color: var(--primary-ink); display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-body); font-weight: var(--fw-strong); }
 .cat-row { display: flex; gap: 6px; overflow-x: auto; padding: 12px var(--gutter) 4px; scrollbar-width: none; }
 .cat-row::-webkit-scrollbar { display: none; }
@@ -214,7 +214,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .person-guest { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 12px; }
 
 /* ---------- 밸런스 게임 ---------- */
-.game { min-height: 100dvh; display: flex; flex-direction: column; padding: calc(16px + env(safe-area-inset-top)) var(--gutter) calc(24px + env(safe-area-inset-bottom)); gap: var(--gap); }
+.game { min-height: 100dvh; display: flex; flex-direction: column; padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(24px + env(safe-area-inset-bottom)); gap: var(--gap); }
 .game-top { display: flex; align-items: center; justify-content: space-between; }
 .dots { display: flex; gap: 6px; }
 .dots i { width: 22px; height: 6px; border-radius: 3px; background: var(--skel); }
@@ -232,7 +232,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .champ-foot { margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 8px; }
 
 /* ---------- 앱 상세 ---------- */
-.detail { max-width: 480px; margin: 0 auto; min-height: 100dvh; background: var(--surface); padding: calc(12px + env(safe-area-inset-top)) var(--gutter) calc(96px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--gap); }
+.detail { max-width: 480px; margin: 0 auto; min-height: 100dvh; background: var(--surface); padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(96px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--gap); }
 body:has(.detail) { background: var(--surface); }
 body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .frame:has(.detail), .frame:has(.game) { padding-bottom: 0; }
@@ -249,7 +249,7 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .cm-name { border: 0; padding: 0; background: none; font-size: var(--fs-body); font-weight: var(--fw-mid); text-align: left; }
 .cm-acts { display: flex; gap: 6px; margin-top: 2px; }
 .cm-acts:empty { display: none; }
-.cbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; max-width: 480px; margin: 0 auto; background: var(--surface); box-shadow: 0 -1px 0 var(--line); padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
+.cbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; max-width: 480px; margin: 0 auto; background: var(--surface); box-shadow: 0 -1px 0 var(--line); padding: 10px var(--gutter) calc(12px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
 .quick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
 .quick .chip { border: 0; height: 30px; font-size: var(--fs-body); }
 .cbar-row { display: flex; align-items: center; gap: 8px; }
@@ -300,7 +300,7 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .sheet-foot { position: sticky; bottom: calc(-24px - env(safe-area-inset-bottom)); margin: auto calc(-1 * var(--gutter)) calc(-24px - env(safe-area-inset-bottom)); padding: 12px var(--gutter) calc(24px + env(safe-area-inset-bottom)); background: var(--surface); display: flex; flex-direction: column; gap: 12px; box-shadow: 0 -1px 0 var(--line); }
 
 /* ---------- 첫 입장 ---------- */
-.welcome { position: fixed; inset: 0; z-index: 50; background: var(--bg); max-width: 480px; margin: 0 auto; padding: calc(56px + env(safe-area-inset-top)) var(--gutter) calc(32px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--gap); }
+.welcome { position: fixed; inset: 0; z-index: 50; background: var(--bg); max-width: 480px; margin: 0 auto; padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(32px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--gap); }
 .welcome .t-title { text-align: center; margin-bottom: 12px; }
 .choice { flex: 1; border: 0; border-radius: 28px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
 .choice:active { background: var(--primary-soft); }
