@@ -23,7 +23,7 @@ export function MeView({ profile, apps, gotApps, onEditApp, onUpload, onSettings
           {apps.map((a) => <AppTile key={a.id} app={a} size={52} star={a.is_primary && apps.length > 1} onClick={() => onEditApp(a)} />)}
           {apps.length < 3 && (
             <button className="tile" onClick={() => (profile.tickets < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
-              <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted"><Ticket n={APP_COST} /></span>
+              <span className="add-icon">{Icon.plus}</span><Ticket n={APP_COST} sign="-" />
             </button>
           )}
         </div>

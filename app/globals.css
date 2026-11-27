@@ -312,28 +312,16 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .dev-seg button.on { background: var(--primary-soft); color: var(--primary-ink); }
 
 /* 테스터 교환 (내 정보 · 상세 띠) */
-.ticket { display: inline-flex; align-items: center; gap: 2px; font-size: var(--fs-sub); font-weight: var(--fw-strong); color: var(--ink); flex-shrink: 0; }
-.ticket svg { width: 14px; height: 14px; }
-.ticket.on { color: var(--primary-ink); }
-.ticket.big { font-size: var(--fs-hero); letter-spacing: -1.5px; gap: 8px; line-height: 1; }
-.ticket.big svg { width: 36px; height: 36px; }
-.reward-tag { flex-shrink: 0; display: inline-flex; align-items: center; }
-.reward-tag .ticket { color: var(--sub); font-weight: var(--fw-mid); }
-.reward-tag.bonus .ticket, .slot.reward.bonus .ticket { color: var(--ink); font-weight: var(--fw-strong); font-size: var(--fs-card); }
 .stake { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .stake-btn { width: 30px; height: 30px; border: 0; border-radius: 15px; background: var(--soft); font-size: var(--fs-card); font-weight: var(--fw-strong); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 .stake-btn.dim { opacity: .35; }
 .stake-n { display: inline-flex; flex-direction: column; align-items: center; min-width: 30px; }
-.stake-n .ticket { font-size: var(--fs-card); }
 .stake-lock { display: inline-flex; align-items: center; gap: 1px; font-size: var(--fs-tiny); color: var(--sub); }
 .stake-lock svg { width: 10px; height: 10px; }
 .how-os { display: inline-flex; color: var(--sub); width: 18px; }
 .mine-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: 0; padding: 0; background: none; text-align: left; }
 .mk-test { position: absolute; top: -7px; left: -7px; width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.14); }
 .mk-test svg { width: 13px; height: 13px; }
-.reward-tag { gap: 4px; }
-.reward-stake { background: var(--primary-soft); }
-.reward-stake .ticket { color: var(--ink); font-weight: var(--fw-strong); }
 .btn-sm.on { background: var(--soft); color: var(--sub); }
 .btn-sm svg { width: 14px; height: 14px; }
 .find-row { min-height: 60px; }
@@ -348,8 +336,6 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .how-cam { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
 .how-cam svg { width: 22px; height: 22px; }
 .how-arrow { color: var(--sub); display: inline-flex; }
-.how-flow .ticket { font-size: var(--fs-section); }
-.how-flow .ticket svg { width: 20px; height: 20px; }
 .col1 { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .meter { display: flex; align-items: center; gap: 8px; }
 .meter-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--soft); overflow: hidden; }
@@ -374,13 +360,18 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .slots-row .slots-reward { margin-left: auto; }
 .ticket-pill { height: var(--icon-btn); border-radius: 20px; font-weight: var(--fw-strong); }
 .ticket-pill svg { width: 16px; height: 16px; }
-.slots-reward { display: inline-flex; align-items: center; gap: 2px; padding-bottom: 20px; }
-.slots-reward .ticket { color: var(--sub); font-size: var(--fs-card); }
-.slots-reward.got .ticket { color: var(--ink); }
+/* 🎫 표시 하나: 연회색 칩, 주황 글씨 = 주인이 건 티켓, 흐림 = 아직 */
+.tk { flex-shrink: 0; height: var(--chip-h); padding: 0 8px; border-radius: 13px; background: var(--soft); color: var(--ink); font-size: var(--fs-sub); font-weight: var(--fw-strong); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.tk svg { width: 14px; height: 14px; }
+.tk.hot { color: var(--primary); }
+.tk.dim { opacity: .55; }
+/* 바탕이 회색이면 흰 칩 */
+.how-row .tk, .tiles .tk { background: var(--surface); }
+.reward-tag { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; }
+.mk-test.stake { color: var(--primary); }
+.slots-reward { display: inline-flex; align-items: center; gap: 4px; }
 .how-line { display: flex; align-items: flex-start; gap: 10px; padding: 4px 0; }
 .how-line .how-os { padding-top: 2px; }
-.how-line .ticket { padding-top: 2px; }
-.how-line .ticket { font-size: var(--fs-card); }
 .cat-test { display: inline-flex; align-items: center; gap: 4px; }
 .cat-test svg { width: 16px; height: 16px; }
 .myapp-test { display: flex; flex-direction: column; gap: var(--gap-list); }

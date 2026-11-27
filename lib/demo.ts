@@ -113,7 +113,7 @@ export const RECRUIT: Recruit[] = [
 export const JOINED: Joined[] = [
   { id: 'j8', app: APPS[8], day: 7, caps: [{ day: 1, src: APPS[8].screenshots[0] }, { day: 4, src: APPS[8].screenshots[0] }] },
   { id: 'j6', app: APPS[6], day: 2, caps: [{ day: 1, src: APPS[6].screenshots[0] }] },
-  { id: 'j4', app: APPS[4], day: 9, caps: [{ day: 1, src: APPS[4].screenshots[0] }, { day: 2, src: APPS[4].screenshots[0] }, { day: 5, src: APPS[4].screenshots[0] }, { day: 8, src: APPS[4].screenshots[0] }], bonus: 2 },
+  { id: 'j4', app: APPS[4], day: 9, caps: [{ day: 1, src: APPS[4].screenshots[0] }, { day: 2, src: APPS[4].screenshots[0] }, { day: 5, src: APPS[4].screenshots[0] }, { day: 8, src: APPS[4].screenshots[0] }], bonus: 2, staked: true },
 ];
 export const MY_TEST: MyTest = {
   app: APPS[10], open: true, need: 12, stake: 1, locked: 2,

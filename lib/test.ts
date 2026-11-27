@@ -19,7 +19,7 @@ export const recruitOf = (board: Board, app: App): Recruit | null => {
 };
 
 type CapRow = { idx: number; path: string | null; created_at: string };
-type JoinRow = { id: string; app_id: string; status: string; reward: number; joined_at: string; platform: App['platform']; app: App; caps: CapRow[] };
+type JoinRow = { id: string; app_id: string; status: string; reward: number; staked: boolean; joined_at: string; platform: App['platform']; app: App; caps: CapRow[] };
 type OwnJoinRow = { id: string; app_id: string; status: string; staked: boolean; joined_at: string; tester: Person; caps: CapRow[] };
 type NoteRow = { app_id: string; body: string; day: number; author: Person };
 
@@ -30,7 +30,7 @@ export async function loadTest(uid: string, myApps: App[], tickets: number): Pro
   const db = sb();
   const [board, joinsQ, ownQ, notesQ, testsQ] = await Promise.all([
     loadBoard(),
-    db.from('aj_test_joins').select(`id, app_id, status, reward, joined_at, platform, app:aj_apps(${APP_FIELDS}), caps:aj_test_caps(idx, path, created_at)`)
+    db.from('aj_test_joins').select(`id, app_id, status, reward, staked, joined_at, platform, app:aj_apps(${APP_FIELDS}), caps:aj_test_caps(idx, path, created_at)`)
       .eq('tester_id', uid).eq('status', 'active').order('joined_at'),
     db.from('aj_test_joins').select(`id, app_id, status, staked, joined_at, tester:aj_profiles!aj_test_joins_tester_id_fkey(${PERSON}), caps:aj_test_caps(idx, path, created_at)`)
       .eq('owner_id', uid).order('joined_at'),
@@ -48,7 +48,7 @@ export async function loadTest(uid: string, myApps: App[], tickets: number): Pro
   }
   const joined: Joined[] = joins.map((j) => ({
     // 캡처 날은 참여할 때 플랫폼 기준 (DB와 같게)
-    id: j.id, app: { ...j.app, platform: j.platform }, day: dayOf(j.joined_at), bonus: j.reward,
+    id: j.id, app: { ...j.app, platform: j.platform }, day: dayOf(j.joined_at), bonus: j.reward, staked: j.staked,
     caps: [...j.caps].sort((a, b) => a.idx - b.idx).map((c) => ({ day: dayOf(j.joined_at, new Date(c.created_at).getTime()), src: c.path ? signed.get(c.path) ?? null : null })),
   }));
 

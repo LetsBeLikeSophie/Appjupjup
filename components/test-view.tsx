@@ -14,7 +14,7 @@ import { Section, Sheet, SheetHeader } from './layout';
 export const MAX_JOIN = 10;
 export const APP_COST = 2;
 export type Recruit = { app: App; joined: number; need: number; given: number; stake?: number };
-export type Joined = { id: string; app: App; day: number; caps: { day: number; src?: string | null }[]; bonus?: number };
+export type Joined = { id: string; app: App; day: number; caps: { day: number; src?: string | null }[]; bonus?: number; staked?: boolean };
 export type Tester = { who: Person; day: number; caps: number[]; failed?: boolean };
 export type MyTest = { app: App; open: boolean; need: number; testers: Tester[]; feedback: { who: Person; body: string; day: number }[]; stake: number; locked: number };
 export type TestData = { points: number; recruit: Recruit[]; joined: Joined[]; mine: MyTest[] };
@@ -38,20 +38,21 @@ export const bonusOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => 1 + (r
 /** 목록 순서: 보상 큰 앱 → 12명에 가까움 + 남을 많이 테스트해 준 사람 */
 export const sortRecruit = (l: Recruit[]) => [...l].sort((a, b) => bonusOf(b) - bonusOf(a) || (b.joined * 2 + b.given) - (a.joined * 2 + a.given));
 
-/** 보상: 기본(+마지막 자리 진하게) + 주인이 건 몫은 따로 칸 */
-export function Reward({ r }: { r: Pick<Recruit, 'joined' | 'need' | 'stake'> }) {
-  const base = bonusOf({ ...r, stake: 0 });
+/** 🎫 표시는 이것 하나: 연회색 칩 + 숫자. +받음 / −씀 / 그냥 개수. 주황 글씨(hot) = 주인이 건 티켓, dim = 아직 못 받음 */
+export function Ticket({ n, sign, hot, dim }: { n: number; sign?: '+' | '-'; hot?: boolean; dim?: boolean }) {
+  return <span className={`tk ${hot ? 'hot' : ''} ${dim ? 'dim' : ''}`}>{Icon.ticket}{sign === '-' ? '−' : sign || ''}{n}</span>;
+}
+
+/** 보상: 기본(1 + 마지막 3자리 1) 칩 + 주인이 건 몫은 주황 칩 */
+export function Reward({ base, staked, dim }: { base: number; staked?: boolean; dim?: boolean }) {
   return (
-    <span className={`reward-tag ${base > 1 ? 'bonus' : ''}`}>
-      <Ticket n={base} plus />
-      {(r.stake || 0) > 0 && <span className="chip reward-stake"><Ticket n={1} plus /></span>}
+    <span className="reward-tag">
+      <Ticket n={base} sign="+" dim={dim} />
+      {staked && <Ticket n={1} sign="+" hot dim={dim} />}
     </span>
   );
 }
-
-export function Ticket({ n, plus, tone }: { n: number | string; plus?: boolean; tone?: 'on' }) {
-  return <span className={`ticket ${tone || ''}`}>{Icon.ticket}{plus ? '+' : ''}{n}</span>;
-}
+const rewardOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => ({ base: bonusOf({ ...r, stake: 0 }), staked: (r.stake || 0) > 0 });
 
 /** 사람 n/need 막대 (테스터 수) */
 export function Meter({ n, need }: { n: number; need: number }) {
@@ -127,7 +128,7 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
       </div>
       <div className="row between">
         <NeedMarks n={caps.length} fin={fin} ok={all} day={t.day} />
-        <span className={`slots-reward ${all ? 'got' : ''}`}><span className="how-arrow">{Icon.chevRight}</span><Ticket n={j.bonus || 1} plus /></span>
+        <span className="slots-reward"><span className="how-arrow">{Icon.chevRight}</span><Reward base={(j.bonus || 1) - (j.staked ? 1 : 0)} staked={j.staked} dim={!all} /></span>
       </div>
       <div className="field-wrap">
         <input placeholder={t.feedbackPh} maxLength={60} value={fb} onChange={(e) => setFb(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} enterKeyHint="send" />
@@ -140,11 +141,11 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
 /** 티켓 규칙 그림: 얻기 / 쓰기 */
 function HowSheet({ open, points, onClose }: { open: boolean; points: number; onClose: () => void }) {
   const { t } = useApp();
-  const line = (icon: ReactNode, text: string, sub: string, n: string) => (
+  const line = (icon: ReactNode, text: string, sub: string, tk: ReactNode) => (
     <span className="how-line">
       <span className="how-os">{icon}</span>
       <span className="col grow"><span className="t-body"><b>{text}</b></span><span className="t-sub">{sub}</span></span>
-      <span className="ticket">{Icon.ticket}{n}</span>
+      {tk}
     </span>
   );
   return (
@@ -153,15 +154,15 @@ function HowSheet({ open, points, onClose }: { open: boolean; points: number; on
       <div className="how">
         <div className="how-row">
           <span className="how-label t-sub">{t.give}</span>
-          {line(Icon.android, t.hAnd, t.hAndS, '+1')}
-          {line(Icon.apple, t.hIos, t.hIosS, '+1')}
-          {line(Icon.user, t.hLast, t.hLastS, '+1')}
-          {line(Icon.ticket, t.hStaked, t.hStakedS, '+1')}
+          {line(Icon.android, t.hAnd, t.hAndS, <Ticket n={1} sign="+" />)}
+          {line(Icon.apple, t.hIos, t.hIosS, <Ticket n={1} sign="+" />)}
+          {line(Icon.user, t.hLast, t.hLastS, <Ticket n={1} sign="+" />)}
+          {line(Icon.lock, t.hStaked, t.hStakedS, <Ticket n={1} sign="+" hot />)}
         </div>
         <div className="how-row">
           <span className="how-label t-sub">{t.use}</span>
-          {line(Icon.plus, t.hUpload, t.hUploadS, `−${APP_COST}`)}
-          {line(Icon.lock, t.hStake, t.hStakeS, '−1')}
+          {line(Icon.plus, t.hUpload, t.hUploadS, <Ticket n={APP_COST} sign="-" />)}
+          {line(Icon.lock, t.hStake, t.hStakeS, <Ticket n={1} sign="-" hot />)}
         </div>
       </div>
     </Sheet>
@@ -225,7 +226,7 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
         <span className="col1"><span className="t-card">{t.testers}</span><Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} /></span>
         <span className="stake">
           <button className={`stake-btn ${stake < 1 ? 'dim' : ''}`} aria-label="-" onClick={() => change(-1)}>−</button>
-          <span className="stake-n"><Ticket n={stake + m.locked} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
+          <span className="stake-n"><Ticket n={stake + m.locked} hot />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
           <button className="stake-btn" aria-label="+" onClick={() => change(1)}>+</button>
         </span>
       </div>
@@ -270,7 +271,7 @@ export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joine
           <span className="t-card">{t.testers}</span>
           <Meter n={r.joined + (joined && !joined0 ? 1 : 0)} need={r.need} />
         </div>
-        <Reward r={r} />
+        <Reward {...rewardOf(r)} />
         {joined
           ? <span className="btn-sm on">{Icon.check}</span>
           : <button className="btn-sm primary" onClick={async () => { if (await onJoin(r)) { setJoined(true); toast(`${t.joinedT} · 🎫+${b}`); } }}>{t.join}</button>}
