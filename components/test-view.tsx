@@ -256,11 +256,10 @@ export function TestSections({ d, h, findHref }: { d: TestData; h: TestH; findHr
   );
 }
 
-/** 앱 상세 안 모집 띠: 사람 n/12 · 🎫+n · [참여] */
+/** 앱 상세 안 모집 띠: 사람 n/12 · [참여] / 약속: 기기 · ●● [14일] → 🎫+n(아직) */
 export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joined?: boolean; onJoin: (r: Recruit) => Promise<boolean> }) {
   const { t, toast } = useApp();
   const [joined, setJoined] = useState(!!joined0);
-  const b = bonusOf(r);
   return (
     <div className="card recruit-strip">
       <div className="row gap12">
@@ -269,10 +268,16 @@ export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joine
           <span className="t-card">{t.testers}</span>
           <Meter n={r.joined + (joined && !joined0 ? 1 : 0)} need={r.need} />
         </div>
-        <Reward n={bonusOf(r)} />
         {joined
           ? <span className="btn-sm on">{Icon.check}</span>
-          : <button className="btn-sm primary" onClick={async () => { if (await onJoin(r)) { setJoined(true); toast(`${t.joinedT} · 🎫+${b}`); } }}>{t.join}</button>}
+          : <button className="btn-sm primary" onClick={async () => { if (await onJoin(r)) { setJoined(true); toast(t.joinedT); } }}>{t.join}</button>}
+      </div>
+      <div className="row between">
+        <span className="row gap6">
+          <PlatformChip platform={r.app.platform} stage="live" />
+          <NeedMarks n={0} fin={finalOf(r.app)} ok={false} day={t.day} />
+        </span>
+        <span className="slots-reward"><span className="how-arrow">{Icon.chevRight}</span><Reward n={bonusOf(r)} dim /></span>
       </div>
     </div>
   );
