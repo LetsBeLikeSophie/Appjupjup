@@ -217,8 +217,8 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .game { min-height: 100dvh; display: flex; flex-direction: column; padding: calc(16px + env(safe-area-inset-top)) var(--gutter) calc(24px + env(safe-area-inset-bottom)); gap: var(--gap); }
 .game-top { display: flex; align-items: center; justify-content: space-between; }
 .dots { display: flex; gap: 6px; }
-.dots i { width: 22px; height: 6px; border-radius: 3px; background: #DEDED8; }
-.dots i.on { background: var(--accent); }
+.dots i { width: 22px; height: 6px; border-radius: 3px; background: var(--skel); }
+.dots i.on { background: var(--ink); }
 .vs { flex: 1; position: relative; display: flex; flex-direction: column; gap: 12px; animation: up .25s ease; }
 .vs-card { flex: 1; min-height: 0; border: 0; border-radius: 28px; background: var(--surface); padding: var(--pad); display: flex; align-items: center; gap: 12px; text-align: left; }
 .vs-card { transition: transform .12s, background .12s; }
@@ -226,7 +226,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .vs-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .vs-shots { display: flex; gap: 6px; flex-shrink: 0; }
 .vs-shots img { height: 150px; width: auto; max-width: 72px; object-fit: cover; border-radius: 10px; background: var(--soft); }
-.vs-mid { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 26px; background: var(--primary); color: var(--on-primary); font-weight: var(--fw-strong); display: flex; align-items: center; justify-content: center; border: 5px solid var(--bg); pointer-events: none; }
+.vs-mid { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52px; height: 52px; border-radius: 26px; background: var(--surface); color: var(--ink); font-weight: var(--fw-strong); display: flex; align-items: center; justify-content: center; border: 5px solid var(--bg); pointer-events: none; }
 .champ { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding-top: 40px; animation: up .3s ease; }
 .crown { position: absolute; top: -16px; right: -16px; width: 44px; height: 44px; border-radius: 22px; background: var(--surface); color: var(--star); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
 .champ-foot { margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 8px; }
