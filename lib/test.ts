@@ -12,6 +12,12 @@ export async function loadBoard(): Promise<Board> {
   return new Map(((data || []) as { app_id: string; joined: number; need: number; stake: number; given: number }[]).map((r) => [r.app_id, r]));
 }
 
+/** 내가 참여했던 앱 (진행·끝·탈락 다) — 홈 🧪에서 빼기 */
+export async function loadMyJoinIds(uid: string): Promise<Set<string>> {
+  const { data } = await sb().from('aj_test_joins').select('app_id').eq('tester_id', uid);
+  return new Set((data || []).map((x: { app_id: string }) => x.app_id));
+}
+
 /** 아직 사람이 덜 찬 모집만 */
 export const recruitOf = (board: Board, app: App): Recruit | null => {
   const b = board.get(app.id);
