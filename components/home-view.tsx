@@ -66,28 +66,6 @@ function DeviceSeg({ device, setDevice }: { device: Device; setDevice: (d: Devic
   );
 }
 
-/** 바닥에 흩어진 아이콘. 자리·크기·기울기는 앱마다 고정 */
-export function IconField({ apps, gotIds, hrefOf, testIds }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; testIds?: Map<string, TestMark> }) {
-  return (
-    <div className="field-icons">
-      {apps.map((a, i) => {
-        const h = hash(a.id);
-        const size = 62 + (h % 23);                 // 62 ~ 84
-        const dx = ((h >>> 5) % 21) - 10;            // -10 ~ 10
-        const dy = ((h >>> 10) % 25) - 12 + (i % 3 === 1 ? 28 : 0); // 가운데 줄은 살짝 아래로
-        return (
-          <Link key={a.id} href={hrefOf ? hrefOf(a) : `/app/${a.id}`} className="pick-cell" aria-label={a.name}>
-            <span className="pick-item" style={{ transform: `translate(${dx}px, ${dy}px)` }}>
-              <AppIcon src={a.icon_url} size={size} tilt={tiltOf(a.id)}><Marker app={a} got={gotIds.has(a.id)} test={testIds?.get(a.id)} /></AppIcon>
-              <span className="pick-name ellipsis">{a.name}</span>
-            </span>
-          </Link>
-        );
-      })}
-    </div>
-  );
-}
-
 /** 3겹 더미. 한 번에 42개만 쏟고 "다시 쏟기"로 다음 앱들. 끌어서 옮기면 맨 위로, 살짝 누르면 열기 */
 /** 말풍선 한마디: 10글자까지 */
 export const SAY_MAX = 10;
@@ -243,7 +221,7 @@ function Bubbles({ box, wh, hide }: { box: React.RefObject<HTMLDivElement | null
 }
 
 /** 홈 그리기 (데이터는 page에서) */
-export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, onPick, device, setDevice, testIds }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; testIds?: Map<string, TestMark>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
+export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, onPick, device, setDevice, testIds }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; testIds?: Map<string, TestMark>; gameHref?: string; hrefOf?: (a: App) => string; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
   const { t } = useApp();
   const mine = apps && device ? byDevice(apps, device) : apps;
   const list = mine ? filterApps(mine, cat, testIds) : null;
@@ -256,9 +234,7 @@ export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, on
       {mine && <CatChips apps={mine} cat={cat} setCat={setCat} test={!!testIds?.size || cat === 'test'} lead={device && setDevice ? <DeviceSeg device={device} setDevice={setDevice} /> : undefined} />}
       {list === null && <Loading />}
       {list?.length === 0 && <div className="gutter"><Empty>{t.empty}</Empty></div>}
-      {list && list.length > 0 && (heap
-        ? <IconHeap key={`${device}:${cat}`} saveKey={`${device ?? 'all'}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} testIds={testIds} />
-        : <IconField apps={list} gotIds={gotIds} hrefOf={hrefOf} testIds={testIds} />)}
+      {list && list.length > 0 && <IconHeap key={`${device}:${cat}`} saveKey={`${device ?? 'all'}:${cat}`} apps={list} gotIds={gotIds} hrefOf={hrefOf} onPick={onPick} testIds={testIds} />}
     </div>
   );
 }

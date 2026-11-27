@@ -20,7 +20,7 @@ export default function Preview() {
   const got = new Set(['a3', 'a7']);
   const sample = APPS.slice(0, 3);
   switch (s) {
-    case 'home': return <HomeView apps={APPS} cat={cat} setCat={setCat} gotIds={got} />;
+    case 'home': return <HomeView apps={APPS} cat={cat} setCat={setCat} gotIds={got} hrefOf={() => '#'} />;
     case 'game': return <GameView pool={APPS.filter((a) => a.owner_id !== 'me')} onClose={noop} />;
     case 'detail': return <DetailView app={APPS[1]} comments={COMMENTS} me={me} from={APPS[10]}
       h={{ onSend: async () => true, onHelpful: noop, onReport: noop, onDelete: noop, onPerson: noop, onBack: noop, onShare: noop }} />;

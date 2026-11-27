@@ -27,6 +27,6 @@ export default function Home() {
     const r = recruitOf(board, a); return r ? [[a.id, { n: bonusOf(r), stake: (r.stake || 0) > 0 }] as const] : [];
   })), [apps, board, uid, skip]);
   if (failed && !apps) return <Failed onRetry={() => setTry((n) => n + 1)} />;
-  return <HomeView apps={apps} cat={cat} setCat={setCat} gotIds={gotIds} heap testIds={testIds}
+  return <HomeView apps={apps} cat={cat} setCat={setCat} gotIds={gotIds} testIds={testIds}
     device={device} setDevice={(d) => { setDevice(d); setCat('all'); }} />;
 }

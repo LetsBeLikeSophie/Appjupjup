@@ -178,9 +178,6 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .cat-row::-webkit-scrollbar { display: none; }
 .cat { flex-shrink: 0; height: 34px; padding: 0 14px; border: 0; border-radius: 17px; background: var(--surface); font-size: var(--fs-body); font-weight: var(--fw-mid); }
 .cat.on { background: var(--primary-soft); color: var(--primary-ink); }
-.field-icons { display: grid; grid-template-columns: repeat(3, 1fr); padding: 8px 8px 40px; }
-.pick-cell { height: 136px; display: flex; align-items: center; justify-content: center; min-width: 0; }
-.pick-item { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 100%; }
 /* 3겹 더미 (끌어서 옮기기, 다시 쏟기) */
 .heap { position: relative; margin: 8px var(--gutter) 0; height: calc(100dvh - 210px - env(safe-area-inset-top)); touch-action: none; isolation: isolate; user-select: none; -webkit-user-select: none; }
 .heap-item { position: absolute; cursor: grab; touch-action: none; -webkit-touch-callout: none; transition: transform .12s, filter .2s; animation: drop .35s backwards cubic-bezier(.2,.9,.3,1.2); }
@@ -199,7 +196,6 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 2px; }
 @keyframes chat { 0% { opacity: 0; scale: .6; } 10% { opacity: 1; scale: 1.06; } 16% { scale: 1; } 85% { opacity: 1; } 100% { opacity: 0; translate: 0 -8px; } }
 .redeal { position: fixed; right: var(--gutter); bottom: calc(96px + env(safe-area-inset-bottom)); width: 52px; height: 52px; border-radius: 26px; background: #fff; color: var(--primary-ink); box-shadow: 0 6px 20px rgba(0,0,0,.12); display: flex; align-items: center; justify-content: center; z-index: 500; }
-.pick-name { max-width: 104px; font-size: var(--fs-sub); font-weight: var(--fw-mid); color: var(--text2); text-align: center; }
 
 /* ---------- 똑바로 놓인 앱 (내 정보·사람 시트) ---------- */
 .tiles { display: flex; gap: var(--gap); align-items: flex-start; padding-top: 8px; }
