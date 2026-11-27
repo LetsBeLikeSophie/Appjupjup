@@ -1,4 +1,5 @@
 'use client';
+import { sized } from '@/lib/image';
 import { useState, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import { useApp } from '@/lib/ctx';
 import { hash, primaryApp, type App, type Person } from '@/lib/supabase';
@@ -62,7 +63,7 @@ export function AppIcon({ src, size = 48, tilt = 0, children }: { src?: string |
   return (
     <span className="appicon-wrap" style={style}>
       {img.ok
-        ? <img className="appicon" src={src!} alt="" width={size} height={size} style={{ borderRadius: r }} onError={img.onError} />
+        ? <img className="appicon" src={sized(src, Math.min(256, size * 3))!} alt="" width={size} height={size} style={{ borderRadius: r }} onError={img.onError} />
         : <span className="appicon ph" style={{ width: size, height: size, borderRadius: r }}>{Icon.img}</span>}
       {children}
     </span>
@@ -105,7 +106,7 @@ export function Shots({ urls, height }: { urls: string[]; height: number }) {
   return (
     <div className="shots" style={{ height }}>
       {list.map((u, i) =>
-        u ? <img key={u} src={u} alt="" loading="lazy" style={{ height, borderRadius: r }} onError={() => setBad((b) => [...b, u])} />
+        u ? <img key={u} src={sized(u, height * 2, 'shot')!} alt="" loading="lazy" style={{ height, borderRadius: r }} onError={() => setBad((b) => [...b, u])} />
           : <span key={i} className="shot-ph" style={{ width: w, height, borderRadius: r }}>{Icon.img}</span>,
       )}
     </div>
