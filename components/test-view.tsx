@@ -154,18 +154,16 @@ function HowSheet({ open, points, onClose }: { open: boolean; points: number; on
     <Sheet open={open} onClose={onClose} label={t.points}>
       <SheetHeader title={<span className="row gap6">{Icon.ticket}{points}</span>} onClose={onClose} />
       <div className="how">
-        <div className="how-row">
-          <span className="how-label t-sub">{t.give}</span>
+        <Section title={t.give}><div className="how-row">
           {line(Icon.android, t.hAnd, t.hAndS, <Ticket n={1} sign="+" />)}
           {line(Icon.apple, t.hIos, t.hIosS, <Ticket n={1} sign="+" />)}
           {line(Icon.user, t.hLast, t.hLastS, <Ticket n={1} sign="+" />)}
           {line(Icon.lock, t.hStaked, t.hStakedS, <Ticket n={1} sign="+" />)}
-        </div>
-        <div className="how-row">
-          <span className="how-label t-sub">{t.use}</span>
+        </div></Section>
+        <Section title={t.use}><div className="how-row">
           {line(Icon.plus, t.hUpload, t.hUploadS, <Ticket n={APP_COST} sign="-" />)}
           {line(Icon.lock, t.hStake, t.hStakeS, <Ticket n={1} sign="-" />)}
-        </div>
+        </div></Section>
       </div>
     </Sheet>
   );
@@ -260,7 +258,7 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
 export function TestSections({ d, h, findHref }: { d: TestData; h: TestH; findHref: string }) {
   const { t } = useApp();
   return (
-    <Section title={`${t.joining} ${d.joined.length}/${MAX_JOIN}`} aside={<Link className="btn-sm white" href={findHref}>{Icon.flask}{t.testApps}</Link>}>
+    <Section title={t.joining} aside={<span className="row gap12"><span className="t-sub">{d.joined.length}/{MAX_JOIN}</span><Link className="btn-sm white" href={findHref}>{Icon.flask}{t.testApps}</Link></span>}>
       {d.joined.map((j) => <JoinedCard key={`${j.id}:${j.caps.length}`} j={j} h={h} />)}
     </Section>
   );
