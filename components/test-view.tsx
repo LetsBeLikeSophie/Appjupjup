@@ -76,12 +76,12 @@ function Slot({ src, label, open, busy, onFile }: { src?: string | null; label: 
   );
 }
 
-/** 필수 표시: 사진 ● ● + 마지막 날 칸 (다 차면 🎫) */
-function NeedMarks({ n, fin, ok, day }: { n: number; fin: number; ok: boolean; day: string }) {
+/** 필수 표시: 사진 ● ● + 마지막 날 칸 (다 차면 🎫, 마지막 날이 되면 점선 = 지금 찍을 칸) */
+export function NeedMarks({ n, fin, ok, day, now }: { n: number; fin: number; ok: boolean; day: string; now?: boolean }) {
   return (
     <span className="need">
       <i className={n >= 1 ? 'on' : ''} /><i className={n >= 2 ? 'on' : ''} />
-      <span className={`need-fin ${ok ? 'on' : ''}`}>{fin}{day}</span>
+      <span className={`need-fin ${ok ? 'on' : now ? 'now' : ''}`}>{fin}{day}</span>
     </span>
   );
 }
@@ -90,6 +90,7 @@ function NeedMarks({ n, fin, ok, day }: { n: number; fin: number; ok: boolean; d
 function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
   const { t, toast } = useApp();
   const fin = finalOf(j.app);
+  const last = lastOf(j.app);
   const [caps, setCaps] = useState(j.caps);
   const [busy, setBusy] = useState(false);
   const [fb, setFb] = useState('');
@@ -114,14 +115,17 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
       <div className="row gap12">
         <AppIcon src={j.app.icon_url} size={40} />
         <span className="row gap6 grow"><span className="t-card ellipsis">{j.app.name}</span><PlatformChip platform={j.app.platform} stage="live" /></span>
-        <span className="t-sub">{Math.min(j.day, fin)}/{fin}{t.day}</span>
+        {/* 마지막 날 넘으면 탈락까지 남은 날 */}
+        {j.day > fin && !all
+          ? <span className="t-sub slot-now">{j.day >= last ? 'D-day' : `D-${last - j.day}`}</span>
+          : <span className="t-sub">{Math.min(j.day, fin)}/{fin}{t.day}</span>}
       </div>
       <div className="shot-strip" ref={strip}>
         {caps.map((c, i) => <Slot key={i} src={c.src} label={`${c.day}${t.day}`} />)}
         {!today && !all && caps.length < 30 && <Slot open busy={busy} label={t.today} onFile={shoot} />}
       </div>
       <div className="row between">
-        <NeedMarks n={caps.length} fin={fin} ok={all} day={t.day} />
+        <NeedMarks n={caps.length} fin={fin} ok={all} day={t.day} now={j.day >= fin} />
         <span className="slots-reward"><span className="how-arrow">{Icon.chevRight}</span><Reward n={j.bonus || 1} dim={!all} /></span>
       </div>
       <div className="field-wrap">
