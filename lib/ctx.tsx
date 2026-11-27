@@ -70,9 +70,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [pending, setPending] = useState<Pending>(null);
 
-  const locale = pickLocale(profile?.locale);
+  // 서버 그림은 늘 ko·KR → 마운트 뒤 브라우저 값 (hydration 안 어긋나게). 프로필 있으면 프로필
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const locale: Locale = profile?.locale ? pickLocale(profile.locale) : mounted ? pickLocale() : 'ko';
   const t = dicts[locale];
-  const country = profile?.country || guessCountry();
+  const country = profile?.country || (mounted ? guessCountry() : 'KR');
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg);
