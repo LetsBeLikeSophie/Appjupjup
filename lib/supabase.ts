@@ -78,6 +78,9 @@ export type Notice = {
 export const PERSON = 'id, nickname, tag, score, apps:aj_apps(id, name, icon_url, is_primary)';
 export const APP_FIELDS =
   `id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, tagline, say, category, released_at, store_updated_at, created_at, owner:aj_profiles(${PERSON})`;
+/** 홈·게임 목록용: 주인 프로필·주인 앱 조인 없이 */
+export const LIST_FIELDS =
+  `id, owner_id, platform, stage, url, name, icon_url, screenshots, is_primary, feedback_count, countries, all_countries, tagline, say, category, released_at, store_updated_at, created_at`;
 export const COMMENT_FIELDS = `id, app_id, author_id, body, helpful_count, created_at, author:aj_profiles(${PERSON})`;
 
 /** 대표 앱 (없으면 첫 앱) */
