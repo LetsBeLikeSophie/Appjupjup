@@ -203,6 +203,7 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
   const [stake, setStake] = useState(m.stake);
   const [open, setOpen] = useState(m.open);
   const [busy, setBusy] = useState(false);
+  const active = m.testers.filter((x) => !x.failed).length;
   const change = async (d: 1 | -1) => {
     if (busy) return;
     if (d === -1 && stake < 1) { toast(t.stakeLocked); return; }
@@ -227,6 +228,11 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
           <span className="stake-n"><Ticket n={stake + m.locked} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
           <button className="stake-btn" aria-label="+" onClick={() => change(1)}>+</button>
         </span>
+      </div>
+      {/* 걸면 바뀌는 것: 다음 테스터가 받는 보상 */}
+      <div className="row between">
+        <span className="t-sub">{t.testers}</span>
+        <span className="slots-reward"><span className="how-arrow">{Icon.chevRight}</span><Reward n={bonusOf({ joined: active, need: m.need, stake })} /></span>
       </div>
       {m.testers.length > 0 && <div className="testers">{m.testers.map((x, i) => <TesterRow key={i} x={x} fin={finalOf(m.app)} />)}</div>}
       {m.feedback.length > 0 && (

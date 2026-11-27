@@ -56,10 +56,10 @@ export function MyAppSheet({ app, onClose, onChanged, test, testH }: { app: App 
         <span className="label">{t.countries}</span>
         <CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} />
       </div>
-      <button className="btn primary" disabled={busy || !name.trim()} onClick={save}>{t.save}</button>
+      <button className="btn soft" disabled={busy || !name.trim()} onClick={save}>{t.save}</button>
       <div className="row between">
         {app.is_primary
-          ? <Chip tone="primary">{Icon.star}{t.primary}</Chip>
+          ? <Chip>{Icon.star}{t.primary}</Chip>
           : <button className="btn-sm" onClick={makePrimary}>{Icon.star}{t.makePrimary}</button>}
         <a className="btn-sm ghost" href={`/app/${app.id}`}>{t.dupSee}</a>
         <button className="btn-sm danger" onClick={remove}>{t.deleteApp}</button>
