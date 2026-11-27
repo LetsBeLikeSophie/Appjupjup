@@ -6,6 +6,7 @@ import { sb, type App, type Comment, type Person } from '@/lib/supabase';
 import { loadApp, loadComments } from '@/lib/data';
 import { DetailView } from '@/components/detail-view';
 import { PersonSheet } from '@/components/person-sheet';
+import { Failed, Missing } from '@/components/layout';
 import type { Recruit } from '@/components/test-view';
 import { loadBoard, myJoinFor, recruitOf, testErrMsg } from '@/lib/test';
 
@@ -19,14 +20,18 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
   const [from, setFrom] = useState<App | null>(null);
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [person, setPerson] = useState<Person | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [try_, setTry] = useState(0);
 
   const reload = useCallback(() => loadComments(id).then(setComments), [id]);
   useEffect(() => {
-    loadApp(id).then(setApp);
+    setFailed(false);
+    loadApp(id).then(setApp).catch(() => setFailed(true));
     reload();
     const f = new URLSearchParams(location.search).get('from');
-    if (f) loadApp(f).then(setFrom);
-  }, [id, reload]);
+    if (f) loadApp(f).then(setFrom).catch(() => {});
+  }, [id, reload, try_]);
+  const back = () => (history.length > 1 ? router.back() : router.push('/'));
 
   // 테스터 모집 띠: 내 앱이 아니고 사람이 덜 찼을 때
   useEffect(() => {
@@ -47,8 +52,9 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
     apps: myApps.map((a) => ({ id: a.id, name: a.name, icon_url: a.icon_url, is_primary: a.is_primary })),
   }), [profile, myApps]);
 
+  if (failed && app === undefined) return <Failed onBack={back} onRetry={() => setTry((n) => n + 1)} />;
   if (app === undefined) return <div className="loading">{t.loading}</div>;
-  if (!app) return <div className="loading">404</div>;
+  if (!app) return <Missing onBack={back} />;
 
   return (
     <>
@@ -65,7 +71,7 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
         onReport: async (c) => { await sb().rpc('aj_report_feedback', { p_feedback: c.id }); toast('✓ ' + t.report); },
         onDelete: async (c) => { if (!confirm(t.remove + '?')) return; await sb().rpc('aj_delete_comment', { p_id: c.id }); reload(); },
         onPerson: setPerson,
-        onBack: () => (history.length > 1 ? router.back() : router.push('/')),
+        onBack: back,
         onShare: async () => {
           const url = `${location.origin}/app/${app.id}`;
           try { if (navigator.share) await navigator.share({ title: app.name, url }); else { await navigator.clipboard.writeText(url); toast(t.copied); } } catch {}

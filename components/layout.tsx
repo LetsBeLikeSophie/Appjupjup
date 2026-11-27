@@ -29,6 +29,30 @@ export function Loading() {
   return <div className="loading">{t.loading}</div>;
 }
 
+/** 못 불러옴: 빈 것과 다르게 + [다시] */
+export function Failed({ onRetry, onBack }: { onRetry?: () => void; onBack?: () => void }) {
+  const { t } = useApp();
+  return (
+    <div className="page">
+      {onBack && <div className="page-head"><IconButton label={t.back} onClick={onBack}>{Icon.back}</IconButton></div>}
+      <Empty>{t.errGeneric}</Empty>
+      {onRetry && <button className="btn soft" onClick={onRetry}>{t.retry}</button>}
+    </div>
+  );
+}
+
+/** 없는 앱 등: ← + 빈 화면 + 홈 */
+export function Missing({ onBack }: { onBack: () => void }) {
+  const { t } = useApp();
+  return (
+    <div className="page">
+      <div className="page-head"><IconButton label={t.back} onClick={onBack}>{Icon.back}</IconButton></div>
+      <Empty>{t.empty}</Empty>
+      <a className="btn soft" href="/" aria-label="home">{Icon.home}</a>
+    </div>
+  );
+}
+
 export function Empty({ title, children }: { title?: string; children?: ReactNode }) {
   return (
     <div className="empty">

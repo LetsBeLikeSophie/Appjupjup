@@ -26,7 +26,7 @@ export default function Game() {
       const inCat = filterApps(onDevice, cat);
       // 카테고리에 앱이 너무 적으면 전체에서
       setPool(inCat.length >= 2 ? inCat : onDevice);
-    });
+    }).catch(() => setPool([]));
   }, [country, session]);
   return <GameView pool={boost ? pool : null} boost={boost} onClose={() => (history.length > 1 ? router.back() : router.push('/'))} />;
 }

@@ -6,15 +6,18 @@ export function dailyShuffle<T extends { id: string }>(list: T[]) {
   return [...list].sort((a, b) => hash(a.id + day) - hash(b.id + day));
 }
 
-/** 내 나라에서 받을 수 있는 앱 */
+/** 내 나라에서 받을 수 있는 앱. 못 읽으면 throw (빈 목록과 나누려고) */
 export async function loadApps(country: string) {
-  const { data } = await sb().from('aj_apps').select(APP_FIELDS)
+  const { data, error } = await sb().from('aj_apps').select(APP_FIELDS)
     .or(`all_countries.eq.true,countries.cs.{${country}}`).limit(120);
+  if (error) throw error;
   return dailyShuffle((data as unknown as App[]) || []);
 }
 
+/** 앱 하나. 없으면 null, 못 읽으면 throw */
 export async function loadApp(id: string) {
-  const { data } = await sb().from('aj_apps').select(APP_FIELDS).eq('id', id).maybeSingle();
+  const { data, error } = await sb().from('aj_apps').select(APP_FIELDS).eq('id', id).maybeSingle();
+  if (error) throw error;
   return data as unknown as App | null;
 }
 
