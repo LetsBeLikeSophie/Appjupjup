@@ -5,6 +5,7 @@ import { sb, SUPABASE_URL, parseLink, type App } from '@/lib/supabase';
 import { AppIcon, Icon, IconButton, Shots } from './ui';
 import { Sheet, SheetHeader } from './layout';
 import { AppChips, CountryEditor, SayInput, parseCountries } from './app-parts';
+import { Ticket, APP_COST } from './test-view';
 
 /** 아이콘 몇 개를 살짝 겹쳐 놓은 그림 (로그인·첫 입장) */
 function IconPile({ apps }: { apps: Pick<App, 'id' | 'icon_url'>[] }) {
@@ -73,7 +74,7 @@ type Meta = {
 };
 
 export function UploadSheet() {
-  const { uploadOpen, setUploadOpen, t, country, toast, refreshMine } = useApp();
+  const { uploadOpen, setUploadOpen, t, country, toast, refreshMine, refreshProfile } = useApp();
   const [url, setUrl] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'bad' | 'dup'>('idle');
   const [meta, setMeta] = useState<Meta>({});
@@ -125,7 +126,7 @@ export function UploadSheet() {
       toast(k === 'need_tickets' ? `🎫2${t.needT}` : k === 'badword' ? t.fbBad : k === 'app_limit' ? t.limit : k === 'duplicate' ? t.dup : k === 'bad_link' ? t.badLink : t.errGeneric);
       return;
     }
-    setUploadOpen(false); refreshMine();
+    setUploadOpen(false); refreshMine(); refreshProfile(); toast(t.uploadedT);
   };
 
   const p = parseLink(url);
@@ -163,7 +164,7 @@ export function UploadSheet() {
           <input id="tagline" className="field" placeholder={t.tagline} maxLength={60} value={tagline} onChange={(e) => setTagline(e.target.value)} />
           <SayInput id="say" value={say} onChange={setSay} />
           <div className="sheet-foot">
-            <button className="btn primary" disabled={busy || !name.trim()} onClick={submit}>{t.publish}</button>
+            <button className="btn primary" disabled={busy || !name.trim()} onClick={submit}>{t.publish}<Ticket n={APP_COST} sign="-" /></button>
           </div>
         </>
       ) : (

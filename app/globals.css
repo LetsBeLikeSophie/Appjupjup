@@ -395,3 +395,4 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .meter-who { display: inline-flex; color: var(--sub); flex-shrink: 0; }
 .meter-who svg { width: 14px; height: 14px; }
 
+.btn .tk { background: rgba(255,255,255,.22); color: inherit; }
