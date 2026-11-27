@@ -185,7 +185,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .heap-item img { -webkit-user-drag: none; pointer-events: none; }
 .heap-item[data-layer="1"] { filter: saturate(.8) brightness(.96); }
 .heap-item[data-layer="2"] { filter: saturate(.6) brightness(.92); }
-.heap-item.lift { transform: scale(1.12); cursor: grabbing; filter: none; }
+.heap-item.lift { transform: scale(1.12); cursor: grabbing; filter: none; transition: filter .2s; will-change: transform; }
 .heap-item.lift .appicon-wrap { box-shadow: 0 14px 30px rgba(0,0,0,.22); }
 @keyframes drop { from { opacity: 0; transform: translateY(-40px) scale(.9); } }
 .say-input { position: relative; display: block; }

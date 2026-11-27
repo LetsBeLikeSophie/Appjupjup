@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/ctx';
 import { hash, isFresh, type App } from '@/lib/supabase';
@@ -121,40 +121,19 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
   }, []);
 
   // 티켓 건 앱은 판마다 맨 위층(최대 한 겹), 새로 나온 앱은 첫 판 위로
-  const isHot = (a: App) => !!testIds?.get(a.id)?.stake;
-  const hot = apps.filter(isHot).slice(0, PER_LAYER);
-  const rest = apps.filter((a) => !hot.includes(a));
-  const ordered = [...hot, ...rest.filter(isFresh), ...rest.filter((a) => !isFresh(a))];
-  const per = PER_LAYER * LAYERS - hot.length;
-  const start = rest.length > per ? (deal * per) % rest.length : 0;
-  const restSorted = [...rest.filter(isFresh), ...rest.filter((a) => !isFresh(a))];
-  const batch = [...hot, ...(rest.length > per ? [...restSorted, ...restSorted].slice(start, start + per) : restSorted)];
+  const isHot = useCallback((a: App) => !!testIds?.get(a.id)?.stake, [testIds]);
+  const { batch, total } = useMemo(() => {
+    const hot = apps.filter(isHot).slice(0, PER_LAYER);
+    const rest = apps.filter((a) => !hot.includes(a));
+    const per = PER_LAYER * LAYERS - hot.length;
+    const start = rest.length > per ? (deal * per) % rest.length : 0;
+    const restSorted = [...rest.filter(isFresh), ...rest.filter((a) => !isFresh(a))];
+    return { batch: [...hot, ...(rest.length > per ? [...restSorted, ...restSorted].slice(start, start + per) : restSorted)], total: apps.length };
+  }, [apps, isHot, deal]);
 
-  const redeal = () => { moved.current.clear(); top.current = 100; setBubbles([]); save(deal + 1); setDeal(deal + 1); };
-
-  // 앱이 떠드는 말풍선: 맨 위에 보이는 앱 중 아무나, 짧게 떴다 사라짐 (동시에 최대 3개)
-  const [bubbles, setBubbles] = useState<{ k: number; id: string; text: string; x: number; y: number }[]>([]);
-  const seq = useRef(0);
-  useEffect(() => {
-    if (!wh) return;
-    const tick = setInterval(() => {
-      const els = [...box.current!.querySelectorAll<HTMLElement>('.heap-item[data-layer="0"]:not(.lift)')];
-      if (!els.length) return;
-      setBubbles((list) => {
-        if (list.length >= 3) return list;
-        const free = els.filter((e) => !list.some((b) => b.id === e.dataset.id));
-        const el = free[Math.floor(Math.random() * free.length)];
-        const text = el?.dataset.say;
-        if (!el || !text) return list;
-        const size = parseFloat(el.dataset.s!);
-        const x = Math.min(wh[0] - 56, Math.max(56, parseFloat(el.dataset.x!) + size / 2));
-        const k = ++seq.current;
-        setTimeout(() => setBubbles((l) => l.filter((b) => b.k !== k)), 2600);
-        return [...list, { k, id: el.dataset.id!, text, x, y: parseFloat(el.dataset.y!) }];
-      });
-    }, 1100);
-    return () => clearInterval(tick);
-  }, [wh, deal]);
+  // 말풍선은 따로 (떴다 사라질 때 아이콘 42개를 다시 그리지 않게)
+  const hideBubble = useRef<(id: string) => void>(() => {});
+  const redeal = () => { moved.current.clear(); top.current = 100; save(deal + 1); setDeal(deal + 1); };
 
   const down = (e: React.PointerEvent<HTMLElement>, a: App) => {
     const el = e.currentTarget;
@@ -163,21 +142,29 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
     const ox = parseFloat(el.dataset.x!), oy = parseFloat(el.dataset.y!);
     const size = parseFloat(el.dataset.s!);
     const [W, H] = wh!;
-    let drag = false;
+    let drag = false, x = ox, y = oy;
     const move = (ev: PointerEvent) => {
       const dx = ev.clientX - sx, dy = ev.clientY - sy;
       if (!drag && Math.hypot(dx, dy) < 6) return;
-      if (!drag) { setBubbles((l) => l.filter((b) => b.id !== a.id)); drag = true; el.style.zIndex = String(++top.current); el.classList.add('lift'); el.dataset.layer = '0'; }
-      const x = Math.min(W - size, Math.max(0, ox + dx)), y = Math.min(H - size, Math.max(0, oy + dy));
-      el.style.left = `${x}px`; el.style.top = `${y}px`;
-      el.dataset.x = String(x); el.dataset.y = String(y);
+      if (!drag) { hideBubble.current(a.id); drag = true; el.style.zIndex = String(++top.current); el.classList.add('lift'); el.dataset.layer = '0'; }
+      x = Math.min(W - size, Math.max(0, ox + dx)); y = Math.min(H - size, Math.max(0, oy + dy));
+      // 레이아웃 안 건드리고 옮기기 (놓을 때만 left/top)
+      el.style.transform = `translate3d(${x - ox}px, ${y - oy}px, 0) scale(1.12)`;
     };
     const up = () => {
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
+      if (drag) {
+        el.style.transition = 'none';
+        el.style.transform = '';
+        el.style.left = `${x}px`; el.style.top = `${y}px`;
+        el.dataset.x = String(x); el.dataset.y = String(y);
+        void el.offsetWidth;
+        el.style.transition = '';
+      }
       el.classList.remove('lift');
-      if (drag) { moved.current.set(a.id, { x: parseFloat(el.dataset.x!) / W, y: parseFloat(el.dataset.y!) / H, z: top.current }); save(deal); }
+      if (drag) { moved.current.set(a.id, { x: x / W, y: y / H, z: top.current }); save(deal); }
       else if (onPick) onPick(a);
       else router.push(hrefOf ? hrefOf(a) : `/app/${a.id}`);
     };
@@ -186,26 +173,29 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
     el.addEventListener('pointercancel', up);
   };
 
-  // 겹마다 3x5 칸에 하나씩 + 흔들기, 겹끼리는 반 칸 어긋나게 → 고르게 덮임
-  const place = (a: App, i: number) => {
-    const layer = Math.floor(i / PER_LAYER);
-    const h = hash(a.id + ':' + deal);
-    const size = (layer === 0 ? 64 : layer === 1 ? 58 : 52) + (h % 13) + (isHot(a) ? 12 : 0);
-    const order = [...Array(COLS * ROWS).keys()].sort((p, q) => hash(`${deal}:${layer}:${p}`) - hash(`${deal}:${layer}:${q}`));
-    const cell = order[i % PER_LAYER];
-    const cw = wh![0] / COLS, ch = wh![1] / ROWS;
-    const off = layer === 1 ? 0.5 : layer === 2 ? -0.35 : 0;
-    const jx = (((h >>> 6) % 100) / 100 - 0.5) * 0.7, jy = (((h >>> 13) % 100) / 100 - 0.5) * 0.7;
-    const x = Math.min(wh![0] - size, Math.max(0, ((cell % COLS) + 0.5 + off * 0.5 + jx) * cw - size / 2));
-    const y = Math.min(wh![1] - size, Math.max(0, (Math.floor(cell / COLS) + 0.5 + off + jy) * ch - size / 2));
-    return { layer, size, x, y };
-  };
+  // 겹마다 3x5 칸에 하나씩 + 흔들기, 겹끼리는 반 칸 어긋나게 → 고르게 덮임 (판·화면 크기 바뀔 때만 계산)
+  const places = useMemo(() => {
+    if (!wh) return [];
+    const orders = [...Array(LAYERS).keys()].map((layer) => [...Array(COLS * ROWS).keys()].sort((p, q) => hash(`${deal}:${layer}:${p}`) - hash(`${deal}:${layer}:${q}`)));
+    const cw = wh[0] / COLS, ch = wh[1] / ROWS;
+    return batch.map((a, i) => {
+      const layer = Math.floor(i / PER_LAYER);
+      const h = hash(a.id + ':' + deal);
+      const size = (layer === 0 ? 64 : layer === 1 ? 58 : 52) + (h % 13) + (isHot(a) ? 12 : 0);
+      const cell = orders[layer][i % PER_LAYER];
+      const off = layer === 1 ? 0.5 : layer === 2 ? -0.35 : 0;
+      const jx = (((h >>> 6) % 100) / 100 - 0.5) * 0.7, jy = (((h >>> 13) % 100) / 100 - 0.5) * 0.7;
+      const x = Math.min(wh[0] - size, Math.max(0, ((cell % COLS) + 0.5 + off * 0.5 + jx) * cw - size / 2));
+      const y = Math.min(wh[1] - size, Math.max(0, (Math.floor(cell / COLS) + 0.5 + off + jy) * ch - size / 2));
+      return { layer, size, x, y };
+    });
+  }, [batch, wh, deal, isHot]);
 
   return (
     <>
       <div className="heap" ref={box}>
         {wh && batch.map((a, i) => {
-          const p = place(a, i);
+          const p = places[i];
           const m = moved.current.get(a.id);
           const x = m ? Math.min(wh[0] - p.size, m.x * wh[0]) : p.x, y = m ? Math.min(wh[1] - p.size, m.y * wh[1]) : p.y;
           return (
@@ -217,11 +207,39 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
             </span>
           );
         })}
-        {bubbles.map((b) => <span key={b.k} className="bubble" style={{ left: b.x, top: b.y }}>{b.text}</span>)}
+        {wh && <Bubbles key={deal} box={box} wh={wh} hide={hideBubble} />}
       </div>
-      {ordered.length > 1 && <button className="redeal" aria-label={t.redeal} onClick={redeal}>{Icon.shuffle}</button>}
+      {total > 1 && <button className="redeal" aria-label={t.redeal} onClick={redeal}>{Icon.shuffle}</button>}
     </>
   );
+}
+
+/** 앱이 떠드는 말풍선: 맨 위에 보이는 앱 중 아무나, 짧게 떴다 사라짐 (동시에 최대 3개). 더미와 따로 그려요 */
+function Bubbles({ box, wh, hide }: { box: React.RefObject<HTMLDivElement | null>; wh: [number, number]; hide: React.MutableRefObject<(id: string) => void> }) {
+  const [bubbles, setBubbles] = useState<{ k: number; id: string; text: string; x: number; y: number }[]>([]);
+  const seq = useRef(0);
+  useEffect(() => {
+    hide.current = (id) => setBubbles((l) => l.filter((b) => b.id !== id));
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const tick = setInterval(() => {
+      const els = [...(box.current?.querySelectorAll<HTMLElement>('.heap-item[data-layer="0"]:not(.lift)') || [])];
+      if (!els.length) return;
+      setBubbles((list) => {
+        if (list.length >= 3) return list;
+        const free = els.filter((e) => !list.some((b) => b.id === e.dataset.id));
+        const el = free[Math.floor(Math.random() * free.length)];
+        const text = el?.dataset.say;
+        if (!el || !text) return list;
+        const size = parseFloat(el.dataset.s!);
+        const x = Math.min(wh[0] - 56, Math.max(56, parseFloat(el.dataset.x!) + size / 2));
+        const k = ++seq.current;
+        timers.push(setTimeout(() => setBubbles((l) => l.filter((b) => b.k !== k)), 2600));
+        return [...list, { k, id: el.dataset.id!, text, x, y: parseFloat(el.dataset.y!) }];
+      });
+    }, 1100);
+    return () => { clearInterval(tick); timers.forEach(clearTimeout); hide.current = () => {}; };
+  }, [box, wh, hide]);
+  return <>{bubbles.map((b) => <span key={b.k} className="bubble" style={{ left: b.x, top: b.y }}>{b.text}</span>)}</>;
 }
 
 /** 홈 그리기 (데이터는 page에서) */
