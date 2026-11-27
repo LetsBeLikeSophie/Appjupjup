@@ -225,7 +225,7 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
   }
   return (
     <>
-      <div className="list-row">
+      <div className="list-row soft">
         <span className="col1"><span className="t-card">{t.testers}</span><Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} /></span>
         <span className="stake">
           <button className={`stake-btn ${stake < 1 ? 'dim' : ''}`} aria-label="-" onClick={() => change(-1)}>−</button>
@@ -279,7 +279,7 @@ export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joine
     if (ok) { setJoined(true); toast(t.joinedT); }
   };
   return (
-    <div className="card recruit-strip">
+    <div className="card soft recruit-strip">
       <div className="row gap12">
         <span className="find-icon">{Icon.flask}</span>
         <div className="col1">

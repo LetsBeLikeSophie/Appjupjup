@@ -80,6 +80,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .card.soft { background: var(--soft); }
 .list-row { width: 100%; min-height: 64px; border: 0; padding: 12px var(--pad); border-radius: var(--r-card); background: var(--surface); display: flex; align-items: center; gap: 12px; text-align: left; }
 .list-row.primary { background: var(--primary-soft); }
+.list-row.soft { background: var(--soft); }
 .row-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .row-title .t-sub { flex-shrink: 0; margin-left: auto; }
 .list-row .chev { color: var(--sub); display: inline-flex; flex-shrink: 0; }
@@ -369,7 +370,8 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .tk.hot { color: var(--primary); }
 .tk.dim { opacity: .55; }
 /* 바탕이 회색이면 흰 칩 */
-.how-row .tk, .tiles .tk { background: var(--surface); }
+/* 연회색 바탕 위 칩·작은 버튼은 흰 톤 */
+.how-row .tk, .tiles .tk, .card.soft .tk, .list-row.soft .tk, .card.soft .btn-sm:not(.primary), .list-row.soft .stake-btn { background: var(--surface); }
 .reward-tag { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; }
 .mk-stake { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); background: var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.14); }
 .slots-reward { display: inline-flex; align-items: center; gap: 4px; }
