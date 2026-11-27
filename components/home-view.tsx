@@ -41,6 +41,14 @@ export function guessDevice(): Device {
   if (/Android/.test(ua)) return 'android';
   return 'all';
 }
+/** 밸런스 게임 주소: 카테고리 + 홈에서 고른 기기 */
+const gameUrl = (cat: string, device?: Device) => {
+  const q = new URLSearchParams();
+  if (cat !== 'all' && cat !== 'test') q.set('cat', cat);
+  if (device) q.set('device', device);
+  const s = q.toString();
+  return `/game${s ? `?${s}` : ''}`;
+};
 export const byDevice = (apps: App[], d: Device) => (d === 'all' ? apps : apps.filter((a) => a.platform === d));
 
 /** 기기 고르기: 안드로이드·아이폰 두 아이콘. 둘 다 켜짐 = 전체, 켜진 걸 다시 누르면 전체 */
@@ -225,7 +233,7 @@ export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, on
     <div className="home">
       <header className="home-head">
         <h1 className="t-title">{t.appName}</h1>
-        <Link className="game-btn" href={gameHref ?? `/game${cat !== 'all' && cat !== 'test' ? `?cat=${cat}` : ''}`}>{Icon.swords}{t.game}</Link>
+        <Link className="game-btn" href={gameHref ?? gameUrl(cat, device)}>{Icon.swords}{t.game}</Link>
       </header>
       {mine && <CatChips apps={mine} cat={cat} setCat={setCat} test={!!testIds?.size || cat === 'test'} lead={device && setDevice ? <DeviceSeg device={device} setDevice={setDevice} /> : undefined} />}
       {list === null && <Loading />}
