@@ -8,7 +8,7 @@ import { DetailView } from '@/components/detail-view';
 import { PersonSheet } from '@/components/person-sheet';
 import { Failed, Missing } from '@/components/layout';
 import type { Recruit } from '@/components/test-view';
-import { loadBoard, myJoinFor, recruitOf, testErrMsg } from '@/lib/test';
+import { loadBoard, myJoinFor, recruitOf, testErrMsg, testHandlers } from '@/lib/test';
 
 export default function AppPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -44,10 +44,11 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
   }, [app, uid]);
   const join = async (r: Recruit) => {
     if (!session) { openLogin(); return false; }
-    const { error } = await sb().rpc('aj_test_join', { p_app: r.app.id });
-    if (error) { toast(testErrMsg(t as unknown as Record<string, string>, error.message)); return false; }
-    refreshTestDue();
-    return true;
+    return testHandlers({
+      uid: session.user.id, toast,
+      err: (m) => toast(testErrMsg(t as unknown as Record<string, string>, m)),
+      after: () => { refreshTestDue(); },
+    }).join(r);
   };
 
   const me = useMemo<Person | null>(() => profile && ({

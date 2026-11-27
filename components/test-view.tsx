@@ -94,6 +94,7 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
   const [caps, setCaps] = useState(j.caps);
   const [busy, setBusy] = useState(false);
   const [fb, setFb] = useState('');
+  const [sending, setSending] = useState(false);
   const today = caps.some((c) => c.day === j.day);
   const all = isDoneCaps(caps.map((c) => c.day), fin);
   const strip = useRef<HTMLDivElement>(null);
@@ -107,8 +108,11 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
   };
   const send = async () => {
     const b = fb.trim();
-    if (!b) return;
-    if (await h.note(j, b)) { setFb(''); toast(t.sent); }
+    if (!b || sending) return;
+    setSending(true);
+    const ok = await h.note(j, b);
+    setSending(false);
+    if (ok) { setFb(''); toast(t.sent); }
   };
   return (
     <div className="card">
@@ -130,7 +134,7 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
       </div>
       <div className="field-wrap">
         <input placeholder={t.feedbackPh} maxLength={60} value={fb} onChange={(e) => setFb(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} enterKeyHint="send" />
-        <button className="icon-btn" aria-label="send" onClick={send}>{Icon.send}</button>
+        <button className="icon-btn" aria-label="send" disabled={sending} onClick={send}>{Icon.send}</button>
       </div>
     </div>
   );
@@ -266,6 +270,14 @@ export function TestSections({ d, h, findHref }: { d: TestData; h: TestH; findHr
 export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joined?: boolean; onJoin: (r: Recruit) => Promise<boolean> }) {
   const { t, toast } = useApp();
   const [joined, setJoined] = useState(!!joined0);
+  const [busy, setBusy] = useState(false);
+  const join = async () => {
+    if (busy) return;
+    setBusy(true);
+    const ok = await onJoin(r);
+    setBusy(false);
+    if (ok) { setJoined(true); toast(t.joinedT); }
+  };
   return (
     <div className="card recruit-strip">
       <div className="row gap12">
@@ -276,7 +288,7 @@ export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joine
         </div>
         {joined
           ? <span className="btn-sm on">{Icon.check}</span>
-          : <button className="btn-sm primary" onClick={async () => { if (await onJoin(r)) { setJoined(true); toast(t.joinedT); } }}>{t.join}</button>}
+          : <button className="btn-sm primary" disabled={busy} onClick={join}>{t.join}</button>}
       </div>
       <div className="row between">
         <span className="row gap6">
