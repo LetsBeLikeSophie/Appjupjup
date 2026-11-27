@@ -9,12 +9,12 @@ import { Marker, tiltOf } from './app-parts';
 import { Loading } from './layout';
 
 /** 카테고리 칩: 전체 · 새로 나옴 · 앱이 있는 카테고리만 */
-export function CatChips({ apps, cat, setCat, lead }: { apps: App[]; cat: string; setCat: (c: string) => void; lead?: ReactNode }) {
+export function CatChips({ apps, cat, setCat, lead, test }: { apps: App[]; cat: string; setCat: (c: string) => void; lead?: ReactNode; test?: boolean }) {
   const { t } = useApp();
   const counts = new Map<string, number>();
   apps.forEach((a) => a.category && counts.set(a.category, (counts.get(a.category) || 0) + 1));
   const cats = [...counts.keys()].sort((a, b) => counts.get(b)! - counts.get(a)!);
-  const items = [{ k: 'all', l: t.all }, ...(apps.some(isFresh) ? [{ k: 'fresh', l: t.fresh }] : []), ...cats.map((k) => ({ k, l: t.cat[k] || t.cat.etc }))];
+  const items: { k: string; l: ReactNode }[] = [{ k: 'all', l: t.all }, ...(test ? [{ k: 'test', l: <span className="cat-test">{Icon.flask}{t.testers}</span> }] : []), ...(apps.some(isFresh) ? [{ k: 'fresh', l: t.fresh }] : []), ...cats.map((k) => ({ k, l: t.cat[k] || t.cat.etc }))];
   return (
     <div className="cat-row" role="tablist">
       {lead}
@@ -25,8 +25,10 @@ export function CatChips({ apps, cat, setCat, lead }: { apps: App[]; cat: string
   );
 }
 
-export function filterApps(apps: App[], cat: string) {
+export function filterApps(apps: App[], cat: string, testIds?: Map<string, 'test' | 'stake'>) {
   if (cat === 'all') return apps;
+  // 🧪 테스터 모집: 티켓 건 앱 먼저
+  if (cat === 'test') return apps.filter((a) => testIds?.has(a.id)).sort((a, b) => (testIds?.get(b.id) === 'stake' ? 1 : 0) - (testIds?.get(a.id) === 'stake' ? 1 : 0));
   if (cat === 'fresh') return apps.filter(isFresh);
   return apps.filter((a) => a.category === cat);
 }
@@ -214,14 +216,14 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
 export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, onPick, device, setDevice, testIds }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; testIds?: Map<string, 'test' | 'stake'>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
   const { t } = useApp();
   const mine = apps && device ? byDevice(apps, device) : apps;
-  const list = mine ? filterApps(mine, cat) : null;
+  const list = mine ? filterApps(mine, cat, testIds) : null;
   return (
     <div className="home">
       <header className="home-head">
         <h1 className="t-title">{t.appName}</h1>
-        <Link className="game-btn" href={gameHref ?? `/game${cat !== 'all' ? `?cat=${cat}` : ''}`}>{Icon.swords}{t.game}</Link>
+        <Link className="game-btn" href={gameHref ?? `/game${cat !== 'all' && cat !== 'test' ? `?cat=${cat}` : ''}`}>{Icon.swords}{t.game}</Link>
       </header>
-      {mine && <CatChips apps={mine} cat={cat} setCat={setCat} lead={device && setDevice ? <DeviceSeg device={device} setDevice={setDevice} /> : undefined} />}
+      {mine && <CatChips apps={mine} cat={cat} setCat={setCat} test={!!testIds?.size || cat === 'test'} lead={device && setDevice ? <DeviceSeg device={device} setDevice={setDevice} /> : undefined} />}
       {list === null && <Loading />}
       {list?.length === 0 && <div className="loading">{t.empty}</div>}
       {list && list.length > 0 && (heap

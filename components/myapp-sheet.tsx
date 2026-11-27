@@ -5,9 +5,10 @@ import { sb, type App } from '@/lib/supabase';
 import { AppIcon, Chip, Icon } from './ui';
 import { Sheet, SheetHeader } from './layout';
 import { CountryEditor, SayInput, parseCountries } from './app-parts';
+import { MyTestPanel, type MyTest, type TestH } from './test-view';
 
 /** 내 앱을 누르면 열리는 수정 창 */
-export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClose: () => void; onChanged: () => void }) {
+export function MyAppSheet({ app, onClose, onChanged, test, testH }: { app: App | null; onClose: () => void; onChanged: () => void; test?: MyTest; testH?: TestH }) {
   const { t, toast } = useApp();
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
@@ -42,8 +43,10 @@ export function MyAppSheet({ app, onClose, onChanged }: { app: App | null; onClo
   };
 
   return (
-    <Sheet open onClose={onClose} label={t.editApp}>
-      <SheetHeader title={t.editApp} leading={<AppIcon src={app.icon_url} size={48} />} onClose={onClose} />
+    <Sheet open onClose={onClose} label={t.editApp} tall>
+      <SheetHeader title={app.name} leading={<AppIcon src={app.icon_url} size={48} />} onClose={onClose} />
+      {test && testH && <div className="myapp-test"><MyTestPanel key={`${test.open}:${test.stake}:${test.locked}`} m={test} h={testH} /></div>}
+      <span className="label">{t.editApp}</span>
       <div className="form">
         <label className="label" htmlFor="ma-name">{t.appName2}</label>
         <input id="ma-name" className="field" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />

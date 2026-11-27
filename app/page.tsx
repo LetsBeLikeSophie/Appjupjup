@@ -12,7 +12,7 @@ export default function Home() {
   const [board, setBoard] = useState<Board>(new Map());
   const [cat, setCat] = useState('all');
   const [device, setDevice] = useState<Device>('all');
-  useEffect(() => { setDevice(guessDevice()); loadBoard().then(setBoard); }, []);
+  useEffect(() => { setDevice(guessDevice()); loadBoard().then(setBoard); const c = new URLSearchParams(location.search).get('cat'); if (c) setCat(c); }, []);
   useEffect(() => { loadApps(country).then(setApps); }, [country]);
   // 테스터 모집 중(사람 덜 참)인 앱: 아이콘에 플라스크
   const testIds = useMemo(() => new Map((apps || []).flatMap((a) => { const r = recruitOf(board, a); return r ? [[a.id, (r.stake || 0) > 0 ? 'stake' : 'test'] as const] : []; })), [apps, board]);

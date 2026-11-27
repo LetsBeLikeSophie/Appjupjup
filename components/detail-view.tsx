@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import type { App, Comment, Person } from '@/lib/supabase';
 import { AppIcon, GetButton, Icon, IconButton, Shots, WhoIcon, WhoName } from './ui';
@@ -92,6 +92,11 @@ function CommentBar({ app, me, onSend }: { app: App; me: Person | null; onSend: 
 /** 앱 상세 그리기 (데이터는 page에서) */
 export function DetailView({ app, comments, me, from, h, recruit, joined, onJoin }: { app: App; comments: Comment[] | null; me: Person | null; from: App | null; h: Handlers; recruit?: Recruit | null; joined?: boolean; onJoin?: (r: Recruit) => Promise<boolean> }) {
   const { t } = useApp();
+  // 알림에서 오면(#comments) 댓글로 바로
+  const loaded = comments !== null;
+  useEffect(() => {
+    if (loaded && location.hash === '#comments') document.getElementById('comments')?.scrollIntoView({ block: 'start' });
+  }, [loaded]);
   return (
     <div className="detail">
       <div className="d-top">
@@ -109,7 +114,7 @@ export function DetailView({ app, comments, me, from, h, recruit, joined, onJoin
       </div>
       {recruit && onJoin && <RecruitStrip key={`${recruit.app.id}:${joined}`} r={recruit} joined={joined} onJoin={onJoin} />}
       <Shots urls={app.screenshots} height={240} />
-      <section className="comments" aria-label={t.comments}>
+      <section id="comments" className="comments" aria-label={t.comments}>
         {comments?.map((c) => <CommentRow key={c.id} c={c} app={app} myId={me?.id} h={h} />)}
       </section>
       <CommentBar app={app} me={me} onSend={h.onSend} />

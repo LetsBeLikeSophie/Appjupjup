@@ -76,7 +76,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg((m) => (m === msg ? null : m)), 2600);
+    setTimeout(() => setToastMsg((m) => (m === msg ? null : m)), 3600);
   }, []);
 
   const loadProfile = useCallback(async (s: Session | null) => {

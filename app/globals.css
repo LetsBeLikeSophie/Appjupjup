@@ -259,13 +259,10 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 @keyframes pop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 
 /* ---------- 알림 ---------- */
-.alert { background: var(--surface); border-radius: var(--r-card); padding: 12px var(--pad); display: flex; flex-direction: column; gap: 12px; }
-.alert.primary { background: var(--primary-soft); }
+.alert { background: var(--surface); border-radius: var(--r-card); padding: 12px var(--pad); }
 .alert-main { display: flex; align-items: center; gap: 12px; min-height: 48px; }
-.visit { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 16px; padding: 10px; }
-.alert:not(.primary) .visit { background: var(--soft); }
-.visit-btn { flex-shrink: 0; height: var(--btn-sm-h); padding: 0 14px; border-radius: 18px; background: var(--primary); color: var(--on-primary); font-size: var(--fs-body); font-weight: var(--fw-mid); display: inline-flex; align-items: center; gap: 4px; }
-.alert:not(.primary) .visit-btn { background: var(--primary-soft); color: var(--primary-ink); }
+.alert-who { flex-shrink: 0; display: inline-flex; }
+.alert-body { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
 
 /* ---------- 하단 메뉴 ---------- */
 .tabwrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; padding-bottom: calc(16px + env(safe-area-inset-bottom)); pointer-events: none; }
@@ -361,16 +358,21 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .days i.ck.on:not(.ok) { background: var(--accent); box-shadow: none; }
 .days i.ck.ok { background: var(--ink); box-shadow: none; }
 .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.slots.four { grid-template-columns: repeat(4, 1fr); }
-.slot.reward { background: var(--soft); color: var(--sub); }
-.slot.reward .ticket { color: var(--sub); font-size: var(--fs-card); }
-.slot.reward.got { background: var(--primary-soft); }
-.slot.reward.got .ticket { color: var(--primary-ink); }
+.slots-row { display: flex; align-items: center; gap: 8px; }
+.slots-row .slots { flex: 1; }
+.slots-reward { display: inline-flex; align-items: center; gap: 2px; padding-bottom: 20px; }
+.slots-reward .ticket { color: var(--sub); font-size: var(--fs-card); }
+.slots-reward.got .ticket { color: var(--ink); }
+.how-line { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+.how-line .ticket { font-size: var(--fs-card); }
+.cat-test { display: inline-flex; align-items: center; gap: 4px; }
+.cat-test svg { width: 16px; height: 16px; }
+.myapp-test { display: flex; flex-direction: column; gap: var(--gap-list); }
 .slot-now { color: var(--primary-ink); font-weight: var(--fw-mid); }
 .slot-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .slot { position: relative; width: 100%; aspect-ratio: 1; border: 0; border-radius: 14px; background: var(--soft); color: var(--sub); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; }
 .slot img { width: 100%; height: 100%; object-fit: cover; }
-.slot.open { background: var(--primary); color: var(--on-primary); }
+.slot.open { background: transparent; color: var(--ink); outline: 2px dashed var(--sub); outline-offset: -2px; }
 .slot.locked { opacity: .6; }
 .slot-ok { position: absolute; right: 6px; bottom: 6px; width: 22px; height: 22px; border-radius: 11px; background: var(--surface); color: var(--ink); display: flex; align-items: center; justify-content: center; }
 .testers { display: flex; flex-direction: column; gap: 10px; }

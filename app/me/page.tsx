@@ -15,7 +15,6 @@ export default function Me() {
   const [test, setTest] = useState<TestData | null>(null);
   const [rev, setRev] = useState(0);
   const [gotApps, setGotApps] = useState<Lite[]>([]);
-  const [commentCount, setCommentCount] = useState(0);
   const [editing, setEditing] = useState<App | null>(null);
   const [settings, setSettings] = useState(false);
 
@@ -23,8 +22,6 @@ export default function Me() {
     if (!session) return;
     sb().from('aj_downloads').select('app:aj_apps(id, name, icon_url)').eq('user_id', session.user.id).order('created_at', { ascending: false })
       .then(({ data }) => setGotApps(((data || []) as unknown as { app: Lite | null }[]).map((d) => d.app).filter(Boolean) as Lite[]));
-    sb().from('aj_feedback').select('id', { count: 'exact', head: true }).eq('author_id', session.user.id)
-      .then(({ count }) => setCommentCount(count || 0));
   }, [session, gotIds]);
 
   useEffect(() => {
@@ -48,11 +45,11 @@ export default function Me() {
 
   return (
     <>
-      <MeView profile={profile} apps={myApps} gotApps={gotApps} commentCount={commentCount}
+      <MeView profile={profile} apps={myApps} gotApps={gotApps} findHref="/?cat=test"
         onEditApp={setEditing} onUpload={() => setUploadOpen(true)} onSettings={() => setSettings(true)} test={test} testH={testH} />
       <SettingsSheet open={settings} profile={profile} onClose={() => setSettings(false)} onSave={save}
         onLogout={async () => { await sb().auth.signOut(); location.href = '/'; }} />
-      <MyAppSheet app={editing} onClose={() => setEditing(null)} onChanged={refreshMine} />
+      <MyAppSheet app={editing} onClose={() => setEditing(null)} onChanged={refreshMine} test={test?.mine.find((m) => m.app.id === editing?.id)} testH={testH} />
     </>
   );
 }

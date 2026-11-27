@@ -2,17 +2,18 @@
 import Link from 'next/link';
 import { useApp } from '@/lib/ctx';
 import { primaryApp, type Notice } from '@/lib/supabase';
-import { AppIcon, Icon, WhoIcon, WhoName } from './ui';
+import { AppIcon, WhoIcon, WhoName } from './ui';
 import { Empty, Loading, Page } from './layout';
 import { ago } from './detail-view';
 
-/** 알림 한 줄. 답방할 앱이 있는 행만 연한 오렌지 */
+/** 알림 한 줄: 누르면 내 앱 댓글로, 앞 아이콘(그 사람 앱)을 누르면 답방 */
 export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
   const { t, locale } = useApp();
   const when = ago(n.created_at, locale);
   const actorApp = primaryApp(n.actor);
   // 남이 내 앱에 왔을 때만 답방 카드 (개발자 답글·도움돼요는 아님)
   const canVisit = (n.kind === 'got' || n.kind === 'comment') && n.app?.owner_id === myId && !!actorApp;
+  const href = n.app_id ? `/app/${n.app_id}${n.kind === 'comment' ? '#comments' : ''}` : '#';
   const unread = !n.read_at;
 
   const title =
@@ -24,9 +25,11 @@ export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
   const leading = n.kind === 'helpful' ? <AppIcon src={n.app?.icon_url} size={40} /> : <WhoIcon who={n.actor} size={40} />;
 
   return (
-    <div className={`alert ${canVisit && unread ? 'primary' : ''}`}>
-      <Link className="alert-main" href={n.app_id ? `/app/${n.app_id}` : '#'}>
-        {leading}
+    <div className="alert alert-main">
+      {canVisit && actorApp
+        ? <Link className="alert-who" href={`/app/${actorApp.id}?from=${n.app_id}`} aria-label={t.visit}>{leading}</Link>
+        : leading}
+      <Link className="alert-body" href={href}>
         <span className="col grow">
           <span className="row-title"><span className="t-body ellipsis">{title}</span><span className="t-sub">{when}</span></span>
           <span className="row gap6">
@@ -35,13 +38,6 @@ export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
         </span>
         {unread && <span className="udot" aria-label="new" />}
       </Link>
-      {canVisit && actorApp && (
-        <div className="visit">
-          <AppIcon src={actorApp.icon_url} size={44} />
-          <span className="col grow"><b className="t-body ellipsis">{actorApp.name}</b></span>
-          <Link className="visit-btn" href={`/app/${actorApp.id}?from=${n.app_id}`}>{Icon.reply}{t.visit}</Link>
-        </div>
-      )}
     </div>
   );
 }

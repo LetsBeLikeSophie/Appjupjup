@@ -3,7 +3,8 @@
 // 🎫 얻기: 남의 앱 테스트 끝(안드로이드 1·7·14일 / 애플 1·2·3일 캡처) → 보상(1 + 마지막 3자리 1 + 주인이 건 티켓 1)
 // 🎫 쓰기: 2·3번째 앱 올리기 2장 · 내 앱에 걸기(테스터 보상 +1, 참여 순간 그 사람 몫으로 잠김, 안 잠긴 것만 뺄 수 있음, 탈락하면 돌아옴)
 // 규칙 숫자는 DB(supabase/migrations/11_tester_exchange.sql)와 같아야 해요
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useApp } from '@/lib/ctx';
 import type { App, Person } from '@/lib/supabase';
 import { AppIcon, Icon, WhoIcon, WhoName } from './ui';
@@ -37,7 +38,6 @@ export const bonusOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => 1 + (r
 /** 목록 순서: 보상 큰 앱 → 12명에 가까움 + 남을 많이 테스트해 준 사람 */
 export const sortRecruit = (l: Recruit[]) => [...l].sort((a, b) => bonusOf(b) - bonusOf(a) || (b.joined * 2 + b.given) - (a.joined * 2 + a.given));
 
-/** 🎫 숫자 */
 /** 보상: 기본(+마지막 자리 진하게) + 주인이 건 몫은 따로 칸 */
 export function Reward({ r }: { r: Pick<Recruit, 'joined' | 'need' | 'stake'> }) {
   const base = bonusOf({ ...r, stake: 0 });
@@ -114,15 +114,14 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
         <span className="row gap6 grow"><span className="t-card ellipsis">{j.app.name}</span><PlatformChip platform={j.app.platform} stage="live" /></span>
         <span className="t-sub">{Math.min(j.day, checks[2])}/{checks[2]}{t.day}</span>
       </div>
-      <div className="slots four">
-        {checks.map((c, i) => (
-          <Slot key={c} label={`${c}${t.day}`} src={j.shots ? j.shots[i] : j.app.screenshots[0]} busy={busy === i}
-            state={stateOf(i, c)} onTap={() => tapLocked(i, c)} onFile={(f) => shoot(i, c, f)} />
-        ))}
-        <div className="slot-col">
-          <span className={`slot reward ${all ? 'got' : ''} ${(j.bonus || 1) > 1 ? 'bonus' : ''}`}><Ticket n={j.bonus || 1} plus /></span>
-          <span className="t-sub">{t.points}</span>
+      <div className="slots-row">
+        <div className="slots">
+          {checks.map((c, i) => (
+            <Slot key={c} label={`${c}${t.day}`} src={j.shots ? j.shots[i] : j.app.screenshots[0]} busy={busy === i}
+              state={stateOf(i, c)} onTap={() => tapLocked(i, c)} onFile={(f) => shoot(i, c, f)} />
+          ))}
         </div>
+        <span className={`slots-reward ${all ? 'got' : ''}`}><span className="how-arrow">{Icon.chevRight}</span><Ticket n={j.bonus || 1} plus /></span>
       </div>
       <div className="field-wrap">
         <input placeholder={t.feedbackPh} maxLength={60} value={fb} onChange={(e) => setFb(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} enterKeyHint="send" />
@@ -132,71 +131,28 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
   );
 }
 
-/** 모집 한 줄: [아이콘] 이름·사람 n/12 · 🎫+n · [참여] */
-export function RecruitRow({ r, joined, full, onJoin }: { r: Recruit; joined: boolean; full: boolean; onJoin: () => void }) {
-  const { t } = useApp();
-  return (
-    <div className="row gap12 recruit-row">
-      <AppIcon src={r.app.icon_url} size={44} />
-      <div className="col1">
-        <div className="row gap6">
-          <span className="t-card ellipsis">{r.app.name}</span>
-          <PlatformChip platform={r.app.platform} stage="live" />
-        </div>
-        <Meter n={r.joined + (joined ? 1 : 0)} need={r.need} />
-      </div>
-      <Reward r={r} />
-      {joined
-        ? <span className="btn-sm on">{Icon.check}</span>
-        : <button className={`btn-sm primary ${full ? 'dim' : ''}`} onClick={onJoin}>{t.join}</button>}
-    </div>
-  );
-}
-
 /** 티켓 규칙 그림: 얻기 / 쓰기 */
 function HowSheet({ open, points, onClose }: { open: boolean; points: number; onClose: () => void }) {
   const { t } = useApp();
-  const cams = (days: number[]) => days.map((c) => <span key={c} className="how-cam">{Icon.camera}<span className="t-sub">{c}{t.day}</span></span>);
-  const arrow = <span className="how-arrow">{Icon.chevRight}</span>;
+  const line = (icon: ReactNode, text: string, n: string) => (
+    <span className="how-line"><span className="how-os">{icon}</span><span className="t-body grow">{text}</span><span className="ticket">{Icon.ticket}{n}</span></span>
+  );
   return (
     <Sheet open={open} onClose={onClose} label={t.points}>
       <SheetHeader title={<span className="row gap6">{Icon.ticket}{points}</span>} onClose={onClose} />
       <div className="how">
         <div className="how-row">
           <span className="how-label t-sub">{t.give}</span>
-          <span className="how-flow"><span className="how-os">{Icon.android}</span>{cams([1, 7, 14])}{arrow}<Ticket n={1} plus tone="on" /></span>
-          <span className="how-flow"><span className="how-os">{Icon.apple}</span>{cams([1, 2, 3])}{arrow}<Ticket n={1} plus tone="on" /></span>
-          <span className="how-flow"><span className="how-cam">{Icon.user}<span className="t-sub">10–12</span></span>{arrow}<Ticket n={2} plus tone="on" /></span>
+          {line(Icon.android, t.hAnd, '+1')}
+          {line(Icon.apple, t.hIos, '+1')}
+          {line(Icon.user, t.hLast, '+1')}
+          {line(Icon.ticket, t.hStaked, '+1')}
         </div>
         <div className="how-row">
           <span className="how-label t-sub">{t.use}</span>
-          <span className="how-flow"><Ticket n={APP_COST} />{arrow}<span className="how-cam">{Icon.plus}<span className="t-sub">{t.appOne}</span></span></span>
-          <span className="how-flow"><Ticket n={1} />{arrow}<span className="how-cam">{Icon.user}<Ticket n={1} plus /></span></span>
+          {line(Icon.plus, t.hUpload, `−${APP_COST}`)}
+          {line(Icon.user, t.hStake, '−1')}
         </div>
-      </div>
-    </Sheet>
-  );
-}
-
-/** 모집 목록 시트 */
-function RecruitSheet({ open, list, joinedCount, h, onClose }: { open: boolean; list: Recruit[]; joinedCount: number; h: TestH; onClose: () => void }) {
-  const { t, toast } = useApp();
-  const [mine, setMine] = useState<Set<string>>(new Set());
-  // 참여하면 다시 읽어서 목록에서 빠지고 joinedCount에 들어가요 (시험 화면은 목록에 남음)
-  const n = joinedCount + [...mine].filter((id) => list.some((r) => r.app.id === id)).length;
-  const join = async (r: Recruit) => {
-    if (n >= MAX_JOIN) { toast(t.maxJoin); return; }
-    if (!(await h.join(r))) return;
-    setMine((s) => new Set(s).add(r.app.id));
-    toast(`${t.joinedT} · 🎫+${bonusOf(r)}`);
-  };
-  return (
-    <Sheet open={open} onClose={onClose} label={t.findTest} tall>
-      <SheetHeader title={t.findTest} sub={`${t.joining} ${n}/${MAX_JOIN}`} onClose={onClose} />
-      <div className="testers">
-        {sortRecruit(list).map((r) => (
-          <RecruitRow key={r.app.id} r={r} joined={mine.has(r.app.id)} full={n >= MAX_JOIN} onJoin={() => join(r)} />
-        ))}
       </div>
     </Sheet>
   );
@@ -217,31 +173,6 @@ function TesterRow({ x, checks }: { x: Tester; checks: number[] }) {
   );
 }
 
-/** 내 앱 테스터 시트: 테스터별 캡처 + 피드백 */
-function TestersSheet({ m, onClose }: { m: MyTest | null; onClose: () => void }) {
-  const { t } = useApp();
-  if (!m) return null;
-  return (
-    <Sheet open onClose={onClose} label={t.testers} tall>
-      <SheetHeader title={m.app.name} leading={<AppIcon src={m.app.icon_url} size={44} />} sub={<Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} />} onClose={onClose} />
-      <div className="testers">{m.testers.map((x, i) => <TesterRow key={i} x={x} checks={checksOf(m.app)} />)}</div>
-      {m.feedback.length > 0 && (
-        <Section title={t.feedback} aside={<span className="t-sub">{m.feedback.length}</span>}>
-          {m.feedback.map((f, i) => (
-            <div key={i} className="cm">
-              <WhoIcon who={f.who} size={34} />
-              <div className="cm-body">
-                <span className="cm-head"><span className="cm-name ellipsis"><WhoName who={f.who} /></span><span className="t-sub">{f.day}{t.day}</span></span>
-                <span className="t-body">{f.body}</span>
-              </div>
-            </div>
-          ))}
-        </Section>
-      )}
-    </Sheet>
-  );
-}
-
 /** 티켓 카드 (내 정보 맨 위, 누르면 규칙 그림) */
 export function PointsCard({ points, sub }: { points: number; sub?: string }) {
   const { t } = useApp();
@@ -257,8 +188,8 @@ export function PointsCard({ points, sub }: { points: number; sub?: string }) {
   );
 }
 
-/** 내 앱 한 줄: 모집 전이면 [테스터 모으기], 모집 중이면 사람 n/12 · 🎫 걸기 [− n +] (잠긴 것은 못 뺌) */
-function MineRow({ m, h, onOpen }: { m: MyTest; h: TestH; onOpen: () => void }) {
+/** 내 앱 시트 안 테스트: 모집 전이면 [테스터 모으기], 모집 중이면 사람 n/12 · 🎫 걸기 [− n +] (잠긴 것은 못 뺌) · 테스터 · 피드백 */
+export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
   const { t, toast } = useApp();
   const [stake, setStake] = useState(m.stake);
   const [open, setOpen] = useState(m.open);
@@ -275,57 +206,49 @@ function MineRow({ m, h, onOpen }: { m: MyTest; h: TestH; onOpen: () => void }) 
   };
   if (!open) {
     return (
-      <div className="list-row">
-        <AppIcon src={m.app.icon_url} size={44} />
-        <span className="t-card ellipsis grow">{m.app.name}</span>
-        <button className="btn-sm primary" disabled={busy} onClick={async () => { setBusy(true); const ok = await h.open(m); setBusy(false); if (ok) setOpen(true); }}>{Icon.user}{t.openTest}</button>
-      </div>
+      <button className="btn primary" disabled={busy} onClick={async () => { setBusy(true); const ok = await h.open(m); setBusy(false); if (ok) setOpen(true); }}>{Icon.user}{t.openTest}</button>
     );
   }
   return (
-    <div className="list-row">
-      <button className="mine-open" onClick={onOpen}>
-        <AppIcon src={m.app.icon_url} size={44} />
-        <span className="col1">
-          <span className="t-card ellipsis">{m.app.name}</span>
-          <Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} />
+    <>
+      <div className="list-row">
+        <span className="col1"><span className="t-card">{t.testers}</span><Meter n={m.testers.filter((x) => !x.failed).length} need={m.need} /></span>
+        <span className="stake">
+          <button className={`stake-btn ${stake < 1 ? 'dim' : ''}`} aria-label="-" onClick={() => change(-1)}>−</button>
+          <span className="stake-n"><Ticket n={stake + m.locked} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
+          <button className="stake-btn" aria-label="+" onClick={() => change(1)}>+</button>
         </span>
-      </button>
-      <span className="stake">
-        <button className={`stake-btn ${stake < 1 ? 'dim' : ''}`} aria-label="-" onClick={() => change(-1)}>−</button>
-        <span className="stake-n"><Ticket n={stake + m.locked} />{m.locked > 0 && <span className="stake-lock">{Icon.lock}{m.locked}</span>}</span>
-        <button className="stake-btn" aria-label="+" onClick={() => change(1)}>+</button>
-      </span>
-    </div>
+      </div>
+      {m.testers.length > 0 && <div className="testers">{m.testers.map((x, i) => <TesterRow key={i} x={x} checks={checksOf(m.app)} />)}</div>}
+      {m.feedback.length > 0 && (
+        <Section title={t.feedback} aside={<span className="t-sub">{m.feedback.length}</span>}>
+          {m.feedback.map((f, i) => (
+            <div key={i} className="cm">
+              <WhoIcon who={f.who} size={34} />
+              <div className="cm-body">
+                <span className="cm-head"><span className="cm-name ellipsis"><WhoName who={f.who} /></span><span className="t-sub">{f.day}{t.day}</span></span>
+                <span className="t-body">{f.body}</span>
+              </div>
+            </div>
+          ))}
+        </Section>
+      )}
+    </>
   );
 }
 
-/** 내 정보 안 테스트 묶음: 참여 중 + 찾기 / 내 앱 테스터 */
-export function TestSections({ d, h }: { d: TestData; h: TestH }) {
+/** 내 정보 안 참여 중: 카드들 + 홈 🧪로 가는 줄 */
+export function TestSections({ d, h, findHref }: { d: TestData; h: TestH; findHref: string }) {
   const { t } = useApp();
-  const [find, setFind] = useState(false);
-  const [open, setOpen] = useState<MyTest | null>(null);
   return (
-    <>
-      <Section title={t.joining} aside={<span className="t-sub">{d.joined.length}/{MAX_JOIN}</span>}>
-        {d.joined.map((j) => <JoinedCard key={`${j.id}:${j.done.join()}`} j={j} h={h} />)}
-        <button className="list-row find-row" onClick={() => setFind(true)}>
-          <span className="find-icon">{Icon.plus}</span>
-          <span className="t-card grow">{t.findTest}</span>
-          <span className="t-sub">{d.recruit.length}</span>
-          <span className="chev">{Icon.chevRight}</span>
-        </button>
-      </Section>
-
-      {d.mine.length > 0 && (
-        <Section title={t.testers}>
-          {d.mine.map((m) => <MineRow key={`${m.app.id}:${m.open}:${m.stake}:${m.locked}`} m={m} h={h} onOpen={() => setOpen(m)} />)}
-        </Section>
-      )}
-
-      <RecruitSheet open={find} list={d.recruit} joinedCount={d.joined.length} h={h} onClose={() => setFind(false)} />
-      <TestersSheet m={open} onClose={() => setOpen(null)} />
-    </>
+    <Section title={t.joining} aside={<span className="t-sub">{d.joined.length}/{MAX_JOIN}</span>}>
+      {d.joined.map((j) => <JoinedCard key={`${j.id}:${j.done.join()}`} j={j} h={h} />)}
+      <Link className="list-row find-row" href={findHref}>
+        <span className="find-icon">{Icon.flask}</span>
+        <span className="t-card grow">{t.testApps}</span>
+        <span className="chev">{Icon.chevRight}</span>
+      </Link>
+    </Section>
   );
 }
 

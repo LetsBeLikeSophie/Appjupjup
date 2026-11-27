@@ -17,7 +17,7 @@ export default function Demo() {
   const [device, setDevice] = useState<Device>('all');
   const [pick, setPick] = useState<App | null>(null);
   const { t, toast } = useApp();
-  useEffect(() => { setDevice(guessDevice()); setN(Math.min(300, Math.max(2, Number(new URLSearchParams(location.search).get('n')) || 120))); }, []);
+  useEffect(() => { setDevice(guessDevice()); const c = new URLSearchParams(location.search).get('cat'); if (c) setCat(c); setN(Math.min(300, Math.max(2, Number(new URLSearchParams(location.search).get('n')) || 120))); }, []);
   const apps = useMemo(() => (n ? fakeApps(n) : null), [n]);
   const got = useMemo(() => new Set(['demo4', 'demo9', 'demo20']), []);
   const testIds = useMemo(() => new Map((apps || []).flatMap((a) => { const r = recruitOf(a); return r ? [[a.id, (r.stake || 0) > 0 ? 'stake' : 'test'] as const] : []; })), [apps]);

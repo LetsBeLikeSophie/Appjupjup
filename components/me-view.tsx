@@ -9,8 +9,8 @@ import { APP_COST, PointsCard, TestSections, Ticket, type TestData, type TestH }
 type Lite = Pick<App, 'id' | 'name' | 'icon_url'>;
 
 /** 내 정보 그리기 (데이터는 page에서) */
-export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUpload, onSettings, test, testH }: {
-  profile: Profile; apps: App[]; gotApps: Lite[]; commentCount: number; test: TestData | null; testH: TestH;
+export function MeView({ profile, apps, gotApps, onEditApp, onUpload, onSettings, test, testH, findHref }: {
+  profile: Profile; apps: App[]; gotApps: Lite[]; test: TestData | null; testH: TestH; findHref: string;
   onEditApp: (a: App) => void; onUpload: () => void; onSettings: () => void;
 }) {
   const { t, toast } = useApp();
@@ -27,9 +27,7 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
         )}
       </div>
 
-      <PointsCard points={profile.tickets} sub={`${t.gotN} ${gotApps.length} · ${t.commentN} ${commentCount}`} />
-
-      {test ? <TestSections d={test} h={testH} /> : <Loading />}
+      <PointsCard points={profile.tickets} />
 
       <Section title={t.gotApps} aside={<span className="t-sub">{gotApps.length}</span>}>
         {gotApps.length > 0 && (
@@ -38,6 +36,8 @@ export function MeView({ profile, apps, gotApps, commentCount, onEditApp, onUplo
           </div>
         )}
       </Section>
+
+      {test ? <TestSections d={test} h={testH} findHref={findHref} /> : <Loading />}
     </Page>
   );
 }
