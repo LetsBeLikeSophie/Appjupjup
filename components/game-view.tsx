@@ -5,11 +5,12 @@ import type { App } from '@/lib/supabase';
 import { AppIcon, GetButton, Icon, IconButton } from './ui';
 import { tiltOf } from './app-parts';
 
-/** 랜덤으로 8·4·2개 뽑기 */
-function draw(pool: App[]) {
-  const list = [...pool].sort(() => Math.random() - 0.5);
-  const n = list.length >= 8 ? 8 : list.length >= 4 ? 4 : list.length >= 2 ? 2 : 0;
-  return list.slice(0, n);
+/** 랜덤으로 8·4·2개 뽑기. 티켓 건 앱(boost)은 판마다 1/4 자리까지 먼저 넣음 */
+function draw(pool: App[], boost?: Set<string>) {
+  const mix = (l: App[]) => [...l].sort(() => Math.random() - 0.5);
+  const n = pool.length >= 8 ? 8 : pool.length >= 4 ? 4 : pool.length >= 2 ? 2 : 0;
+  const hot = mix(pool.filter((a) => boost?.has(a.id))).slice(0, Math.max(1, n / 4));
+  return mix([...hot, ...mix(pool.filter((a) => !hot.includes(a)))].slice(0, n));
 }
 
 function Pick({ app, onPick }: { app: App; onPick: () => void }) {
@@ -28,7 +29,7 @@ function Pick({ app, onPick }: { app: App; onPick: () => void }) {
 }
 
 /** 밸런스 게임: 둘 중 하나 → 우승 앱 받아볼래요? 숫자·% 없음 */
-export function GameView({ pool, onClose }: { pool: App[] | null; onClose: () => void }) {
+export function GameView({ pool, onClose, boost }: { pool: App[] | null; onClose: () => void; boost?: Set<string> }) {
   const { t } = useApp();
   const [round, setRound] = useState<App[]>([]);
   const [winners, setWinners] = useState<App[]>([]);
@@ -38,9 +39,9 @@ export function GameView({ pool, onClose }: { pool: App[] | null; onClose: () =>
 
   const start = useCallback(() => {
     if (!pool) return;
-    const d = draw(pool);
+    const d = draw(pool, boost);
     setRound(d); setWinners([]); setPos(0); setDone(0); setTotal(Math.max(0, d.length - 1));
-  }, [pool]);
+  }, [pool, boost]);
   useEffect(start, [start]);
 
   const champ = round.length === 1 ? round[0] : null;

@@ -52,10 +52,14 @@ export function CountryEditor({ world, setWorld, cc, setCc }: { world: boolean; 
 export const tiltOf = (id: string) => ((hash(id + 't') % 17) - 8);
 
 /** 아이콘에 붙는 표시는 하나만: 새로 나옴 → 주움 → 댓글 수 */
-export function Marker({ app, got, test }: { app: App; got: boolean; test?: 'test' | 'stake' }) {
+/** 테스터 모집 중: 보상 n장, 주인이 티켓 걸었나 */
+export type TestMark = { n: number; stake: boolean };
+
+export function Marker({ app, got, test }: { app: App; got: boolean; test?: TestMark }) {
+  // 테스터 모집: 아이콘 아래 🎫+n 칩 (Ticket 칩과 같은 모양, 2장부터 주황)
+  if (test) return <span className={`tk mk-stake ${test.n >= 2 ? 'hot' : ''}`} aria-label="test">{Icon.ticket}+{test.n}</span>;
   if (isFresh(app) && !got) return <i className="mk-fresh" aria-label="new" />;
   if (got) return <span className="mk-got">{Icon.check}</span>;
-  if (test) return <span className={`mk-test ${test}`} aria-label={test}>{test === 'stake' ? Icon.ticket : Icon.flask}</span>;
   if (app.feedback_count > 0) return <span className="mk-count">{app.feedback_count > 9 ? '9+' : app.feedback_count}</span>;
   return null;
 }

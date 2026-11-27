@@ -368,7 +368,7 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 /* 바탕이 회색이면 흰 칩 */
 .how-row .tk, .tiles .tk { background: var(--surface); }
 .reward-tag { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; }
-.mk-test.stake { color: var(--primary); }
+.mk-stake { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); background: var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.14); }
 .slots-reward { display: inline-flex; align-items: center; gap: 4px; }
 .how-line { display: flex; align-items: flex-start; gap: 10px; padding: 4px 0; }
 .how-line .how-os { padding-top: 2px; }

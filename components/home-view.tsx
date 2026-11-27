@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/ctx';
 import { hash, isFresh, type App } from '@/lib/supabase';
 import { AppIcon, Icon } from './ui';
-import { Marker, tiltOf } from './app-parts';
+import { Marker, tiltOf, type TestMark } from './app-parts';
 import { Loading } from './layout';
 
 /** 카테고리 칩: 전체 · 새로 나옴 · 앱이 있는 카테고리만 */
@@ -25,10 +25,10 @@ export function CatChips({ apps, cat, setCat, lead, test }: { apps: App[]; cat: 
   );
 }
 
-export function filterApps(apps: App[], cat: string, testIds?: Map<string, 'test' | 'stake'>) {
+export function filterApps(apps: App[], cat: string, testIds?: Map<string, TestMark>) {
   if (cat === 'all') return apps;
   // 🧪 테스터 모집: 티켓 건 앱 먼저
-  if (cat === 'test') return apps.filter((a) => testIds?.has(a.id)).sort((a, b) => (testIds?.get(b.id) === 'stake' ? 1 : 0) - (testIds?.get(a.id) === 'stake' ? 1 : 0));
+  if (cat === 'test') return apps.filter((a) => testIds?.has(a.id)).sort((a, b) => (testIds?.get(b.id)?.n || 0) - (testIds?.get(a.id)?.n || 0));
   if (cat === 'fresh') return apps.filter(isFresh);
   return apps.filter((a) => a.category === cat);
 }
@@ -59,7 +59,7 @@ function DeviceSeg({ device, setDevice }: { device: Device; setDevice: (d: Devic
 }
 
 /** 바닥에 흩어진 아이콘. 자리·크기·기울기는 앱마다 고정 */
-export function IconField({ apps, gotIds, hrefOf, testIds }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; testIds?: Map<string, 'test' | 'stake'> }) {
+export function IconField({ apps, gotIds, hrefOf, testIds }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; testIds?: Map<string, TestMark> }) {
   return (
     <div className="field-icons">
       {apps.map((a, i) => {
@@ -85,7 +85,7 @@ export function IconField({ apps, gotIds, hrefOf, testIds }: { apps: App[]; gotI
 export const SAY_MAX = 10;
 const sayOf = (a: App) => (a.say || '').trim() || undefined;
 const PER_LAYER = 14, LAYERS = 3, COLS = 3, ROWS = 5;
-export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; onPick?: (a: App) => void; saveKey?: string; testIds?: Map<string, 'test' | 'stake'> }) {
+export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { apps: App[]; gotIds: Set<string>; hrefOf?: (a: App) => string; onPick?: (a: App) => void; saveKey?: string; testIds?: Map<string, TestMark> }) {
   const { t } = useApp();
   const router = useRouter();
   const box = useRef<HTMLDivElement>(null);
@@ -112,11 +112,15 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
     return () => ro.disconnect();
   }, []);
 
-  // 새로 나온 앱이 첫 판 맨 위로
-  const ordered = [...apps.filter(isFresh), ...apps.filter((a) => !isFresh(a))];
-  const per = PER_LAYER * LAYERS;
-  const start = ordered.length > per ? (deal * per) % ordered.length : 0;
-  const batch = ordered.length > per ? [...ordered, ...ordered].slice(start, start + per) : ordered;
+  // 티켓 건 앱은 판마다 맨 위층(최대 한 겹), 새로 나온 앱은 첫 판 위로
+  const isHot = (a: App) => !!testIds?.get(a.id)?.stake;
+  const hot = apps.filter(isHot).slice(0, PER_LAYER);
+  const rest = apps.filter((a) => !hot.includes(a));
+  const ordered = [...hot, ...rest.filter(isFresh), ...rest.filter((a) => !isFresh(a))];
+  const per = PER_LAYER * LAYERS - hot.length;
+  const start = rest.length > per ? (deal * per) % rest.length : 0;
+  const restSorted = [...rest.filter(isFresh), ...rest.filter((a) => !isFresh(a))];
+  const batch = [...hot, ...(rest.length > per ? [...restSorted, ...restSorted].slice(start, start + per) : restSorted)];
 
   const redeal = () => { moved.current.clear(); top.current = 100; setBubbles([]); save(deal + 1); setDeal(deal + 1); };
 
@@ -178,7 +182,7 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
   const place = (a: App, i: number) => {
     const layer = Math.floor(i / PER_LAYER);
     const h = hash(a.id + ':' + deal);
-    const size = (layer === 0 ? 64 : layer === 1 ? 58 : 52) + (h % 13);
+    const size = (layer === 0 ? 64 : layer === 1 ? 58 : 52) + (h % 13) + (isHot(a) ? 12 : 0);
     const order = [...Array(COLS * ROWS).keys()].sort((p, q) => hash(`${deal}:${layer}:${p}`) - hash(`${deal}:${layer}:${q}`));
     const cell = order[i % PER_LAYER];
     const cw = wh![0] / COLS, ch = wh![1] / ROWS;
@@ -213,7 +217,7 @@ export function IconHeap({ apps, gotIds, hrefOf, onPick, saveKey, testIds }: { a
 }
 
 /** 홈 그리기 (데이터는 page에서) */
-export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, onPick, device, setDevice, testIds }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; testIds?: Map<string, 'test' | 'stake'>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
+export function HomeView({ apps, cat, setCat, gotIds, gameHref, hrefOf, heap, onPick, device, setDevice, testIds }: { apps: App[] | null; cat: string; setCat: (c: string) => void; gotIds: Set<string>; testIds?: Map<string, TestMark>; gameHref?: string; hrefOf?: (a: App) => string; heap?: boolean; onPick?: (a: App) => void; device?: Device; setDevice?: (d: Device) => void }) {
   const { t } = useApp();
   const mine = apps && device ? byDevice(apps, device) : apps;
   const list = mine ? filterApps(mine, cat, testIds) : null;

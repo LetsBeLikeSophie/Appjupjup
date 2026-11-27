@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fakeApps, recruitOf } from '@/lib/demo';
 import { HomeView, filterApps, byDevice, guessDevice, type Device } from '@/components/home-view';
 import { GameView } from '@/components/game-view';
+import { bonusOf } from '@/components/test-view';
 import { DetailView } from '@/components/detail-view';
 import { useApp } from '@/lib/ctx';
 import type { App } from '@/lib/supabase';
@@ -20,12 +21,13 @@ export default function Demo() {
   useEffect(() => { setDevice(guessDevice()); const c = new URLSearchParams(location.search).get('cat'); if (c) setCat(c); setN(Math.min(300, Math.max(2, Number(new URLSearchParams(location.search).get('n')) || 120))); }, []);
   const apps = useMemo(() => (n ? fakeApps(n) : null), [n]);
   const got = useMemo(() => new Set(['demo4', 'demo9', 'demo20']), []);
-  const testIds = useMemo(() => new Map((apps || []).flatMap((a) => { const r = recruitOf(a); return r ? [[a.id, (r.stake || 0) > 0 ? 'stake' : 'test'] as const] : []; })), [apps]);
+  const testIds = useMemo(() => new Map((apps || []).flatMap((a) => { const r = recruitOf(a); return r ? [[a.id, { n: bonusOf(r), stake: (r.stake || 0) > 0 }] as const] : []; })), [apps]);
+  const boost = useMemo(() => new Set([...testIds].filter(([, v]) => v.stake).map(([id]) => id)), [testIds]);
   if (!apps) return null;
   if (game) {
     const mine = byDevice(apps, device).length >= 2 ? byDevice(apps, device) : apps;
     const inCat = filterApps(mine, cat);
-    return <GameView pool={inCat.length >= 2 ? inCat : mine} onClose={() => setGame(false)} />;
+    return <GameView pool={inCat.length >= 2 ? inCat : mine} boost={boost} onClose={() => setGame(false)} />;
   }
   return (
     <div onClickCapture={(e) => {

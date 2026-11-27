@@ -38,21 +38,15 @@ export const bonusOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => 1 + (r
 /** 목록 순서: 보상 큰 앱 → 12명에 가까움 + 남을 많이 테스트해 준 사람 */
 export const sortRecruit = (l: Recruit[]) => [...l].sort((a, b) => bonusOf(b) - bonusOf(a) || (b.joined * 2 + b.given) - (a.joined * 2 + a.given));
 
-/** 🎫 표시는 이것 하나: 연회색 칩 + 숫자. +받음 / −씀 / 그냥 개수. 주황 글씨(hot) = 주인이 건 티켓, dim = 아직 못 받음 */
+/** 🎫 표시는 이것 하나: 연회색 칩 + 숫자. +받음 / −씀 / 그냥 개수. 주황 글씨(hot) = 보너스(2장 이상·주인이 건 티켓), dim = 아직 못 받음 */
 export function Ticket({ n, sign, hot, dim }: { n: number; sign?: '+' | '-'; hot?: boolean; dim?: boolean }) {
   return <span className={`tk ${hot ? 'hot' : ''} ${dim ? 'dim' : ''}`}>{Icon.ticket}{sign === '-' ? '−' : sign || ''}{n}</span>;
 }
 
-/** 보상: 기본(1 + 마지막 3자리 1) 칩 + 주인이 건 몫은 주황 칩 */
-export function Reward({ base, staked, dim }: { base: number; staked?: boolean; dim?: boolean }) {
-  return (
-    <span className="reward-tag">
-      <Ticket n={base} sign="+" dim={dim} />
-      {staked && <Ticket n={1} sign="+" hot dim={dim} />}
-    </span>
-  );
+/** 보상: 합계 칩 하나 (기본 1 + 마지막 3자리 1 + 주인이 건 티켓 1), 2장부터 주황 */
+export function Reward({ n, dim }: { n: number; dim?: boolean }) {
+  return <Ticket n={n} sign="+" hot={n >= 2} dim={dim} />;
 }
-const rewardOf = (r: Pick<Recruit, 'joined' | 'need' | 'stake'>) => ({ base: bonusOf({ ...r, stake: 0 }), staked: (r.stake || 0) > 0 });
 
 /** 사람 n/need 막대 (테스터 수) */
 export function Meter({ n, need }: { n: number; need: number }) {
@@ -128,7 +122,7 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
       </div>
       <div className="row between">
         <NeedMarks n={caps.length} fin={fin} ok={all} day={t.day} />
-        <span className="slots-reward"><span className="how-arrow">{Icon.chevRight}</span><Reward base={(j.bonus || 1) - (j.staked ? 1 : 0)} staked={j.staked} dim={!all} /></span>
+        <span className="slots-reward"><span className="how-arrow">{Icon.chevRight}</span><Reward n={j.bonus || 1} dim={!all} /></span>
       </div>
       <div className="field-wrap">
         <input placeholder={t.feedbackPh} maxLength={60} value={fb} onChange={(e) => setFb(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') send(); }} enterKeyHint="send" />
@@ -271,7 +265,7 @@ export function RecruitStrip({ r, joined: joined0, onJoin }: { r: Recruit; joine
           <span className="t-card">{t.testers}</span>
           <Meter n={r.joined + (joined && !joined0 ? 1 : 0)} need={r.need} />
         </div>
-        <Reward {...rewardOf(r)} />
+        <Reward n={bonusOf(r)} />
         {joined
           ? <span className="btn-sm on">{Icon.check}</span>
           : <button className="btn-sm primary" onClick={async () => { if (await onJoin(r)) { setJoined(true); toast(`${t.joinedT} · 🎫+${b}`); } }}>{t.join}</button>}

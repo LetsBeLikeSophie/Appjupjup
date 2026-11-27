@@ -6,13 +6,16 @@ import type { App } from '@/lib/supabase';
 import { loadApps } from '@/lib/data';
 import { filterApps } from '@/components/home-view';
 import { GameView } from '@/components/game-view';
+import { loadBoard } from '@/lib/test';
 
 export default function Game() {
   const { country, session } = useApp();
   const router = useRouter();
   const [pool, setPool] = useState<App[] | null>(null);
+  const [boost, setBoost] = useState<Set<string>>();
   useEffect(() => {
     const cat = new URLSearchParams(location.search).get('cat') || 'all';
+    loadBoard().then((b) => setBoost(new Set([...b].filter(([, r]) => r.stake > 0 && r.joined < r.need).map(([id]) => id))));
     loadApps(country).then((list) => {
       const mine = (a: App) => a.owner_id === session?.user.id;
       const inCat = filterApps(list, cat).filter((a) => !mine(a));
@@ -20,5 +23,5 @@ export default function Game() {
       setPool(inCat.length >= 2 ? inCat : list.filter((a) => !mine(a)));
     });
   }, [country, session]);
-  return <GameView pool={pool} onClose={() => (history.length > 1 ? router.back() : router.push('/'))} />;
+  return <GameView pool={boost ? pool : null} boost={boost} onClose={() => (history.length > 1 ? router.back() : router.push('/'))} />;
 }
