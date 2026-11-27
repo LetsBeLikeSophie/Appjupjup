@@ -206,7 +206,7 @@ input[type=checkbox] { accent-color: var(--primary); width: 18px; height: 18px; 
 .tiles.center { justify-content: center; padding-top: 12px; }
 .tiles.scroll { overflow-x: auto; gap: 16px; margin: 0 calc(-1 * var(--gutter)); padding: 8px var(--gutter); scrollbar-width: none; }
 .tiles.scroll::-webkit-scrollbar { display: none; }
-.tile { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; padding: 0; background: none; flex-shrink: 0; width: calc(var(--icon-tile) + 12px); }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; padding: 0; background: none; flex-shrink: 0; width: calc(var(--tile-icon, var(--icon-tile)) + 12px); }
 .tile .tile-name { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile-name { font-size: var(--fs-sub); font-weight: var(--fw-mid); color: var(--text2); text-align: center; }
 .add-icon { width: var(--icon-tile); height: var(--icon-tile); border-radius: 12px; background: var(--surface); color: #A2A6AD; display: inline-flex; align-items: center; justify-content: center; }
@@ -287,6 +287,8 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .grab { width: 40px; height: 5px; border-radius: 3px; background: #D8D8D2; align-self: center; flex-shrink: 0; }
 .sheet-head { display: flex; align-items: center; gap: 12px; }
 .sheet-head .grow { display: flex; flex-direction: column; gap: 2px; }
+.sheet-head.center .grow { align-items: center; text-align: center; }
+.sheet-head-pad { width: var(--icon-btn); flex-shrink: 0; }
 .sheet-skip { text-align: center; color: var(--sub); padding: 4px; text-decoration: underline; }
 .pile { display: flex; justify-content: center; align-items: center; padding: 12px 0 4px; }
 .pile .appicon-wrap + .appicon-wrap { margin-left: -10px; }

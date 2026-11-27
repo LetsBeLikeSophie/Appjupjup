@@ -170,11 +170,12 @@ export function Sheet({ open, onClose, label, children, tall }: { open: boolean;
 }
 
 /** 시트 머리: [아이콘] 제목/보조 ··· [닫기]. 모든 시트 같은 모양 */
-export function SheetHeader({ title, sub, leading, onClose }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; onClose: () => void }) {
+/** 시트 머리: 제목 + 닫기. center = 제목 가운데(로그인·사람 시트) */
+export function SheetHeader({ title, sub, leading, onClose, center }: { title: ReactNode; sub?: ReactNode; leading?: ReactNode; onClose: () => void; center?: boolean }) {
   const { t } = useApp();
   return (
-    <div className="sheet-head">
-      {leading}
+    <div className={`sheet-head ${center ? 'center' : ''}`}>
+      {center ? <span className="sheet-head-pad" aria-hidden /> : leading}
       <div className="grow">
         <h2 className="t-name clamp2">{title}</h2>
         {sub && <div className="t-sub">{sub}</div>}

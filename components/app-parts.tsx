@@ -69,12 +69,13 @@ export function AppTile({ app, size = 56, star, onClick, href }: { app: Pick<App
   const inner = (
     <>
       <AppIcon src={app.icon_url} size={size}>{star && <span className="mk-star">{Icon.star}</span>}</AppIcon>
-      <span className="tile-name ellipsis" style={{ maxWidth: size + 24 }}>{app.name}</span>
+      <span className="tile-name ellipsis">{app.name}</span>
     </>
   );
-  if (href) return <a className="tile" href={href}>{inner}</a>;
-  if (onClick) return <button className="tile" onClick={onClick}>{inner}</button>;
-  return <span className="tile">{inner}</span>;
+  const style = { '--tile-icon': `${size}px` } as React.CSSProperties;
+  if (href) return <a className="tile" href={href} style={style}>{inner}</a>;
+  if (onClick) return <button className="tile" onClick={onClick} style={style}>{inner}</button>;
+  return <span className="tile" style={style}>{inner}</span>;
 }
 
 /** 한마디 입력: 홈 더미에서 앱이 말풍선으로 떠드는 10글자 */

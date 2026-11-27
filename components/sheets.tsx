@@ -51,8 +51,8 @@ export function LoginSheet({ sample, force }: { sample: Pick<App, 'id' | 'icon_u
 
   return (
     <Sheet open={loginOpen} onClose={closeLogin} label={t.loginTitle}>
+      <SheetHeader center title={t.loginTitle} onClose={closeLogin} />
       <IconPile apps={sample} />
-      <h2 className="t-name" style={{ textAlign: 'center' }}>{t.loginTitle}</h2>
       <button className="btn kakao" onClick={() => go('kakao')}>
         <svg aria-hidden width="20" height="20" viewBox="0 0 24 24"><path d="M12 4C7 4 3 7.1 3 11c0 2.5 1.7 4.7 4.2 6l-1 3.6c-.1.3.3.6.6.4l4.2-2.8c.3 0 .7.1 1 .1 5 0 9-3.1 9-7s-4-7.3-9-7.3z" fill="#191919" /></svg>
         {t.loginKakao}
