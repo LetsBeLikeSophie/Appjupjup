@@ -51,7 +51,7 @@ const take = (): Pending => {
 
 export function errKey(e: unknown): string {
   const m = (e as { message?: string })?.message || '';
-  const k = ['badword', 'too_fast', 'already', 'duplicate', 'app_limit', 'bad_link', 'own_app', 'login_required', 'need_tickets', 'max_join', 'full', 'same_photo', 'not_yet', 'missed', 'stake_locked'].find((x) => m.includes(x));
+  const k = ['badword', 'too_fast', 'already', 'duplicate', 'app_limit', 'bad_link', 'own_app', 'login_required', 'need_tickets', 'max_join', 'full', 'same_photo', 'today_done', 'not_yet', 'missed', 'stake_locked'].find((x) => m.includes(x));
   return k || 'generic';
 }
 

@@ -111,20 +111,20 @@ export const RECRUIT: Recruit[] = [
   { app: APPS[3], joined: 1, need: 12, given: 0 },
 ];
 export const JOINED: Joined[] = [
-  { id: 'j8', app: APPS[8], day: 7, done: [true, false, false] },
-  { id: 'j6', app: APPS[6], day: 2, done: [true, false, false] },
-  { id: 'j4', app: APPS[4], day: 3, done: [true, false, false], bonus: 2 },
+  { id: 'j8', app: APPS[8], day: 7, caps: [{ day: 1, src: APPS[8].screenshots[0] }, { day: 4, src: APPS[8].screenshots[0] }] },
+  { id: 'j6', app: APPS[6], day: 2, caps: [{ day: 1, src: APPS[6].screenshots[0] }] },
+  { id: 'j4', app: APPS[4], day: 9, caps: [{ day: 1, src: APPS[4].screenshots[0] }, { day: 2, src: APPS[4].screenshots[0] }, { day: 5, src: APPS[4].screenshots[0] }, { day: 8, src: APPS[4].screenshots[0] }], bonus: 2 },
 ];
 export const MY_TEST: MyTest = {
   app: APPS[10], open: true, need: 12, stake: 1, locked: 2,
   testers: [
-    { who: filmDev, day: 9, done: [true, true, false] },
-    { who: people[2], day: 8, done: [true, true, false] },
-    { who: tester(1), day: 9, done: [true, false, false] },
-    { who: tester(2), day: 5, done: [true, false, false] },
-    { who: tester(3), day: 4, done: [true, false, false] },
-    { who: tester(4), day: 2, done: [true, false, false] },
-    { who: tester(5), day: 1, done: [false, false, false] },
+    { who: filmDev, day: 15, caps: [1, 3, 6, 9, 14] },
+    { who: people[2], day: 8, caps: [1, 7] },
+    { who: tester(1), day: 9, caps: [1, 2, 5, 8] },
+    { who: tester(2), day: 5, caps: [1] },
+    { who: tester(3), day: 17, caps: [1, 2], failed: true },
+    { who: tester(4), day: 2, caps: [1] },
+    { who: tester(5), day: 1, caps: [] },
   ],
   feedback: [
     { who: filmDev, body: '문장 고르는 화면이 좀 느려요', day: 7 },
@@ -136,7 +136,7 @@ export const MY_TEST: MyTest = {
 export const TEST: TestData = { points: TEST_POINTS, recruit: RECRUIT, joined: JOINED, mine: [MY_TEST, { app: APPS[5], open: false, need: 12, stake: 0, locked: 0, testers: [], feedback: [] }] };
 /** 시험 동작: 다 성공 (사진은 안 올림) */
 const yes = async () => true;
-export const TEST_H: TestH = { join: yes, note: yes, stake: yes, open: yes, capture: async (j, i) => (j.done.filter(Boolean).length + 1 >= 3 && i === 2 ? 'done' : 'ok') };
+export const TEST_H: TestH = { join: yes, note: yes, stake: yes, open: yes, capture: async (j, i) => (i + 1 >= 3 && j.day >= (j.app.platform === 'ios' ? 3 : 14) ? 'done' : 'ok') };
 /** 홈 가짜 앱 중 테스터 모집 중인 것 (5개 중 1개) */
 export const recruitOf = (a: App): Recruit | null => {
   const i = Number(a.id.replace(/\D/g, ''));

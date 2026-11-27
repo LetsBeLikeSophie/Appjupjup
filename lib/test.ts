@@ -1,7 +1,7 @@
 'use client';
 // 테스터 교환: DB → 화면 데이터(TestData), 동작(TestH). 규칙은 DB 함수(11_tester_exchange.sql)가 지켜요
 import { sb, APP_FIELDS, PERSON, type App, type Person } from './supabase';
-import { checksOf, dayOf, deadlinesOf, type Joined, type MyTest, type Recruit, type TestData, type TestH } from '@/components/test-view';
+import { dayOf, type Joined, type MyTest, type Recruit, type TestData, type TestH } from '@/components/test-view';
 import { shrinkImage } from './image';
 
 export type Board = Map<string, { joined: number; need: number; stake: number; given: number }>;
@@ -23,7 +23,7 @@ type JoinRow = { id: string; app_id: string; status: string; reward: number; joi
 type OwnJoinRow = { id: string; app_id: string; status: string; staked: boolean; joined_at: string; tester: Person; caps: CapRow[] };
 type NoteRow = { app_id: string; body: string; day: number; author: Person };
 
-const doneOf = (caps: CapRow[]) => [0, 1, 2].map((i) => caps.some((c) => c.idx === i));
+const daysOf = (joinedAt: string, caps: CapRow[]) => [...caps].sort((a, b) => a.idx - b.idx).map((c) => dayOf(joinedAt, new Date(c.created_at).getTime()));
 
 /** 내 정보: 참여 중 · 모집 목록 · 내 앱 테스터 */
 export async function loadTest(uid: string, myApps: App[], tickets: number): Promise<TestData> {
@@ -48,8 +48,8 @@ export async function loadTest(uid: string, myApps: App[], tickets: number): Pro
   }
   const joined: Joined[] = joins.map((j) => ({
     // 캡처 날은 참여할 때 플랫폼 기준 (DB와 같게)
-    id: j.id, app: { ...j.app, platform: j.platform }, day: dayOf(j.joined_at), done: doneOf(j.caps), bonus: j.reward,
-    shots: [0, 1, 2].map((i) => { const p = j.caps.find((c) => c.idx === i)?.path; return p ? signed.get(p) ?? null : null; }),
+    id: j.id, app: { ...j.app, platform: j.platform }, day: dayOf(j.joined_at), bonus: j.reward,
+    caps: [...j.caps].sort((a, b) => a.idx - b.idx).map((c) => ({ day: dayOf(j.joined_at, new Date(c.created_at).getTime()), src: c.path ? signed.get(c.path) ?? null : null })),
   }));
 
   const mineIds = new Set(myApps.map((a) => a.id));
@@ -70,7 +70,7 @@ export async function loadTest(uid: string, myApps: App[], tickets: number): Pro
     return {
       app: a, open: openIds.has(a.id), need: b?.need ?? 12, stake: b?.stake ?? 0,
       locked: js.filter((j) => j.status === 'active' && j.staked).length,
-      testers: js.map((j) => ({ who: j.tester, day: dayOf(j.joined_at), done: doneOf(j.caps), failed: j.status === 'failed' })),
+      testers: js.map((j) => ({ who: j.tester, day: dayOf(j.joined_at), caps: daysOf(j.joined_at, j.caps), failed: j.status === 'failed' })),
       feedback: notes.filter((n) => n.app_id === a.id).map((n) => ({ who: n.author, body: n.body, day: n.day })),
     };
   });
@@ -114,7 +114,7 @@ export function testHandlers({ toast, err, after, uid }: Msgs): TestH {
       if (up.error && !/exists/i.test(up.error.message)) { err(up.error.message); return null; }
       const res = await run(sb().rpc('aj_test_capture', { p_join: j.id, p_idx: idx, p_path: path, p_hash: hash })) as { done?: boolean; missed?: boolean } | null;
       // 확실히 기록 안 된 경우만 파일 지우기 (응답만 끊긴 경우엔 기록됐을 수 있음)
-      if (!res) { if (failKey && /same_photo|bad_|not_yet|not_active|missed/.test(failKey)) await sb().storage.from('aj-caps').remove([path]); return null; }
+      if (!res) { if (failKey && /same_photo|bad_|today_done|not_active|missed/.test(failKey)) await sb().storage.from('aj-caps').remove([path]); return null; }
       after();
       if (res.missed) { err('missed'); return null; }
       return res.done ? 'done' : 'ok';
@@ -122,11 +122,10 @@ export function testHandlers({ toast, err, after, uid }: Msgs): TestH {
   };
 }
 
-export { checksOf, deadlinesOf };
 
 /** 테스트 실패 이유 → 짧은 토스트 */
 export function testErrMsg(t: Record<string, string>, raw: string) {
-  const k = ['need_tickets', 'max_join', 'full', 'same_photo', 'not_yet', 'missed', 'stake_locked', 'already', 'login_required'].find((x) => raw.includes(x));
+  const k = ['need_tickets', 'max_join', 'full', 'same_photo', 'today_done', 'missed', 'stake_locked', 'already', 'login_required'].find((x) => raw.includes(x));
   return k === 'need_tickets' ? `🎫1${t.needT}` : k === 'max_join' ? t.maxJoin : k === 'full' ? t.eFull : k === 'same_photo' ? t.eSame
-    : k === 'not_yet' ? t.eNotYet : k === 'missed' ? t.eMissed : k === 'stake_locked' ? t.stakeLocked : k === 'already' ? t.eAlready : t.errGeneric;
+    : k === 'today_done' ? t.eToday : k === 'missed' ? t.eMissed : k === 'stake_locked' ? t.stakeLocked : k === 'already' ? t.eAlready : t.errGeneric;
 }

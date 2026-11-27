@@ -16,18 +16,18 @@ export function MeView({ profile, apps, gotApps, onEditApp, onUpload, onSettings
   const { t, toast } = useApp();
   const who = { id: profile.id, nickname: profile.nickname, tag: profile.tag, score: profile.score, apps };
   return (
-    <Page title={t.me} action={<IconButton label={t.settings} tone="white" onClick={onSettings}>{Icon.gear}</IconButton>}>
-      <div className="tiles">
-        {apps.length === 0 && <span className="tile"><WhoIcon who={who} size={64} /><span className="tile-name"><WhoName who={who} /></span></span>}
-        {apps.map((a) => <AppTile key={a.id} app={a} size={64} star={a.is_primary && apps.length > 1} onClick={() => onEditApp(a)} />)}
-        {apps.length < 3 && (
-          <button className="tile" onClick={() => (profile.tickets < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
-            <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted"><Ticket n={APP_COST} /></span>
-          </button>
-        )}
-      </div>
-
-      <PointsCard points={profile.tickets} />
+    <Page title={t.me} action={<span className="row gap6"><PointsCard points={profile.tickets} /><IconButton label={t.settings} tone="white" onClick={onSettings}>{Icon.gear}</IconButton></span>}>
+      <Section title={t.myApps} aside={<span className="t-sub">{apps.length}/3</span>}>
+        <div className="tiles">
+          {apps.length === 0 && <span className="tile"><WhoIcon who={who} size={52} /><span className="tile-name"><WhoName who={who} /></span></span>}
+          {apps.map((a) => <AppTile key={a.id} app={a} size={52} star={a.is_primary && apps.length > 1} onClick={() => onEditApp(a)} />)}
+          {apps.length < 3 && (
+            <button className="tile" onClick={() => (profile.tickets < APP_COST ? toast(`🎫${APP_COST}${t.needT}`) : onUpload())} aria-label={t.upload}>
+              <span className="add-icon">{Icon.plus}</span><span className="tile-name t-muted"><Ticket n={APP_COST} /></span>
+            </button>
+          )}
+        </div>
+      </Section>
 
       <Section title={t.gotApps} aside={<span className="t-sub">{gotApps.length}</span>}>
         {gotApps.length > 0 && (

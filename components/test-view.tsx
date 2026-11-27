@@ -14,8 +14,8 @@ import { Section, Sheet, SheetHeader } from './layout';
 export const MAX_JOIN = 10;
 export const APP_COST = 2;
 export type Recruit = { app: App; joined: number; need: number; given: number; stake?: number };
-export type Joined = { id: string; app: App; day: number; done: boolean[]; shots?: (string | null)[]; bonus?: number };
-export type Tester = { who: Person; day: number; done: boolean[]; failed?: boolean };
+export type Joined = { id: string; app: App; day: number; caps: { day: number; src?: string | null }[]; bonus?: number };
+export type Tester = { who: Person; day: number; caps: number[]; failed?: boolean };
 export type MyTest = { app: App; open: boolean; need: number; testers: Tester[]; feedback: { who: Person; body: string; day: number }[]; stake: number; locked: number };
 export type TestData = { points: number; recruit: Recruit[]; joined: Joined[]; mine: MyTest[] };
 /** 동작: 성공하면 true(캡처는 'ok'|'done'), 실패 토스트는 h 쪽에서 */
@@ -27,10 +27,10 @@ export type TestH = {
   open: (m: MyTest) => Promise<boolean>;
 };
 
-/** 캡처 날: 안드로이드는 구글 조건 14일, 애플은 서로 다른 날 3번 */
-export const checksOf = (a: Pick<App, 'platform'>) => (a.platform === 'ios' ? [1, 2, 3] : [1, 7, 14]);
-/** 칸마다 마지막 날 (넘기면 탈락) */
-export const deadlinesOf = (a: Pick<App, 'platform'>) => (a.platform === 'ios' ? [3, 4, 5] : [6, 13, 16]);
+/** 캡처: 하루 1장씩 몇 장이든. 끝 = 서로 다른 날 3장 이상 + 마지막 날(안드로이드 14 = 구글 조건, 애플 3) 이후 1장. 넘기면 탈락하는 날: 16 / 5 (DB 14와 같게) */
+export const finalOf = (a: Pick<App, 'platform'>) => (a.platform === 'ios' ? 3 : 14);
+export const lastOf = (a: Pick<App, 'platform'>) => (a.platform === 'ios' ? 5 : 16);
+export const isDoneCaps = (days: number[], fin: number) => days.length >= 3 && days.some((d) => d >= fin);
 /** 참여한 날 = 1일 (24시간마다 하루) */
 export const dayOf = (joinedAt: string, at = Date.now()) => Math.floor((at - new Date(joinedAt).getTime()) / 86400000) + 1;
 /** 보상: 기본 1 + 마지막 3자리(10~12번째) 1 + 주인이 건 티켓 남아 있으면 1 */
@@ -64,43 +64,50 @@ export function Meter({ n, need }: { n: number; need: number }) {
   );
 }
 
-/** 캡처 칸: 했음 / 열림(누르면 사진 고르기) / 아직 */
-function Slot({ state, src, label, busy, onTap, onFile }: { state: 'done' | 'open' | 'locked'; src?: string | null; label: string; busy?: boolean; onTap: () => void; onFile: (f: File) => void }) {
+/** 사진 칸: 찍은 사진 / 오늘 칸(점선, 누르면 사진 고르기) */
+function Slot({ src, label, open, busy, onFile }: { src?: string | null; label: string; open?: boolean; busy?: boolean; onFile?: (f: File) => void }) {
   const file = useRef<HTMLInputElement>(null);
   return (
     <div className="slot-col">
-      <button className={`slot ${state} ${busy ? 'busy' : ''}`} aria-label={label} disabled={busy}
-        onClick={() => (state === 'open' ? file.current?.click() : onTap())}>
-        {state === 'done' && src && <img src={src} alt="" />}
-        {state === 'done' && <span className="slot-ok">{Icon.check}</span>}
-        {state === 'open' && Icon.camera}
-        {state === 'locked' && Icon.lock}
+      <button className={`slot ${open ? 'open' : 'done'} ${busy ? 'busy' : ''}`} aria-label={label} disabled={busy || !open}
+        onClick={() => open && file.current?.click()}>
+        {!open && (src ? <img src={src} alt="" /> : Icon.check)}
+        {open && Icon.camera}
       </button>
-      <input ref={file} type="file" accept="image/*" hidden
-        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFile(f); }} />
-      <span className={`t-sub ${state === 'open' ? 'slot-now' : ''}`}>{label}</span>
+      {open && <input ref={file} type="file" accept="image/*" hidden
+        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f && onFile) onFile(f); }} />}
+      <span className={`t-sub ${open ? 'slot-now' : ''}`}>{label}</span>
     </div>
   );
 }
 
-/** 참여 중 카드: 캡처 3칸 → 끝나면 🎫 */
+/** 필수 표시: 사진 ● ● + 마지막 날 칸 (다 차면 🎫) */
+function NeedMarks({ n, fin, ok, day }: { n: number; fin: number; ok: boolean; day: string }) {
+  return (
+    <span className="need">
+      <i className={n >= 1 ? 'on' : ''} /><i className={n >= 2 ? 'on' : ''} />
+      <span className={`need-fin ${ok ? 'on' : ''}`}>{fin}{day}</span>
+    </span>
+  );
+}
+
+/** 참여 중 카드: 하루 1장씩 사진 줄 (필수 3장 + 마지막 날 1장, 더 찍어도 됨) → 끝나면 🎫 */
 function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
   const { t, toast } = useApp();
-  const checks = checksOf(j.app);
-  const [done, setDone] = useState(j.done);
-  const [busy, setBusy] = useState(-1);
+  const fin = finalOf(j.app);
+  const [caps, setCaps] = useState(j.caps);
+  const [busy, setBusy] = useState(false);
   const [fb, setFb] = useState('');
-  const all = done.every(Boolean);
-  // 열림: 그날이 됐고 앞 칸을 찍었을 때
-  const stateOf = (i: number, c: number) => (done[i] ? 'done' : c <= j.day && (i === 0 || done[i - 1]) ? 'open' : 'locked');
-  const tapLocked = (i: number, c: number) => { if (!done[i]) toast(c > j.day ? `${c}${t.day}${t.opensOn}` : t.prevFirst); };
-  const shoot = async (i: number, c: number, f: File) => {
-    setBusy(i);
-    const r = await h.capture(j, i, f);
-    setBusy(-1);
+  const today = caps.some((c) => c.day === j.day);
+  const all = isDoneCaps(caps.map((c) => c.day), fin);
+  const strip = useRef<HTMLDivElement>(null);
+  const shoot = async (f: File) => {
+    setBusy(true);
+    const r = await h.capture(j, caps.length, f);
+    setBusy(false);
     if (!r) return;
-    setDone((d) => d.map((x, k) => x || k === i));
-    toast(r === 'done' ? `🎫+${j.bonus || 1}${t.gotT}` : `${c}${t.day}${t.captured}`);
+    setCaps((l) => [...l, { day: j.day, src: URL.createObjectURL(f) }]);
+    toast(r === 'done' ? `🎫+${j.bonus || 1}${t.gotT}` : `${j.day}${t.day}${t.captured}`);
   };
   const send = async () => {
     const b = fb.trim();
@@ -112,15 +119,14 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
       <div className="row gap12">
         <AppIcon src={j.app.icon_url} size={40} />
         <span className="row gap6 grow"><span className="t-card ellipsis">{j.app.name}</span><PlatformChip platform={j.app.platform} stage="live" /></span>
-        <span className="t-sub">{Math.min(j.day, checks[2])}/{checks[2]}{t.day}</span>
+        <span className="t-sub">{Math.min(j.day, fin)}/{fin}{t.day}</span>
       </div>
-      <div className="slots-row">
-        <div className="slots">
-          {checks.map((c, i) => (
-            <Slot key={c} label={`${c}${t.day}`} src={j.shots ? j.shots[i] : j.app.screenshots[0]} busy={busy === i}
-              state={stateOf(i, c)} onTap={() => tapLocked(i, c)} onFile={(f) => shoot(i, c, f)} />
-          ))}
-        </div>
+      <div className="shot-strip" ref={strip}>
+        {caps.map((c, i) => <Slot key={i} src={c.src} label={`${c.day}${t.day}`} />)}
+        {!today && !all && caps.length < 30 && <Slot open busy={busy} label={t.today} onFile={shoot} />}
+      </div>
+      <div className="row between">
+        <NeedMarks n={caps.length} fin={fin} ok={all} day={t.day} />
         <span className={`slots-reward ${all ? 'got' : ''}`}><span className="how-arrow">{Icon.chevRight}</span><Ticket n={j.bonus || 1} plus /></span>
       </div>
       <div className="field-wrap">
@@ -134,8 +140,12 @@ function JoinedCard({ j, h }: { j: Joined; h: TestH }) {
 /** 티켓 규칙 그림: 얻기 / 쓰기 */
 function HowSheet({ open, points, onClose }: { open: boolean; points: number; onClose: () => void }) {
   const { t } = useApp();
-  const line = (icon: ReactNode, text: string, n: string) => (
-    <span className="how-line"><span className="how-os">{icon}</span><span className="t-body grow">{text}</span><span className="ticket">{Icon.ticket}{n}</span></span>
+  const line = (icon: ReactNode, text: string, sub: string, n: string) => (
+    <span className="how-line">
+      <span className="how-os">{icon}</span>
+      <span className="col grow"><span className="t-body"><b>{text}</b></span><span className="t-sub">{sub}</span></span>
+      <span className="ticket">{Icon.ticket}{n}</span>
+    </span>
   );
   return (
     <Sheet open={open} onClose={onClose} label={t.points}>
@@ -143,31 +153,32 @@ function HowSheet({ open, points, onClose }: { open: boolean; points: number; on
       <div className="how">
         <div className="how-row">
           <span className="how-label t-sub">{t.give}</span>
-          {line(Icon.android, t.hAnd, '+1')}
-          {line(Icon.apple, t.hIos, '+1')}
-          {line(Icon.user, t.hLast, '+1')}
-          {line(Icon.ticket, t.hStaked, '+1')}
+          {line(Icon.android, t.hAnd, t.hAndS, '+1')}
+          {line(Icon.apple, t.hIos, t.hIosS, '+1')}
+          {line(Icon.user, t.hLast, t.hLastS, '+1')}
+          {line(Icon.ticket, t.hStaked, t.hStakedS, '+1')}
         </div>
         <div className="how-row">
           <span className="how-label t-sub">{t.use}</span>
-          {line(Icon.plus, t.hUpload, `−${APP_COST}`)}
-          {line(Icon.user, t.hStake, '−1')}
+          {line(Icon.plus, t.hUpload, t.hUploadS, `−${APP_COST}`)}
+          {line(Icon.lock, t.hStake, t.hStakeS, '−1')}
         </div>
       </div>
     </Sheet>
   );
 }
 
-function TesterRow({ x, checks }: { x: Tester; checks: number[] }) {
+/** 테스터 한 줄: 필수 3칸(사진·사진·마지막 날) + 더 찍은 장수, 탈락이면 빈 칸 빨간 ✕ */
+function TesterRow({ x, fin }: { x: Tester; fin: number }) {
+  const n = x.caps.length;
+  const marks = [n >= 1, n >= 2, isDoneCaps(x.caps, fin)];
   return (
     <div className={`tester ${x.failed ? 'failed' : ''}`}>
       <WhoIcon who={x.who} size={34} />
       <span className="t-body ellipsis tester-name"><WhoName who={x.who} /></span>
+      {n > 3 && <span className="t-sub">+{n - 3}</span>}
       <span className="mini-slots">
-        {checks.map((c, i) => {
-          const miss = !x.done[i] && (x.failed || c < x.day);
-          return <i key={c} className={x.done[i] ? 'ok' : miss ? 'miss' : ''}>{miss && Icon.close}</i>;
-        })}
+        {marks.map((ok, i) => <i key={i} className={ok ? 'ok' : x.failed ? 'miss' : ''}>{!ok && x.failed && Icon.close}</i>)}
       </span>
     </div>
   );
@@ -179,9 +190,8 @@ export function PointsCard({ points, sub }: { points: number; sub?: string }) {
   const [how, setHow] = useState(false);
   return (
     <>
-      <button className="temp-card" onClick={() => setHow(true)} aria-label={t.points}>
-        <span className="ticket big">{Icon.ticket}{points}</span>
-        {sub && <span className="t-sub">{sub}</span>}
+      <button className="btn-sm white ticket-pill" onClick={() => setHow(true)} aria-label={t.points}>
+        {Icon.ticket}{points}{sub}
       </button>
       <HowSheet open={how} points={points} onClose={() => setHow(false)} />
     </>
@@ -219,7 +229,7 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
           <button className="stake-btn" aria-label="+" onClick={() => change(1)}>+</button>
         </span>
       </div>
-      {m.testers.length > 0 && <div className="testers">{m.testers.map((x, i) => <TesterRow key={i} x={x} checks={checksOf(m.app)} />)}</div>}
+      {m.testers.length > 0 && <div className="testers">{m.testers.map((x, i) => <TesterRow key={i} x={x} fin={finalOf(m.app)} />)}</div>}
       {m.feedback.length > 0 && (
         <Section title={t.feedback} aside={<span className="t-sub">{m.feedback.length}</span>}>
           {m.feedback.map((f, i) => (
@@ -241,13 +251,8 @@ export function MyTestPanel({ m, h }: { m: MyTest; h: TestH }) {
 export function TestSections({ d, h, findHref }: { d: TestData; h: TestH; findHref: string }) {
   const { t } = useApp();
   return (
-    <Section title={t.joining} aside={<span className="t-sub">{d.joined.length}/{MAX_JOIN}</span>}>
-      {d.joined.map((j) => <JoinedCard key={`${j.id}:${j.done.join()}`} j={j} h={h} />)}
-      <Link className="list-row find-row" href={findHref}>
-        <span className="find-icon">{Icon.flask}</span>
-        <span className="t-card grow">{t.testApps}</span>
-        <span className="chev">{Icon.chevRight}</span>
-      </Link>
+    <Section title={`${t.joining} ${d.joined.length}/${MAX_JOIN}`} aside={<Link className="btn-sm white" href={findHref}>{Icon.flask}{t.testApps}</Link>}>
+      {d.joined.map((j) => <JoinedCard key={`${j.id}:${j.caps.length}`} j={j} h={h} />)}
     </Section>
   );
 }
