@@ -15,11 +15,14 @@ export function AlertRow({ n, myId }: { n: Notice; myId?: string }) {
   const canVisit = (n.kind === 'got' || n.kind === 'comment') && n.app?.owner_id === myId && !!actorApp;
   const href = n.app_id ? `/app/${n.app_id}${n.kind === 'comment' ? '#comments' : ''}` : '#';
   const unread = !n.read_at;
+  // 개발자 답글: 앱 주인이 자기 앱에 단 댓글 → 상세 댓글처럼 '개발자' 태그
+  const isReply = n.kind === 'comment' && !!n.actor && n.app?.owner_id === n.actor.id;
 
   const title =
     n.kind === 'helpful' ? <b>{t.nHelpful}</b> :
     n.kind === 'got' ? <><b><WhoName who={n.actor} /></b>{t.nGot}</> :
     n.kind === 'visit' ? <><b><WhoName who={n.actor} /></b>{t.nVisit}</> :
+    isReply ? <><b><WhoName who={n.actor} /></b> <span className="dev-tag">{t.dev}</span></> :
     <><b><WhoName who={n.actor} /></b> → {n.app?.name}</>;
   const sub = n.body ? <>“{n.body}”</> : n.app?.name;
   const leading = n.kind === 'helpful' ? <AppIcon src={n.app?.icon_url} size={40} /> : <WhoIcon who={n.actor} size={40} />;
