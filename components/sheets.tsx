@@ -87,27 +87,34 @@ export function UploadSheet() {
   const [say, setSay] = useState('');
   const [busy, setBusy] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 링크를 빨리 바꾸면 앞 링크 응답이 늦게 와서 덮어쓰지 않게: 가장 최근 요청만 반영
+  const req = useRef(0);
 
-  useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); setEditCc(false); setTagline(''); } }, [uploadOpen, country]);
+  useEffect(() => { if (uploadOpen) { setUrl(''); setState('idle'); setMeta({}); setName(''); setCc(country); setWorld(false); setEditCc(false); setTagline(''); setSay(''); setDupId(null); req.current++; } }, [uploadOpen, country]);
 
   const check = (u: string) => {
     setUrl(u);
+    const my = ++req.current;
     if (timer.current) clearTimeout(timer.current);
     if (!u.trim()) { setState('idle'); return; }
     if (!parseLink(u)) { setState('bad'); return; }
     timer.current = setTimeout(async () => {
       setState('loading');
       const { data: existing } = await sb().rpc('aj_find_app_by_link', { p_url: u.trim() });
+      if (my !== req.current) return;
       if (existing) { setDupId(existing as string); setState('dup'); return; }
+      setDupId(null);
       try {
         const r = await fetch(`${SUPABASE_URL}/functions/v1/aj-store-meta`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u.trim(), country }),
         });
         const m = (await r.json()) as Meta;
+        if (my !== req.current) return;
         setMeta(m); setName(m.name || '');
         if (m.allCountries) setWorld(true);
         else if (m.countries?.length) { setWorld(false); setCc(m.countries.join(', ')); }
-      } catch { setMeta({ needsManual: true }); }
+      } catch { if (my !== req.current) return; setMeta({ needsManual: true }); }
+      if (my !== req.current) return;
       setState('ok');
     }, 400);
   };
