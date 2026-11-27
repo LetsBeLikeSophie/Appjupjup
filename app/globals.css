@@ -298,9 +298,9 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 .sheet-foot { position: sticky; bottom: calc(-24px - env(safe-area-inset-bottom)); margin: auto calc(-1 * var(--gutter)) calc(-24px - env(safe-area-inset-bottom)); padding: 12px var(--gutter) calc(24px + env(safe-area-inset-bottom)); background: var(--surface); display: flex; flex-direction: column; gap: 12px; box-shadow: 0 -1px 0 var(--line); }
 
 /* ---------- 첫 입장 ---------- */
-.welcome { position: fixed; inset: 0; z-index: 50; background: var(--bg); max-width: 480px; margin: 0 auto; padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(32px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: var(--gap); }
+.welcome { position: fixed; inset: 0; z-index: 50; background: var(--bg); max-width: 480px; margin: 0 auto; padding: calc(var(--top) + env(safe-area-inset-top)) var(--gutter) calc(32px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; justify-content: center; gap: var(--gap); }
 .welcome .t-title { text-align: center; margin-bottom: 12px; }
-.choice { flex: 1; border: 0; border-radius: 28px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.choice { padding: calc(var(--pad) * 2) var(--pad); border: 0; border-radius: 28px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
 .choice:active { background: var(--primary-soft); }
 .choice .add-icon { background: var(--soft); }
 .choice-ics { display: flex; }
