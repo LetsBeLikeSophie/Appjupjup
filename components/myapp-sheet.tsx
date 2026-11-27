@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useApp } from '@/lib/ctx';
 import { sb, type App } from '@/lib/supabase';
 import { AppIcon, Chip, Icon } from './ui';
-import { Sheet, SheetHeader } from './layout';
+import { Section, Sheet, SheetHeader } from './layout';
 import { CountryEditor, SayInput, parseCountries } from './app-parts';
 import { MyTestPanel, type MyTest, type TestH } from './test-view';
 
@@ -45,8 +45,9 @@ export function MyAppSheet({ app, onClose, onChanged, test, testH }: { app: App 
   return (
     <Sheet open onClose={onClose} label={t.editApp} tall>
       <SheetHeader title={app.name} leading={<AppIcon src={app.icon_url} size={48} />} onClose={onClose} />
-      {test && testH && <div className="myapp-test"><MyTestPanel key={`${test.open}:${test.stake}:${test.locked}`} m={test} h={testH} /></div>}
-      <span className="label">{t.editApp}</span>
+      {/* 시트당 주황 하나: 테스트 쪽 [테스터 모으기]만, 수정 [저장]은 연회색 */}
+      {test && testH && <Section title={t.test}><div className="myapp-test"><MyTestPanel key={`${test.open}:${test.stake}:${test.locked}`} m={test} h={testH} /></div></Section>}
+      <Section title={t.editApp}>
       <div className="form">
         <label className="label" htmlFor="ma-name">{t.appName2}</label>
         <input id="ma-name" className="field" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
@@ -57,6 +58,7 @@ export function MyAppSheet({ app, onClose, onChanged, test, testH }: { app: App 
         <CountryEditor world={world} setWorld={setWorld} cc={cc} setCc={setCc} />
       </div>
       <button className="btn soft" disabled={busy || !name.trim()} onClick={save}>{t.save}</button>
+      </Section>
       <div className="row between">
         {app.is_primary
           ? <Chip>{Icon.star}{t.primary}</Chip>
