@@ -34,11 +34,14 @@ export default function AppPage({ params }: { params: Promise<{ id: string }> })
   const back = () => (history.length > 1 ? router.back() : router.push('/'));
 
   // 테스터 모집 띠: 내 앱이 아니고 사람이 덜 찼을 때
+  const uid = session?.user.id;
   useEffect(() => {
-    if (!app || app.owner_id === session?.user.id) { setRecruit(null); return; }
-    loadBoard().then((b) => setRecruit(recruitOf(b, app)));
-    if (session) myJoinFor(session.user.id, app.id).then(setJoined);
-  }, [app, session]);
+    if (!app || app.owner_id === uid) { setRecruit(null); return; }
+    let live = true;
+    loadBoard().then((b) => { if (live) setRecruit(recruitOf(b, app)); });
+    if (uid) myJoinFor(uid, app.id).then((j) => { if (live) setJoined(j); });
+    return () => { live = false; };
+  }, [app, uid]);
   const join = async (r: Recruit) => {
     if (!session) { openLogin(); return false; }
     const { error } = await sb().rpc('aj_test_join', { p_app: r.app.id });

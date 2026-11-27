@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { sb, APP_FIELDS, type Profile, type App } from './supabase';
 import { dicts, pickLocale, guessCountry, type Locale } from './i18n';
@@ -19,6 +19,8 @@ type Ctx = {
   refreshTestDue: () => Promise<void>;
   /** 내가 올린 앱 (대표 앱이 곧 나) */
   myApps: App[];
+  /** 로그인한 사람의 myApps를 한 번 이상 읽었나 (그 전엔 [] 라서 기다려야 함) */
+  mineReady: boolean;
   /** 내가 주운 앱 id */
   gotIds: Set<string>;
   toast: (msg: string) => void;
@@ -62,6 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [unread, setUnread] = useState(0);
   const [testDue, setTestDue] = useState(false);
   const [myApps, setMyApps] = useState<App[]>([]);
+  const [mineReady, setMineReady] = useState(false);
   const [gotIds, setGotIds] = useState<Set<string>>(new Set());
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [picked, setPicked] = useState<App | null>(null);
@@ -69,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [pending, setPending] = useState<Pending>(null);
+  const lastUid = useRef<string | null>(null);
 
   // 서버 그림은 늘 ko·KR → 마운트 뒤 브라우저 값 (hydration 안 어긋나게). 프로필 있으면 프로필
   const [mounted, setMounted] = useState(false);
@@ -103,6 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ]);
     setMyApps((a.data as unknown as App[]) || []);
     setGotIds(new Set((d.data || []).map((x: { app_id: string }) => x.app_id)));
+    setMineReady(true);
   }, []);
 
   const refreshUnread = useCallback(async () => {
@@ -122,6 +127,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const db = sb();
     db.auth.getSession().then(async ({ data }) => {
+      lastUid.current = data.session?.user.id ?? null;
       // 카카오가 로그인 콜백을 두 번 부르면 두 번째가 bad_oauth_state로 돌아와요.
       const q = new URLSearchParams(location.search);
       if (q.get('error_code') === 'bad_oauth_state' || q.get('error') === 'invalid_request') {
@@ -135,11 +141,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // 처음 온 사람에게만: 앱 만들어요 / 구경할래요
       try { if (!data.session && !localStorage.getItem(WELCOME_KEY) && location.pathname === '/') setWelcomeOpen(true); } catch {}
     });
-    const { data: sub } = db.auth.onAuthStateChange((_e, s) => { setSession(s); loadProfile(s); });
+    // 토큰 갱신마다 오는 이벤트: 사람이 바뀔 때만 프로필 다시 읽기
+    const { data: sub } = db.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+      if ((s?.user.id ?? null) !== lastUid.current) { lastUid.current = s?.user.id ?? null; loadProfile(s); }
+    });
     return () => sub.subscription.unsubscribe();
   }, [loadProfile]);
 
-  useEffect(() => { refreshUnread(); refreshMine(); refreshTestDue(); }, [session, refreshUnread, refreshMine, refreshTestDue]);
+  // 사람이 바뀔 때만 (토큰 갱신으로 session 객체만 바뀌면 안 읽음)
+  const uid = session?.user.id;
+  useEffect(() => { setMineReady(false); refreshUnread(); refreshMine(); refreshTestDue(); }, [uid, refreshUnread, refreshMine, refreshTestDue]);
 
   const showPicked = useCallback((app: App) => {
     setPicked(app);
@@ -177,12 +189,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const value = useMemo<Ctx>(() => ({
-    session, profile, ready, t, locale, country, unread, testDue, refreshTestDue, myApps, gotIds, toast, toastMsg, picked,
+    session, profile, ready, t, locale, country, unread, testDue, refreshTestDue, myApps, mineReady, gotIds, toast, toastMsg, picked,
     loginOpen, openLogin: openLoginInner, closeLogin: () => setLoginOpen(false),
     uploadOpen, setUploadOpen, welcomeOpen, closeWelcome,
     refreshProfile, refreshMine, refreshUnread, download,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [session, profile, ready, t, locale, country, unread, testDue, refreshTestDue, myApps, gotIds, toastMsg, picked, loginOpen, uploadOpen, welcomeOpen, download, refreshUnread, refreshMine, loadProfile, toast]);
+  }), [session, profile, ready, t, locale, country, unread, testDue, refreshTestDue, myApps, mineReady, gotIds, toastMsg, picked, loginOpen, uploadOpen, welcomeOpen, download, refreshUnread, refreshMine, loadProfile, toast]);
 
   return <C.Provider value={value}>{children}</C.Provider>;
 }

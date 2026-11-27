@@ -11,24 +11,31 @@ import { loadTest, testErrMsg, testHandlers } from '@/lib/test';
 type Lite = Pick<App, 'id' | 'name' | 'icon_url'>;
 
 export default function Me() {
-  const { t, session, profile, ready, myApps, gotIds, openLogin, refreshProfile, refreshMine, refreshTestDue, setUploadOpen, toast } = useApp();
+  const { t, session, profile, ready, myApps, mineReady, gotIds, openLogin, refreshProfile, refreshMine, refreshTestDue, setUploadOpen, toast } = useApp();
   const [test, setTest] = useState<TestData | null>(null);
   const [rev, setRev] = useState(0);
   const [gotApps, setGotApps] = useState<Lite[]>([]);
   const [editing, setEditing] = useState<App | null>(null);
   const [settings, setSettings] = useState(false);
 
+  const uid = session?.user.id;
+  // 늦게 온 응답은 버림 (live)
   useEffect(() => {
-    if (!session) return;
-    sb().from('aj_downloads').select('app:aj_apps(id, name, icon_url)').eq('user_id', session.user.id).order('created_at', { ascending: false })
-      .then(({ data }) => setGotApps(((data || []) as unknown as { app: Lite | null }[]).map((d) => d.app).filter(Boolean) as Lite[]));
-  }, [session, gotIds]);
+    if (!uid) return;
+    let live = true;
+    sb().from('aj_downloads').select('app:aj_apps(id, name, icon_url)').eq('user_id', uid).order('created_at', { ascending: false })
+      .then(({ data }) => { if (live) setGotApps(((data || []) as unknown as { app: Lite | null }[]).map((d) => d.app).filter(Boolean) as Lite[]); });
+    return () => { live = false; };
+  }, [uid, gotIds]);
 
+  // 내 앱을 읽은 뒤에만 (그 전 myApps=[]로 한 번 더 도는 것 막기)
   useEffect(() => {
-    if (!session) return;
-    loadTest(session.user.id, myApps, profile?.tickets ?? 0).then(setTest);
+    if (!uid || !mineReady) return;
+    let live = true;
+    loadTest(uid, myApps, profile?.tickets ?? 0).then((d) => { if (live) setTest(d); });
+    return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, myApps, rev]);
+  }, [uid, mineReady, myApps, rev]);
   const testH = useMemo(() => session ? testHandlers({
     uid: session.user.id, toast,
     err: (m) => toast(testErrMsg(t as unknown as Record<string, string>, m)),
