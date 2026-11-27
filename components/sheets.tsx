@@ -46,7 +46,7 @@ export function LoginSheet({ sample, force }: { sample: Pick<App, 'id' | 'icon_u
   }, [loginOpen]);
 
   const go = (provider: 'kakao' | 'google') =>
-    sb().auth.signInWithOAuth({ provider, options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(location.pathname)}` } });
+    sb().auth.signInWithOAuth({ provider, options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(location.pathname + location.search + location.hash)}` } });
 
   return (
     <Sheet open={loginOpen} onClose={closeLogin} label={t.loginTitle}>
