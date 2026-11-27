@@ -307,6 +307,8 @@ body:has(.detail) .tabwrap, body:has(.game) .tabwrap { display: none; }
 
 /* ---------- 토스트 ---------- */
 .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; background: #2B2D31; color: #fff; padding: 12px 18px; border-radius: 22px; font-size: var(--fs-body); font-weight: var(--fw-mid); max-width: 90vw; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+.toast-tk { display: inline-flex; vertical-align: -3px; margin-right: 2px; }
+.toast-tk svg { width: 16px; height: 16px; }
 
 /* /demo: 더미 위에 상세 겹쳐 열기 (더미 자리 유지) */
 .demo-detail { position: fixed; inset: 0; z-index: 600; overflow-y: auto; background: var(--surface); }

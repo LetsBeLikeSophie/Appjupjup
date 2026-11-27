@@ -128,7 +128,13 @@ export function GetButton({ app, big, children }: { app: App; big?: boolean; chi
 export function Toast() {
   const { toastMsg } = useApp();
   if (!toastMsg) return null;
-  return <div className="toast" role="status">{toastMsg}</div>;
+  // 문구 속 🎫 는 티켓 그림으로 (화면의 Ticket 칩과 같은 아이콘)
+  const parts = toastMsg.split('🎫');
+  return (
+    <div className="toast" role="status">
+      {parts.map((p, i) => <span key={i}>{i > 0 && <span className="toast-tk">{Icon.ticket}</span>}{p}</span>)}
+    </div>
+  );
 }
 
 /** 받기 누른 순간: 아이콘이 크게 떴다 사라져요 */
